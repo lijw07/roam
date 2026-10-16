@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://b74beobkoctuj"]
+
+[ext_resource type="PackedScene" uid="uid://c5jfow7clxq56" path="res://assets/dungeon/banners/banner_thin_yellow.gltf" id="1_model"]
+
+[node name="BannerThinYellow" instance=ExtResource("1_model")]

@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://c0qdpf3xbopnl"]
+
+[ext_resource type="PackedScene" uid="uid://dtcmbhvbdoeiq" path="res://assets/dungeon/lighting/candle_lit.gltf" id="1_model"]
+
+[node name="CandleLit" instance=ExtResource("1_model")]

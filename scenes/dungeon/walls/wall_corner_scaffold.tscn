@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://bh1u24op61iuf"]
+
+[ext_resource type="PackedScene" uid="uid://c0cvuv3rcyuxt" path="res://assets/dungeon/walls/wall_corner_scaffold.gltf" id="1_model"]
+
+[node name="WallCornerScaffold" instance=ExtResource("1_model")]

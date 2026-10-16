@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://klfh3j3h8hr"]
+
+[ext_resource type="PackedScene" uid="uid://bk0lcp3yqligy" path="res://assets/dungeon/floors/floor_tile_small_corner.gltf" id="1_model"]
+
+[node name="FloorTileSmallCorner" instance=ExtResource("1_model")]

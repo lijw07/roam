@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://7v2cs3rhwjdd"]
+
+[ext_resource type="PackedScene" uid="uid://dt8o0ukr600he" path="res://assets/dungeon/furniture/table_medium.gltf" id="1_model"]
+
+[node name="TableMedium" instance=ExtResource("1_model")]

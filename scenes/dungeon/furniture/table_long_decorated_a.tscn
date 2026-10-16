@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://ko5aa021oirb"]
+
+[ext_resource type="PackedScene" uid="uid://b22uld6seyxo0" path="res://assets/dungeon/furniture/table_long_decorated_A.gltf" id="1_model"]
+
+[node name="TableLongDecoratedA" instance=ExtResource("1_model")]

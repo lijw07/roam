@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://bwlb3ujiv8klo"]
+
+[ext_resource type="PackedScene" uid="uid://bcl3fn4in0gp5" path="res://assets/dungeon/floors/floor_dirt_small_C.gltf" id="1_model"]
+
+[node name="FloorDirtSmallC" instance=ExtResource("1_model")]

@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://dcg6kbj7e336"]
+
+[ext_resource type="PackedScene" uid="uid://b8332bgyvc7aq" path="res://assets/dungeon/floors/ceiling_tile.gltf" id="1_model"]
+
+[node name="CeilingTile" instance=ExtResource("1_model")]

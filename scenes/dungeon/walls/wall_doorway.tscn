@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://b4q2kan5gsvja"]
+
+[ext_resource type="PackedScene" uid="uid://bejcbxjutvn34" path="res://assets/dungeon/walls/wall_doorway.gltf" id="1_model"]
+
+[node name="WallDoorway" instance=ExtResource("1_model")]

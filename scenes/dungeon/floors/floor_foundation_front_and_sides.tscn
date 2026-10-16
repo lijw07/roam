@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://b36i1csijar5g"]
+
+[ext_resource type="PackedScene" uid="uid://csbs8k6ori0au" path="res://assets/dungeon/floors/floor_foundation_front_and_sides.gltf" id="1_model"]
+
+[node name="FloorFoundationFrontAndSides" instance=ExtResource("1_model")]

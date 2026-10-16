@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://b76efoxrhovji"]
+
+[ext_resource type="PackedScene" uid="uid://33q41vd8wyp0" path="res://assets/dungeon/floors/floor_wood_small_dark.gltf" id="1_model"]
+
+[node name="FloorWoodSmallDark" instance=ExtResource("1_model")]

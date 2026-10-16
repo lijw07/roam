@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://cx5aoe7pyqbhc"]
+
+[ext_resource type="PackedScene" uid="uid://cogupa5u5vhnn" path="res://assets/dungeon/containers/chest_gold.gltf" id="1_model"]
+
+[node name="ChestGold" instance=ExtResource("1_model")]

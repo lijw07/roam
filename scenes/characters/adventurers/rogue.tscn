@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://ce1mj0bxe16tu"]
+
+[ext_resource type="PackedScene" path="res://assets/characters/adventurers/Rogue.glb" id="1_qqb1q"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_CombatMelee.glb" id="2_2q465"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_CombatRanged.glb" id="3_qgaiu"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_General.glb" id="4_2kso0"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_MovementAdvanced.glb" id="5_p7xoj"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_MovementBasic.glb" id="6_ysx52"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_Simulation.glb" id="7_rok4c"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_Special.glb" id="8_07ld3"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_Tools.glb" id="9_6e8rl"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6i8kb"]
+radius = 0.51
+height = 2.18
+
+[node name="Rogue" type="CharacterBody3D" unique_id=1984209515]
+
+[node name="Model" parent="." unique_id=37399213 instance=ExtResource("1_qqb1q")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2089589184]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.09, 0)
+shape = SubResource("CapsuleShape3D_6i8kb")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=959701341]
+root_node = NodePath("../Model")
+libraries/combat_melee = ExtResource("2_2q465")
+libraries/combat_ranged = ExtResource("3_qgaiu")
+libraries/general = ExtResource("4_2kso0")
+libraries/movement_advanced = ExtResource("5_p7xoj")
+libraries/movement_basic = ExtResource("6_ysx52")
+libraries/simulation = ExtResource("7_rok4c")
+libraries/special = ExtResource("8_07ld3")
+libraries/tools = ExtResource("9_6e8rl")

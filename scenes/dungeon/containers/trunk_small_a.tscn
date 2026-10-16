@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://bm03rpiqbms2n"]
+
+[ext_resource type="PackedScene" uid="uid://dxhy8jt61q3mu" path="res://assets/dungeon/containers/trunk_small_A.gltf" id="1_model"]
+
+[node name="TrunkSmallA" instance=ExtResource("1_model")]

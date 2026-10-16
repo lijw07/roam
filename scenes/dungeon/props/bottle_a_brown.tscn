@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://cmf4buv7mey42"]
+
+[ext_resource type="PackedScene" uid="uid://20nl72jadyak" path="res://assets/dungeon/props/bottle_A_brown.gltf" id="1_model"]
+
+[node name="BottleABrown" instance=ExtResource("1_model")]

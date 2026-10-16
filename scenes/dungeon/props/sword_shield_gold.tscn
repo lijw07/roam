@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://ysetoi6cw2ng"]
+
+[ext_resource type="PackedScene" uid="uid://cy3a6tpkk0321" path="res://assets/dungeon/props/sword_shield_gold.gltf" id="1_model"]
+
+[node name="SwordShieldGold" instance=ExtResource("1_model")]

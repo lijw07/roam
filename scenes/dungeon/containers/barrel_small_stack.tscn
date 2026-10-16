@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://bdlt86md3p3k"]
+
+[ext_resource type="PackedScene" uid="uid://c80qbad8drvdc" path="res://assets/dungeon/containers/barrel_small_stack.gltf" id="1_model"]
+
+[node name="BarrelSmallStack" instance=ExtResource("1_model")]

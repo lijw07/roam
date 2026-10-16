@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://djvswut7cuija"]
+
+[ext_resource type="PackedScene" uid="uid://c6kapcvs4aru" path="res://assets/dungeon/structure/pillar_decorated.gltf" id="1_model"]
+
+[node name="PillarDecorated" instance=ExtResource("1_model")]

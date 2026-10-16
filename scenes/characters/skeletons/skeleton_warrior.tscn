@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://r5jdwi5v4vwj"]
+
+[ext_resource type="PackedScene" path="res://assets/characters/skeletons/Skeleton_Warrior.glb" id="1_2s18f"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_CombatMelee.glb" id="2_3n5e5"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_CombatRanged.glb" id="3_vpvlu"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_General.glb" id="4_at7yi"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_MovementAdvanced.glb" id="5_cgyfr"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_MovementBasic.glb" id="6_62hnx"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_Simulation.glb" id="7_nt3tg"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_Special.glb" id="8_nb56p"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_Tools.glb" id="9_klgmb"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_wtnvb"]
+radius = 0.4
+height = 2.17
+
+[node name="SkeletonWarrior" type="CharacterBody3D" unique_id=1596825400]
+
+[node name="Model" parent="." unique_id=1767575458 instance=ExtResource("1_2s18f")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=326823435]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.085, 0)
+shape = SubResource("CapsuleShape3D_wtnvb")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1799036363]
+root_node = NodePath("../Model")
+libraries/combat_melee = ExtResource("2_3n5e5")
+libraries/combat_ranged = ExtResource("3_vpvlu")
+libraries/general = ExtResource("4_at7yi")
+libraries/movement_advanced = ExtResource("5_cgyfr")
+libraries/movement_basic = ExtResource("6_62hnx")
+libraries/simulation = ExtResource("7_nt3tg")
+libraries/special = ExtResource("8_nb56p")
+libraries/tools = ExtResource("9_klgmb")

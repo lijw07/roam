@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://re02lu7vx06t"]
+
+[ext_resource type="PackedScene" uid="uid://ckcmec1sq4tui" path="res://assets/dungeon/stairs/stairs_long_modular_right.gltf" id="1_model"]
+
+[node name="StairsLongModularRight" instance=ExtResource("1_model")]

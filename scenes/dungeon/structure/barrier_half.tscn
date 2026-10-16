@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://ccg2co4q8srh2"]
+
+[ext_resource type="PackedScene" uid="uid://2pdjwck006wb" path="res://assets/dungeon/structure/barrier_half.gltf" id="1_model"]
+
+[node name="BarrierHalf" instance=ExtResource("1_model")]

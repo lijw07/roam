@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://bkm18y4cxw7le"]
+
+[ext_resource type="PackedScene" uid="uid://d2s3bdwqh73jj" path="res://assets/dungeon/containers/box_small.gltf" id="1_model"]
+
+[node name="BoxSmall" instance=ExtResource("1_model")]

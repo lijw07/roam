@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://bvf4wk0475b4l"]
+
+[ext_resource type="PackedScene" uid="uid://dna6uux4qu8q3" path="res://assets/dungeon/stairs/stairs_narrow.gltf" id="1_model"]
+
+[node name="StairsNarrow" instance=ExtResource("1_model")]

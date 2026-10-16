@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://clsldfs8sro0v"]
+
+[ext_resource type="PackedScene" uid="uid://dtft4ljlkh1fy" path="res://assets/dungeon/props/plate_small.gltf" id="1_model"]
+
+[node name="PlateSmall" instance=ExtResource("1_model")]

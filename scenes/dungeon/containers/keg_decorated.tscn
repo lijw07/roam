@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://ct46tnuq8kphw"]
+
+[ext_resource type="PackedScene" uid="uid://0uwpcnlaf3m8" path="res://assets/dungeon/containers/keg_decorated.gltf" id="1_model"]
+
+[node name="KegDecorated" instance=ExtResource("1_model")]

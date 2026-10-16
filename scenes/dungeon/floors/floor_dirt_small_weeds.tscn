@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://dnx4vly0scnm8"]
+
+[ext_resource type="PackedScene" uid="uid://d34n4nhrpvg5x" path="res://assets/dungeon/floors/floor_dirt_small_weeds.gltf" id="1_model"]
+
+[node name="FloorDirtSmallWeeds" instance=ExtResource("1_model")]

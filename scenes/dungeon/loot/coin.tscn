@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://cx88cti3do8lu"]
+
+[ext_resource type="PackedScene" uid="uid://dtqwpffkqe8pb" path="res://assets/dungeon/loot/coin.gltf" id="1_model"]
+
+[node name="Coin" instance=ExtResource("1_model")]

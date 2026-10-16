@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://dxhbarbw0shui"]
+
+[ext_resource type="PackedScene" uid="uid://duoycetoa7jkx" path="res://assets/dungeon/walls/wall_Tsplit.gltf" id="1_model"]
+
+[node name="WallTsplit" instance=ExtResource("1_model")]

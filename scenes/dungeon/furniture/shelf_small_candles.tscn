@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://dqwv0nii3vt0x"]
+
+[ext_resource type="PackedScene" uid="uid://petendj2gy13" path="res://assets/dungeon/furniture/shelf_small_candles.gltf" id="1_model"]
+
+[node name="ShelfSmallCandles" instance=ExtResource("1_model")]

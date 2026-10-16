@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://c20i0nc06t3un"]
+
+[ext_resource type="PackedScene" path="res://assets/characters/adventurers/Rogue_Hooded.glb" id="1_d3j0o"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_CombatMelee.glb" id="2_b24rb"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_CombatRanged.glb" id="3_iqss7"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_General.glb" id="4_hwue7"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_MovementAdvanced.glb" id="5_7oy1k"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_MovementBasic.glb" id="6_h428f"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_Simulation.glb" id="7_pxpuh"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_Special.glb" id="8_l77hp"]
+[ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_Tools.glb" id="9_n5kv1"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_cdnxt"]
+radius = 0.51
+height = 2.17
+
+[node name="RogueHooded" type="CharacterBody3D" unique_id=550466012]
+
+[node name="Model" parent="." unique_id=218072950 instance=ExtResource("1_d3j0o")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1815906604]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.085, 0)
+shape = SubResource("CapsuleShape3D_cdnxt")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1809836789]
+root_node = NodePath("../Model")
+libraries/combat_melee = ExtResource("2_b24rb")
+libraries/combat_ranged = ExtResource("3_iqss7")
+libraries/general = ExtResource("4_hwue7")
+libraries/movement_advanced = ExtResource("5_7oy1k")
+libraries/movement_basic = ExtResource("6_h428f")
+libraries/simulation = ExtResource("7_pxpuh")
+libraries/special = ExtResource("8_l77hp")
+libraries/tools = ExtResource("9_n5kv1")

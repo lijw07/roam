@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://biuq4sbd31vse"]
+
+[ext_resource type="PackedScene" uid="uid://bd2r0o7cotg12" path="res://assets/dungeon/lighting/torch_lit.gltf" id="1_model"]
+
+[node name="TorchLit" instance=ExtResource("1_model")]

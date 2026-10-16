@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://ypc6twtbjaw4"]
+
+[ext_resource type="PackedScene" uid="uid://8iy01lp6ltxv" path="res://assets/dungeon/walls/wall_corner_gated.gltf" id="1_model"]
+
+[node name="WallCornerGated" instance=ExtResource("1_model")]

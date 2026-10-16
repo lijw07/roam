@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://cq3ldpersg4xg"]
+
+[ext_resource type="PackedScene" uid="uid://bx44sx3sphsfq" path="res://assets/dungeon/walls/wall_half_endcap_sloped.gltf" id="1_model"]
+
+[node name="WallHalfEndcapSloped" instance=ExtResource("1_model")]

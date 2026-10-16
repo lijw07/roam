@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://bbu6s4mllnopn"]
+
+[ext_resource type="PackedScene" uid="uid://cyq4e0wi7lcnp" path="res://assets/dungeon/structure/rubble_half.gltf" id="1_model"]
+
+[node name="RubbleHalf" instance=ExtResource("1_model")]

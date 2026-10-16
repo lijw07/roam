@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://dpc3y8vcq3py6"]
+
+[ext_resource type="PackedScene" uid="uid://dj4unwqxt4ifp" path="res://assets/dungeon/loot/keyring.gltf" id="1_model"]
+
+[node name="Keyring" instance=ExtResource("1_model")]
