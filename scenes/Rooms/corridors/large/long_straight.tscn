@@ -1,0 +1,85 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/dungeon/floors/floor_tile_large.tscn" id="1_5n1uy"]
+[ext_resource type="Script" path="res://scripts/dungeon_piece.gd" id="1_wp037"]
+[ext_resource type="PackedScene" path="res://scenes/dungeon/walls/wall_cracked.tscn" id="2_wp037"]
+[ext_resource type="PackedScene" path="res://scenes/dungeon/walls/wall.tscn" id="3_ciy4b"]
+[ext_resource type="PackedScene" path="res://scenes/dungeon/lighting/torch_mounted.tscn" id="4_rk7o0"]
+[ext_resource type="PackedScene" path="res://scenes/dungeon/banners/banner_thin_red.tscn" id="5_0txn6"]
+
+[node name="CorridorLong" type="Node3D" unique_id=1169295716]
+script = ExtResource("1_wp037")
+kind = 2
+size = Vector2(4, 16)
+
+[node name="Floors" type="Node3D" parent="." unique_id=1317145643]
+
+[node name="Floor1" parent="Floors" unique_id=153642628 instance=ExtResource("1_5n1uy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)
+
+[node name="Floor2" parent="Floors" unique_id=1941613825 instance=ExtResource("1_5n1uy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+
+[node name="Floor3" parent="Floors" unique_id=975087207 instance=ExtResource("1_5n1uy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
+
+[node name="Floor4" parent="Floors" unique_id=318152576 instance=ExtResource("1_5n1uy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+
+[node name="Walls" type="Node3D" parent="." unique_id=1938644984]
+
+[node name="WallW1" parent="Walls" unique_id=1769513779 instance=ExtResource("2_wp037")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -2, 0, -6)
+
+[node name="WallE1" parent="Walls" unique_id=214997068 instance=ExtResource("3_ciy4b")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2, 0, -6)
+
+[node name="WallW2" parent="Walls" unique_id=1051134152 instance=ExtResource("3_ciy4b")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -2, 0, -2)
+
+[node name="WallE2" parent="Walls" unique_id=685888285 instance=ExtResource("3_ciy4b")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2, 0, -2)
+
+[node name="WallW3" parent="Walls" unique_id=1705292550 instance=ExtResource("3_ciy4b")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -2, 0, 2)
+
+[node name="WallE3" parent="Walls" unique_id=913972396 instance=ExtResource("2_wp037")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2, 0, 2)
+
+[node name="WallW4" parent="Walls" unique_id=1213535625 instance=ExtResource("2_wp037")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -2, 0, 6)
+
+[node name="WallE4" parent="Walls" unique_id=209411745 instance=ExtResource("3_ciy4b")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2, 0, 6)
+
+[node name="Props" type="Node3D" parent="." unique_id=2126721314]
+
+[node name="Lighting" type="Node3D" parent="Props" unique_id=1328695782]
+
+[node name="TorchMounted" parent="Props/Lighting" unique_id=927994971 instance=ExtResource("4_rk7o0")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.5, 2.2, -6)
+
+[node name="TorchMounted2" parent="Props/Lighting" unique_id=1438810466 instance=ExtResource("4_rk7o0")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.5, 2.2, 2)
+
+[node name="TorchMounted3" parent="Props/Lighting" unique_id=449792614 instance=ExtResource("4_rk7o0")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 1.5, 2.2, -2)
+
+[node name="TorchMounted4" parent="Props/Lighting" unique_id=2109324750 instance=ExtResource("4_rk7o0")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 1.5, 2.2, 6)
+
+[node name="Decor" type="Node3D" parent="Props" unique_id=861293842]
+
+[node name="BannerThinRed" parent="Props/Decor" unique_id=906887485 instance=ExtResource("5_0txn6")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2, 0, -6)
+
+[node name="BannerThinRed2" parent="Props/Decor" unique_id=1149957064 instance=ExtResource("5_0txn6")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -2, 0, 6)
+
+[node name="Exits" type="Node3D" parent="." unique_id=1080567261]
+
+[node name="ExitN" type="Marker3D" parent="Exits" unique_id=610223180]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -8)
+
+[node name="ExitS" type="Marker3D" parent="Exits" unique_id=593191427]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 8)

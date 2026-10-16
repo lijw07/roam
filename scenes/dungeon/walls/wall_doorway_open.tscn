@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://bejcbxjutvn34" path="res://assets/dungeon/walls/wall_doorway.gltf" id="1_model"]
+
+[node name="WallDoorwayOpen" instance=ExtResource("1_model")]
+
+[node name="wall_doorway_door" parent="wall_doorway" index="0"]
+visible = false

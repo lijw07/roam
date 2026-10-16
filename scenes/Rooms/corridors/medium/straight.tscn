@@ -1,0 +1,51 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/dungeon_piece.gd" id="1_a480w"]
+[ext_resource type="PackedScene" path="res://scenes/dungeon/floors/floor_tile_large.tscn" id="1_h2ay7"]
+[ext_resource type="PackedScene" path="res://scenes/dungeon/walls/wall.tscn" id="2_a480w"]
+[ext_resource type="PackedScene" path="res://scenes/dungeon/lighting/torch_mounted.tscn" id="3_m5h2f"]
+
+[node name="CorridorStraight" type="Node3D" unique_id=1492650791]
+script = ExtResource("1_a480w")
+kind = 2
+size = Vector2(4, 8)
+
+[node name="Floors" type="Node3D" parent="." unique_id=1546784973]
+
+[node name="Floor1" parent="Floors" unique_id=1860690150 instance=ExtResource("1_h2ay7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+
+[node name="Floor2" parent="Floors" unique_id=1991454721 instance=ExtResource("1_h2ay7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
+
+[node name="Walls" type="Node3D" parent="." unique_id=1147037528]
+
+[node name="WallW1" parent="Walls" unique_id=1580160773 instance=ExtResource("2_a480w")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -2, 0, -2)
+
+[node name="WallE1" parent="Walls" unique_id=898827638 instance=ExtResource("2_a480w")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2, 0, -2)
+
+[node name="WallW2" parent="Walls" unique_id=1898968590 instance=ExtResource("2_a480w")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -2, 0, 2)
+
+[node name="WallE2" parent="Walls" unique_id=59835000 instance=ExtResource("2_a480w")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 2, 0, 2)
+
+[node name="Props" type="Node3D" parent="." unique_id=1017326253]
+
+[node name="Lighting" type="Node3D" parent="Props" unique_id=569557490]
+
+[node name="TorchMounted" parent="Props/Lighting" unique_id=379733089 instance=ExtResource("3_m5h2f")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.5, 2.2, -2)
+
+[node name="TorchMounted2" parent="Props/Lighting" unique_id=430739765 instance=ExtResource("3_m5h2f")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 1.5, 2.2, 2)
+
+[node name="Exits" type="Node3D" parent="." unique_id=1226375378]
+
+[node name="ExitN" type="Marker3D" parent="Exits" unique_id=955067298]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -4)
+
+[node name="ExitS" type="Marker3D" parent="Exits" unique_id=1879552568]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)

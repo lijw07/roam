@@ -1,5 +1,9 @@
 [gd_scene format=3 uid="uid://dm70wt3apjh4w"]
 
 [ext_resource type="PackedScene" uid="uid://bobcxqwo1tcgo" path="res://assets/dungeon/lighting/candle_thin_lit.gltf" id="1_model"]
+[ext_resource type="PackedScene" path="res://scenes/effects/fire_candle.tscn" id="2_fire"]
 
 [node name="CandleThinLit" instance=ExtResource("1_model")]
+
+[node name="Fire" parent="." instance=ExtResource("2_fire")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)

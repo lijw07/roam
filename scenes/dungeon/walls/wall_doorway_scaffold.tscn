@@ -1,5 +1,18 @@
 [gd_scene format=3 uid="uid://cf3hvuyv5odn2"]
 
 [ext_resource type="PackedScene" uid="uid://deof6bmjt7eph" path="res://assets/dungeon/walls/wall_doorway_scaffold.gltf" id="1_model"]
+[ext_resource type="Script" path="res://scripts/door.gd" id="2_door"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_leaf"]
+size = Vector3(2, 2.75, 0.3)
 
 [node name="WallDoorwayScaffold" instance=ExtResource("1_model")]
+script = ExtResource("2_door")
+leaf_path = NodePath("wall_doorway_scaffold/wall_doorway_scaffold_door")
+
+[node name="LeafBody" type="AnimatableBody3D" parent="wall_doorway_scaffold/wall_doorway_scaffold_door"]
+sync_to_physics = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="wall_doorway_scaffold/wall_doorway_scaffold_door/LeafBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.82, 1.375, 0)
+shape = SubResource("BoxShape3D_leaf")

@@ -1,0 +1,24 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/characters/skeletons/skeleton_warrior.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="2_enemy"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/skeletons/skeleton_blade.tscn" id="3_skeleton_blade"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/skeletons/skeleton_shield_small_a.tscn" id="4_skeleton_shield_small_a"]
+
+[node name="SkeletonWarrior" instance=ExtResource("1_base")]
+script = ExtResource("2_enemy")
+threat = 2
+idle_animation = &"general/Idle_A"
+
+[node name="HandslotRSkeletonBlade" type="BoneAttachment3D" parent="Model/Rig_Medium/Skeleton3D"]
+bone_name = "handslot.r"
+
+[node name="SkeletonBlade" parent="Model/Rig_Medium/Skeleton3D/HandslotRSkeletonBlade" instance=ExtResource("3_skeleton_blade")]
+
+[node name="HandslotLSkeletonShieldSmallA" type="BoneAttachment3D" parent="Model/Rig_Medium/Skeleton3D"]
+bone_name = "handslot.l"
+
+[node name="SkeletonShieldSmallA" parent="Model/Rig_Medium/Skeleton3D/HandslotLSkeletonShieldSmallA" instance=ExtResource("4_skeleton_shield_small_a")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.16)
+
+[editable path="Model"]

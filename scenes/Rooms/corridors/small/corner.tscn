@@ -1,0 +1,48 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/dungeon/floors/floor_tile_large.tscn" id="1_1jihc"]
+[ext_resource type="Script" path="res://scripts/dungeon_piece.gd" id="1_x603s"]
+[ext_resource type="PackedScene" path="res://scenes/dungeon/walls/wall_corner.tscn" id="2_x603s"]
+[ext_resource type="PackedScene" path="res://scenes/dungeon/walls/wall_half.tscn" id="3_golqb"]
+[ext_resource type="PackedScene" path="res://scenes/dungeon/structure/pillar.tscn" id="4_kcwbl"]
+[ext_resource type="PackedScene" path="res://scenes/dungeon/lighting/torch_mounted.tscn" id="5_c8hbb"]
+
+[node name="CorridorCorner" type="Node3D" unique_id=782342238]
+script = ExtResource("1_x603s")
+kind = 2
+size = Vector2(4, 4)
+
+[node name="Floors" type="Node3D" parent="." unique_id=842021446]
+
+[node name="Floor1" parent="Floors" unique_id=553677697 instance=ExtResource("1_1jihc")]
+
+[node name="Walls" type="Node3D" parent="." unique_id=415548622]
+
+[node name="CornerNW" parent="Walls" unique_id=1198105262 instance=ExtResource("2_x603s")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -2, 0, -2)
+
+[node name="WallN" parent="Walls" unique_id=385007610 instance=ExtResource("3_golqb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+
+[node name="WallW" parent="Walls" unique_id=1968757172 instance=ExtResource("3_golqb")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -2, 0, 0)
+
+[node name="Structure" type="Node3D" parent="." unique_id=1070068734]
+
+[node name="PillarSE" parent="Structure" unique_id=1907956123 instance=ExtResource("4_kcwbl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 2)
+
+[node name="Props" type="Node3D" parent="." unique_id=1209597209]
+
+[node name="Lighting" type="Node3D" parent="Props" unique_id=936632714]
+
+[node name="TorchMounted" parent="Props/Lighting" unique_id=828794381 instance=ExtResource("5_c8hbb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 2.2, -1.5)
+
+[node name="Exits" type="Node3D" parent="." unique_id=1037630729]
+
+[node name="ExitS" type="Marker3D" parent="Exits" unique_id=1407418604]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
+
+[node name="ExitE" type="Marker3D" parent="Exits" unique_id=26697752]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 2, 0, 0)
