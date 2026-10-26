@@ -46,7 +46,7 @@ _subresources={
 "physics/shape_type": 2
 },
 "PATH:wall_doorway/wall_doorway_door": {
-"generate/physics": true,
+"generate/physics": false,
 "physics/shape_type": 3
 }
 }

@@ -1,5 +1,9 @@
 [gd_scene format=3 uid="uid://flqqecfrrmwt"]
 
 [ext_resource type="PackedScene" uid="uid://daff6ll50gehv" path="res://assets/dungeon/lighting/torch_mounted.gltf" id="1_model"]
+[ext_resource type="PackedScene" path="res://scenes/effects/fire_torch.tscn" id="2_fire"]
 
 [node name="TorchMounted" instance=ExtResource("1_model")]
+
+[node name="Fire" parent="." instance=ExtResource("2_fire")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.32)

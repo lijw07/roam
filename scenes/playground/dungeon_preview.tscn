@@ -1,0 +1,37 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/dungeon_preview.gd" id="1_oh2dx"]
+[ext_resource type="Script" path="res://scripts/dungeon_generator.gd" id="2_sj4dl"]
+
+[sub_resource type="Environment" id="Environment_wdhwm"]
+background_mode = 1
+background_color = Color(0.08, 0.08, 0.1, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.32, 0.32, 0.4, 1)
+
+[node name="DungeonPreview" type="Node3D" unique_id=1559714067]
+script = ExtResource("1_oh2dx")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=335946907]
+environment = SubResource("Environment_wdhwm")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1010439802]
+transform = Transform3D(0.8660254, -0.43301272, 0.24999999, 0, 0.49999997, 0.86602545, -0.5, -0.75, 0.43301266, 0, 0, 0)
+light_energy = 0.25
+
+[node name="DungeonGenerator" type="Node3D" parent="." unique_id=908371500]
+script = ExtResource("2_sj4dl")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=144374114]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 80, 0)
+projection = 1
+size = 100.0
+far = 200.0
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=1115785879]
+
+[node name="Info" type="Label" parent="UI" unique_id=724944909]
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 12.0
+offset_bottom = 12.0
