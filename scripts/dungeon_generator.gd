@@ -12,7 +12,8 @@ class_name DungeonGenerator
 ##
 ## Pieces come from folders under pieces_dir, scanned on every generate(), so a new scene saved
 ## into one of them joins the pool with no other setup than its DungeonPiece script, size and exits:
-##   rooms/small                  start rooms and fillers; may repeat
+##   start                        the player's starting rooms; one is picked per dungeon
+##   rooms/small                  fillers; may repeat
 ##   rooms/medium, rooms/large    unique rooms; each appears at most once per dungeon
 ##   corridors/small|medium|large open-ended corridor pieces
 ##   boss                         one is picked per dungeon
@@ -147,9 +148,11 @@ func get_linked_piece(exit: Marker3D) -> DungeonPiece:
 	return _owner(_links[exit]) if _links.has(exit) else null
 
 
-## Where the player should start: the middle of the start room.
+## Where the player should start: the start room's SpawnPoint.
 func get_spawn_position() -> Vector3:
-	return start_room.global_position + Vector3.UP * 0.5 if start_room else global_position
+	if start_room == null:
+		return global_position
+	return start_room.get_node("SpawnPoint").global_position + Vector3.UP * 0.5
 
 
 ## Footprint of the whole dungeon on the XZ plane, in generator space.
@@ -164,6 +167,7 @@ func get_bounds() -> Rect2:
 
 func _load_library() -> bool:
 	_kinds.clear()
+	_start_rooms = _scan("start", DungeonPiece.Kind.ROOM)
 	_small_rooms = _scan("rooms/small", DungeonPiece.Kind.CONNECTOR)
 	_unique_rooms = _scan("rooms/medium", DungeonPiece.Kind.ROOM) + _scan("rooms/large", DungeonPiece.Kind.ROOM)
 	_boss_rooms = _scan("boss", DungeonPiece.Kind.BOSS)
@@ -174,11 +178,9 @@ func _load_library() -> bool:
 		for scene in found:
 			_corridors.append(scene)
 			_corridor_weights.append(corridor_size_weights[size_name] / found.size())
-	# A start room needs at least two ways out.
-	_start_rooms = _small_rooms.filter(func(scene): return _exit_count(scene) >= 2)
 	var missing: Array[String] = []
 	if _start_rooms.is_empty():
-		missing.append("rooms/small (with 2+ exits)")
+		missing.append("start")
 	if _boss_rooms.is_empty():
 		missing.append("boss")
 	if not _corridors.any(_is_straight):
@@ -246,13 +248,6 @@ func _check_piece(scene: PackedScene) -> String:
 		problem = "no Marker3D exits under an Exits node"
 	node.free()
 	return problem
-
-
-func _exit_count(scene: PackedScene) -> int:
-	var piece := _spawn(scene)
-	var count := piece.get_exits().size()
-	piece.free()
-	return count
 
 
 # --- Layout ---

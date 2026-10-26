@@ -5,7 +5,7 @@ extends SceneTree
 ## Exits with code 1 if anything fails.
 
 const PIECES_DIR := "res://scenes/Rooms"
-const PIECE_FOLDERS := ["rooms/small", "rooms/medium", "rooms/large", "corridors/small", "corridors/medium", "corridors/large", "boss"]
+const PIECE_FOLDERS := ["start", "rooms/small", "rooms/medium", "rooms/large", "corridors/small", "corridors/medium", "corridors/large", "boss"]
 const GENERATOR := preload("res://scripts/dungeon_generator.gd")
 const DOOR := preload("res://scripts/door.gd")
 
@@ -521,7 +521,8 @@ func _walkable_cells(rects: Array[Rect2]) -> Dictionary:
 				var floor_y := _floor_height(w)
 				var free := _characters_fit(Vector3(w.x, floor_y, w.z))
 				if free and floor_y < HOLE_DEPTH:
-					holes.append(c)
+					if not _inside_solid(w):
+						holes.append(c)
 				elif free:
 					walkable[c] = floor_y
 	return {"walkable": walkable, "holes": holes}
@@ -680,6 +681,10 @@ func _visual_aabb(node: Node3D) -> AABB:
 		box = b if first else box.merge(b)
 		first = false
 	return box
+
+
+func _inside_solid(w: Vector3) -> bool:
+	return not _ray(Vector3(w.x, 6.0, w.z), Vector3(w.x, 0.6, w.z)).is_empty()
 
 
 func _ray(from: Vector3, to: Vector3) -> Dictionary:
