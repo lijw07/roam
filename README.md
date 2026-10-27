@@ -18,9 +18,13 @@ scenes/
   equipment/    One scene per item, each with its own collision
   effects/      Arrow, magic bolt and melee impact effects
   playground/   Movement and animation test scenes
+resources/
+  attacks/      AttackStep resources: one per attack clip, shared by every weapon that uses it
 scripts/
   player.gd               Player movement and animation: locomotion, stances, dodge and actions
   animation_test.gd       Animation test scene: camera, HUD, action keys and animation browser
+  weapon.gd               How a weapon is held, its combo and the stance it gives the player
+  attack_step.gd          One step of a combo: its animation and when it can chain
   projectile.gd           Moves an effect forward and frees it after its lifetime
 ```
 
@@ -53,7 +57,8 @@ spawn and `Interact` when you open a door.
 
 ## Weapons
 A weapon scene's root runs `weapon.gd`, which says how it is held and swung: `hand` (`handslot.r`
-or `handslot.l`), `grip_rotation_degrees`, `attack_animations` and `running_attack_animation`.
+or `handslot.l`), `grip_rotation_degrees`, `combo` (a list of `AttackStep` resources) and
+`running_attack_animation`.
 
 Its **Stance** group changes how the player moves while holding it: `idle_animation` and
 `run_animation` replace the player's own, and `upper_body_animation` keeps the arms, chest and head
@@ -61,14 +66,39 @@ in that pose on top of every other movement clip (walk, strafe, sneak, jump, dod
 builds those combined clips on first use. The bow uses `Ranged_Bow_Idle` and `Running_HoldingBow`,
 so it stays upright in front of the body instead of swinging out like a rifle.
 
-The one-handed sword combos through `Melee_1H_Attack_Slice_Diagonal`, `Slice_Horizontal`, `Stab` and
-`Chop`. Pressing attack in the last 60% of a swing queues the next one, earlier presses are ignored,
-and the combo starts over half a second after the last swing ends. Attacking while sprinting plays
-`Melee_1H_Attack_Jump_Chop` and lunges about 2.8 m forward. The bow (left hand, turned 180°, bow
-stance), the one-handed axe (turned 180° so the blade leads), the dagger (turned 180° so the curved
-edge faces up) and both crossbows (turned 90° so they point along the forearm) only set their grip
-and stance so far; the other weapons hold correctly as modeled and have no
-attacks yet.
+### Combos
+Every KayKit attack is a standalone move: it winds up from a neutral stance, swings for about a tenth
+of a second, then spends 0.5–1.2 s returning to neutral. Played back to back that reads as separate
+attacks, so each `AttackStep` (in `resources/attacks/`) marks where in its clip the combo can move on:
+
+| Field | Meaning |
+| --- | --- |
+| `combo_time` | After the swing's follow-through: a buffered press cuts the recovery here and blends (0.2 s) into the next step |
+| `window_end` | Last moment a press continues the string; after it the player can move or dodge out of the recovery |
+| `chain_start` | How far into the wind-up the step starts when it follows another, skipping the slow neutral part |
+
+A press any time during a swing is remembered. A press after `window_end`, during the rest of the
+recovery or up to 0.4 s after the swing ends, still continues the string from the next step; only a
+longer pause starts it over. After the last step the string starts again at its `window_end`, which gives
+the finisher a beat. Dodging or moving can't cut a swing short until its `window_end`.
+
+| Clip | Swing | `combo_time` | `window_end` | `chain_start` |
+| --- | --- | --- | --- | --- |
+| `Melee_1H_Attack_Slice_Diagonal` | 0.37–0.47 | 0.75 | 1.00 | 0.05 |
+| `Melee_1H_Attack_Slice_Horizontal` | 0.23–0.33 | 0.70 | 1.00 | 0.00 |
+| `Melee_1H_Attack_Stab` | 0.37–0.43 | 0.80 | 1.40 | 0.05 |
+| `Melee_1H_Attack_Chop` | 0.57–0.60 | 0.88 | 1.05 | 0.15 |
+
+The orders follow each swing's follow-through into the closest wind-up: the sword goes Diagonal →
+Stab → Chop → Horizontal, the axe Diagonal → Chop → Horizontal, and the dagger Diagonal → Stab →
+Horizontal. Chained, hits land about 0.6–0.85 s apart instead of about 1.3 s, and the player stays in
+place. Attacking while
+sprinting plays `Melee_1H_Attack_Jump_Chop` and lunges about 2.8 m forward.
+
+Grips: the bow is held in the left hand turned 180° with the bow stance, the crossbows are turned
+90° so they point along the forearm, the one-handed axe is turned 180° so the blade leads, and the
+dagger is turned 180° so its curved edge faces up. The sword, axe and dagger attack; the other
+weapons hold correctly but have no attacks yet.
 
 The idle, fidget, walk and run animations are exports under **Animations**, so a character can
 use a variant such as `Walking_B` or `Running_B`.

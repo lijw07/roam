@@ -9,7 +9,7 @@ const MIN_DISTANCE := 2.0
 const MAX_DISTANCE := 12.0
 const PICK_UP_REACH := 1.6
 const CONTROLS := """WASD move   Shift run   Space jump   Alt dodge   Right mouse (hold) strafe
-Left mouse / J attack with the held sword (keep pressing to combo, Shift + move to lunge)
+Left mouse / J attack with the held sword, axe or dagger (keep pressing to combo, Shift + move to lunge)
 C crouch   Z crawl
 1 interact   2 pick up the weapon in front of you   3 throw   4 use item   5 hit   6 die   7 spawn   8 spawn from the air
 Left / Right animation   Up / Down library   Q / E orbit   Wheel zoom"""

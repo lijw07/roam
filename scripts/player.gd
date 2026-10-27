@@ -35,8 +35,8 @@ const PICK_UP_ANIMATION := &"general/PickUp"
 const PICK_UP_GRAB_TIME := 0.5
 const PICK_UP_HAND_OFFSET := Vector3(-0.36, 0.0, 0.43)
 const PICK_UP_ALIGN_TIME := 0.2
-const ATTACK_QUEUE_FRACTION := 0.4
-const COMBO_RESET_TIME := 0.5
+const CHAIN_BLEND := 0.2
+const COMBO_GRACE := 0.4
 const LUNGE_DURATION := 0.7
 const THROW_ANIMATION := &"general/Throw"
 const USE_ITEM_ANIMATION := &"general/Use_Item"
@@ -90,8 +90,9 @@ var _action_velocity := Vector3.ZERO
 var _action_velocity_duration := INF
 var _attacking := false
 var _attack_queued := false
+var _attack_step: AttackStep = null
 var _combo_index := 0
-var _since_attack := INF
+var _combo_grace := 0.0
 var _air_time := 0.0
 var _idle_time := 0.0
 var _capsule: CapsuleShape3D
@@ -123,9 +124,9 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_update_held_item()
-	_since_attack += delta
+	_combo_grace = maxf(_combo_grace - delta, 0.0)
 	var direction := _input_direction()
-	_queue_attack_input()
+	_update_attack(direction)
 	if _action_cancellable and _has_new_input(direction):
 		_end_action()
 	if dead or is_acting():
@@ -387,40 +388,70 @@ func _can_attack() -> bool:
 
 func _attack(direction: Vector3) -> void:
 	_set_stance(Stance.STANDING)
-	if not direction.is_zero_approx() and not _is_strafing():
-		model.rotation.y = atan2(direction.x, direction.z)
+	_face_attack_direction(direction)
 	if Input.is_action_pressed("sprint") and not direction.is_zero_approx() and _held_weapon.running_attack_animation != &"":
-		_start_attack(_held_weapon.running_attack_animation, direction.normalized() * lunge_speed)
-		_action_velocity_duration = LUNGE_DURATION
+		_start_running_attack(direction)
 		return
-	if _since_attack > COMBO_RESET_TIME:
-		_combo_index = 0
-	var attacks := _held_weapon.attack_animations
-	_start_attack(attacks[_combo_index % attacks.size()])
-	_combo_index += 1
+	if _combo_grace > 0.0:
+		_continue_combo()
+		return
+	_combo_index = 0
+	_start_attack_step(_held_weapon.combo[0], 0.0, BLEND_TIME)
 
 
-func _start_attack(animation: StringName, lunge := Vector3.ZERO) -> void:
-	_start_action(animation, false, lunge)
+func _start_running_attack(direction: Vector3) -> void:
+	_start_action(_held_weapon.running_attack_animation, false, direction.normalized() * lunge_speed)
+	_action_velocity_duration = LUNGE_DURATION
 	_attacking = true
 	_attack_queued = false
+	_attack_step = null
 
 
-func _queue_attack_input() -> void:
-	if not _attacking or not Input.is_action_just_pressed("attack"):
-		return
-	var progress := animation_player.current_animation_position / animation_player.current_animation_length
-	if progress >= ATTACK_QUEUE_FRACTION:
-		_attack_queued = true
+func _face_attack_direction(direction: Vector3) -> void:
+	if not direction.is_zero_approx() and not _is_strafing():
+		model.rotation.y = atan2(direction.x, direction.z)
 
 
-func _finish_attack() -> void:
-	var queued := _attack_queued
-	_attacking = false
+func _start_attack_step(step: AttackStep, from: float, blend: float) -> void:
+	_start_action(step.animation, false, Vector3.ZERO, blend, from)
+	_attacking = true
 	_attack_queued = false
-	_since_attack = 0.0
-	if queued and _can_attack():
-		_attack(_input_direction())
+	_attack_step = step
+
+
+func _update_attack(direction: Vector3) -> void:
+	if not _attacking or _attack_step == null:
+		return
+	if Input.is_action_just_pressed("attack") and not _action_cancellable:
+		_attack_queued = true
+	var playback_time := animation_player.current_animation_position
+	if _attack_queued and _has_next_attack_step() and playback_time >= _attack_step.combo_time:
+		_chain_attack(direction)
+	elif playback_time >= _attack_step.window_end and not _action_cancellable:
+		_close_combo_window(direction)
+
+
+func _has_next_attack_step() -> bool:
+	return _combo_index + 1 < _held_weapon.combo.size()
+
+
+func _chain_attack(direction: Vector3) -> void:
+	_face_attack_direction(direction)
+	_continue_combo()
+
+
+func _continue_combo() -> void:
+	_combo_index = _combo_index + 1 if _has_next_attack_step() else 0
+	var step := _held_weapon.combo[_combo_index]
+	_start_attack_step(step, step.chain_start, CHAIN_BLEND)
+
+
+func _close_combo_window(direction: Vector3) -> void:
+	if _attack_queued:
+		_chain_attack(direction)
+		return
+	_action_cancellable = true
+	_combo_grace = animation_player.current_animation_length - animation_player.current_animation_position + COMBO_GRACE
 
 
 func _perform(animation: StringName) -> bool:
@@ -478,14 +509,16 @@ func _hand_slot(hand: StringName) -> BoneAttachment3D:
 	return _hand_slots[hand]
 
 
-func _start_action(animation: StringName, cancellable := false, action_velocity := Vector3.ZERO, blend := BLEND_TIME) -> void:
+func _start_action(animation: StringName, cancellable := false, action_velocity := Vector3.ZERO, blend := BLEND_TIME, from := 0.0) -> void:
 	_action = animation
 	_action_cancellable = cancellable
 	_action_velocity = action_velocity
 	_action_velocity_duration = INF
 	_attacking = false
+	_attack_step = null
+	_combo_grace = 0.0
 	_idle_time = 0.0
-	_play(animation, blend, 0.0)
+	_play(animation, blend, from)
 
 
 func _end_action() -> void:
@@ -494,15 +527,16 @@ func _end_action() -> void:
 	_action_velocity = Vector3.ZERO
 	_action_velocity_duration = INF
 	_attacking = false
+	_attack_step = null
 
 
 func _on_animation_finished(animation: StringName) -> void:
 	if animation != _action:
 		return
-	var was_attacking := _attacking
+	var finished_combo_step := _attack_step != null
 	_end_action()
-	if was_attacking:
-		_finish_attack()
+	if finished_combo_step:
+		_combo_grace = COMBO_GRACE
 	if dead and DEATH_POSES.has(animation):
 		_play(DEATH_POSES[animation], 0.0)
 

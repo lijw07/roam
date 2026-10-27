@@ -2,13 +2,18 @@
 
 [ext_resource type="PackedScene" path="res://assets/equipment/adventurers/sword_1handed.gltf" id="1_uurbk"]
 [ext_resource type="Script" path="res://scripts/weapon.gd" id="2_weapon"]
+[ext_resource type="Script" path="res://scripts/attack_step.gd" id="3_attack_step"]
+[ext_resource type="Resource" path="res://resources/attacks/one_handed/slice_diagonal.tres" id="4_slice_diagonal"]
+[ext_resource type="Resource" path="res://resources/attacks/one_handed/stab.tres" id="5_stab"]
+[ext_resource type="Resource" path="res://resources/attacks/one_handed/chop.tres" id="6_chop"]
+[ext_resource type="Resource" path="res://resources/attacks/one_handed/slice_horizontal.tres" id="7_slice_horizontal"]
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_ysdp5"]
 points = PackedVector3Array(0.12863871, -0.32323325, 0.033311237, 0.15688704, 1.2823896, -0.0230144, 0.24142237, 0.26839563, -0.07935659, 0.24142237, 0.24015558, 0.089653425, -0.12486248, 1.3106296, 0.033311237, -0.06852306, 1.3106296, -0.051193766, -0.09666656, -0.35147327, -0.051193766, -0.23759373, 0.15561196, 0.089653425, 0.015907463, 1.3106296, 0.061490603, -0.23759373, 0.26839563, -0.07935659, -0.04032714, -0.3795368, 0.061490603, -0.18120189, 1.226086, -0.0230144, 0.1004428, -0.35147327, -0.051193766, 0.26961827, 0.24015558, -0.051193766, 0.15688704, 1.226086, 0.033311237, -0.26578963, 0.24015558, 0.061490603, 0.044103377, -0.097842395, -0.07935659, 0.26961827, 0.24015558, 0.061490603, 0.015907463, 1.4234133, -0.0230144, -0.12486248, -0.32323325, 0.033311237, -0.26578963, 0.24015558, -0.051193766, 0.072299294, 1.2823896, -0.051193766, -0.23759373, 0.26839563, 0.089653425, 0.24142237, 0.15561196, 0.089653425, -0.1530584, 1.2543261, 0.033311237, 0.044103377, -0.3795368, 0.061490603, 0.044103377, 1.3951733, 0.033311237, -0.06852306, 1.226086, 0.061490603, -0.04032714, 1.4234133, -0.0230144, -0.04032714, -0.3795368, -0.051193766, 0.072299294, 1.226086, 0.061490603, -0.04032714, -0.097842395, -0.07935659)
 
 [node name="Sword1Handed" type="Area3D" unique_id=454472116]
 script = ExtResource("2_weapon")
-attack_animations = Array[StringName]([&"combat_melee/Melee_1H_Attack_Slice_Diagonal", &"combat_melee/Melee_1H_Attack_Slice_Horizontal", &"combat_melee/Melee_1H_Attack_Stab", &"combat_melee/Melee_1H_Attack_Chop"])
+combo = Array[ExtResource("3_attack_step")]([ExtResource("4_slice_diagonal"), ExtResource("5_stab"), ExtResource("6_chop"), ExtResource("7_slice_horizontal")])
 running_attack_animation = &"combat_melee/Melee_1H_Attack_Jump_Chop"
 
 [node name="Model" parent="." unique_id=1906155672 instance=ExtResource("1_uurbk")]
