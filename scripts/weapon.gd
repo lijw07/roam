@@ -5,6 +5,7 @@ class_name Weapon
 @export var grip_rotation_degrees := Vector3.ZERO
 @export var combo: Array[AttackStep] = []
 @export var running_attack_animation: StringName = &""
+@export var allows_shield := false
 
 @export_group("Stance")
 @export var idle_animation: StringName = &""

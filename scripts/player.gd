@@ -7,6 +7,7 @@ enum Stance { STANDING, CROUCHING, CRAWLING }
 
 const BLEND_TIME := 0.15
 const RIGHT_HAND := &"handslot.r"
+const LEFT_HAND := &"handslot.l"
 const ROOT_MOTION_TRACK := ^"Rig_Medium/Skeleton3D:root"
 const SKELETON_PATH := ^"Model/Rig_Medium/Skeleton3D"
 const JUMP_START_ANIMATION := &"movement_basic/Jump_Start"
@@ -83,6 +84,7 @@ const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"crouch", &"crawl
 var stance := Stance.STANDING
 var dead := false
 var held_item: Node3D = null
+var shield: Shield = null
 
 var _action: StringName = &""
 var _action_cancellable := false
@@ -93,6 +95,7 @@ var _attack_queued := false
 var _attack_step: AttackStep = null
 var _combo_index := 0
 var _combo_grace := 0.0
+var _was_blocking := false
 var _air_time := 0.0
 var _idle_time := 0.0
 var _capsule: CapsuleShape3D
@@ -127,12 +130,14 @@ func _physics_process(delta: float) -> void:
 	_combo_grace = maxf(_combo_grace - delta, 0.0)
 	var direction := _input_direction()
 	_update_attack(direction)
+	_lower_shield_if_released()
 	if _action_cancellable and _has_new_input(direction):
 		_end_action()
 	if dead or is_acting():
 		_move_with_action(delta)
 	else:
 		_move_with_input(direction, delta)
+	_was_blocking = _is_blocking()
 
 
 func is_acting() -> bool:
@@ -151,8 +156,9 @@ func pick_up(item: Node3D = null) -> void:
 	if not _perform(PICK_UP_ANIMATION) or item == null:
 		return
 	_pick_up_item = item
-	_held_hand = item.hand if item is Weapon else RIGHT_HAND
-	_held_grip = item.grip() if item is Weapon else Transform3D.IDENTITY
+	if not item is Shield:
+		_held_hand = item.hand if item is Weapon else RIGHT_HAND
+		_held_grip = item.grip() if item is Weapon else Transform3D.IDENTITY
 	_align_hand_with(item.global_position)
 
 
@@ -162,6 +168,15 @@ func release_held_item() -> void:
 	var item := held_item
 	held_item = null
 	_held_weapon = null
+	item.reparent(get_parent())
+	item_released.emit(item)
+
+
+func release_shield() -> void:
+	if shield == null:
+		return
+	var item := shield
+	shield = null
 	item.reparent(get_parent())
 	item_released.emit(item)
 
@@ -176,6 +191,9 @@ func use_item() -> void:
 
 func take_hit() -> void:
 	if dead:
+		return
+	if _is_blocking() and _can_react_with_shield():
+		_start_action(shield.hit_animation)
 		return
 	_set_stance(Stance.STANDING)
 	_start_action(HIT_ANIMATIONS.pick_random())
@@ -221,6 +239,12 @@ func _move_with_input(direction: Vector3, delta: float) -> void:
 		_update_stance()
 		if stance == Stance.STANDING and Input.is_action_just_pressed("dodge"):
 			_dodge(direction)
+			return
+		if _is_blocking() and not _was_blocking and direction.is_zero_approx():
+			_start_action(shield.raise_animation, true)
+			return
+		if Input.is_action_just_pressed("attack") and _is_blocking():
+			_start_action(shield.bash_animation)
 			return
 		if Input.is_action_just_pressed("attack") and _can_attack():
 			_attack(direction)
@@ -273,8 +297,21 @@ func _is_strafing() -> bool:
 	return stance == Stance.STANDING and Input.is_action_pressed("secondary")
 
 
+func _is_blocking() -> bool:
+	return shield != null and _is_strafing()
+
+
+func _can_react_with_shield() -> bool:
+	return not is_acting() or _action in [shield.raise_animation, shield.hit_animation]
+
+
+func _lower_shield_if_released() -> void:
+	if shield != null and _action == shield.raise_animation and not _is_blocking():
+		_end_action()
+
+
 func _gait(direction: Vector3) -> Gait:
-	var sprinting := Input.is_action_pressed("sprint")
+	var sprinting := Input.is_action_pressed("sprint") and not _is_blocking()
 	match stance:
 		Stance.CROUCHING:
 			return Gait.new(CROUCH_RUN_ANIMATION, crouch_run_speed) if sprinting else Gait.new(SNEAK_ANIMATION, sneak_speed)
@@ -360,6 +397,9 @@ func _animate_idle(delta: float) -> void:
 
 
 func _animate_standing_idle(delta: float) -> void:
+	if _is_blocking():
+		_play(shield.hold_animation)
+		return
 	if _held_weapon != null and _held_weapon.idle_animation != &"":
 		_play(_held_weapon.idle_animation)
 		return
@@ -482,11 +522,33 @@ func _update_pick_up() -> void:
 		return
 	if animation_player.current_animation_position < PICK_UP_GRAB_TIME:
 		return
-	release_held_item()
-	held_item = _pick_up_item
-	_held_weapon = held_item as Weapon
+	var item := _pick_up_item
 	_pick_up_item = null
-	_attach_to_hand(held_item, RIGHT_HAND, _held_grip if _held_hand == RIGHT_HAND else Transform3D.IDENTITY)
+	if item is Shield:
+		_take_shield(item)
+	else:
+		_take_main_hand_item(item)
+
+
+func _take_main_hand_item(item: Node3D) -> void:
+	release_held_item()
+	held_item = item
+	_held_weapon = item as Weapon
+	if not _allows_shield():
+		release_shield()
+	_attach_to_hand(item, RIGHT_HAND, _held_grip if _held_hand == RIGHT_HAND else Transform3D.IDENTITY)
+
+
+func _take_shield(item: Shield) -> void:
+	release_shield()
+	if not _allows_shield():
+		release_held_item()
+	shield = item
+	_attach_to_hand(item, LEFT_HAND, item.grip())
+
+
+func _allows_shield() -> bool:
+	return held_item == null or (_held_weapon != null and _held_weapon.allows_shield)
 
 
 func _settle_held_item() -> void:
@@ -551,17 +613,26 @@ func _play(animation: StringName, blend := BLEND_TIME, from := -1.0) -> void:
 
 
 func _stanced(animation: StringName) -> StringName:
-	if _held_weapon == null or _held_weapon.upper_body_animation == &"" or not _takes_upper_body(animation):
+	var upper_body := _upper_body_animation()
+	if upper_body == &"" or not _takes_upper_body(animation):
 		return animation
-	var stance_name := StringName("%s_with_%s" % [animation.get_file(), _held_weapon.upper_body_animation.get_file()])
+	var stance_name := StringName("%s_with_%s" % [animation.get_file(), upper_body.get_file()])
 	var path := StringName("%s/%s" % [STANCE_LIBRARY, stance_name])
 	if not animation_player.has_animation(path):
-		_stance_library().add_animation(stance_name, _with_upper_body(animation, _held_weapon.upper_body_animation))
+		_stance_library().add_animation(stance_name, _with_upper_body(animation, upper_body))
 	return path
 
 
+func _upper_body_animation() -> StringName:
+	if _is_blocking():
+		return shield.hold_animation
+	return _held_weapon.upper_body_animation if _held_weapon != null else &""
+
+
 func _takes_upper_body(animation: StringName) -> bool:
-	return animation not in [CRAWL_ANIMATION, _held_weapon.idle_animation, _held_weapon.run_animation]
+	if animation == CRAWL_ANIMATION:
+		return false
+	return _held_weapon == null or animation not in [_held_weapon.idle_animation, _held_weapon.run_animation]
 
 
 func _stance_library() -> AnimationLibrary:

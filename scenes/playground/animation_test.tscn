@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/crossbow_1handed.tscn" id="17_crossbow_1handed"]
 [ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/crossbow_2handed.tscn" id="18_crossbow_2handed"]
 [ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/bow_withstring.tscn" id="19_bow_withstring"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_round.tscn" id="20_shield_round"]
 
 [sub_resource type="Environment" id="Environment_test"]
 background_mode = 1
@@ -500,6 +501,9 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 8.75
 
 [node name="BowWithString" parent="Weapons" instance=ExtResource("19_bow_withstring")]
 transform = Transform3D(1.1924881e-08, 0, -1, 0, 1, 0, 1, 0, 1.1924881e-08, 11.25, 0.12779944, -5)
+
+[node name="ShieldRound" parent="Weapons" instance=ExtResource("20_shield_round")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 13.75, 0.19, -5)
 
 [node name="CameraRig" type="Node3D" parent="." unique_id=709445592]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)

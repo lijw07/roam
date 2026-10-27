@@ -15,6 +15,7 @@ points = PackedVector3Array(0.12863871, -0.32323325, 0.033311237, 0.15688704, 1.
 script = ExtResource("2_weapon")
 combo = Array[ExtResource("3_attack_step")]([ExtResource("4_slice_diagonal"), ExtResource("5_stab"), ExtResource("6_chop"), ExtResource("7_slice_horizontal")])
 running_attack_animation = &"combat_melee/Melee_1H_Attack_Jump_Chop"
+allows_shield = true
 
 [node name="Model" parent="." unique_id=1906155672 instance=ExtResource("1_uurbk")]
 

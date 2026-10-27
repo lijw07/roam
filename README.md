@@ -24,6 +24,7 @@ scripts/
   player.gd               Player movement and animation: locomotion, stances, dodge and actions
   animation_test.gd       Animation test scene: camera, HUD, action keys and animation browser
   weapon.gd               How a weapon is held, its combo and the stance it gives the player
+  shield.gd               An off-hand shield and its block animations
   attack_step.gd          One step of a combo: its animation and when it can chain
   projectile.gd           Moves an effect forward and frees it after its lifetime
 ```
@@ -37,7 +38,7 @@ preview's walk mode.
 | W A S D | Walk | `Walking_A`, idle `Idle_A` (`Idle_B` after standing still for a while) |
 | Shift | Run | `Running_A` |
 | Space | Jump | `Jump_Start`, `Jump_Idle`, `Jump_Land` |
-| Right mouse (hold) | Strafe: keep facing one way | `Walking_Backwards`, `Running_Strafe_Left`, `Running_Strafe_Right` |
+| Right mouse (hold) | Strafe: keep facing one way; with a shield, block | `Walking_Backwards`, `Running_Strafe_Left`, `Running_Strafe_Right` |
 | Alt | Dodge toward the move direction, or back when standing still | `Dodge_Forward`, `Dodge_Backward`, `Dodge_Left`, `Dodge_Right` |
 | C | Crouch (Shift for a crouch run) | `Sneaking`, `Crouching` |
 | Z | Crawl | `Crawling` |
@@ -95,6 +96,22 @@ Horizontal. Chained, hits land about 0.6–0.85 s apart instead of about 1.3 s, 
 place. Attacking while
 sprinting plays `Melee_1H_Attack_Jump_Chop` and lunges about 2.8 m forward.
 
+### Shields
+A shield's root runs `shield.gd` and is held in the left hand alongside a main-hand weapon whose
+`allows_shield` is on (the one-handed sword and axe); picking up a weapon that doesn't allow one, or
+a shield while holding such a weapon, puts the other item back. Holding right mouse with a shield
+blocks:
+
+| Situation | Animation |
+| --- | --- |
+| Start blocking while standing still | `Melee_Block` raises the shield, then `Melee_Blocking` holds it |
+| Move while blocking | the strafe and walk cycles with `Melee_Blocking` on the arms, facing locked, no sprint |
+| Hit while blocking (`take_hit()`) | `Melee_Block_Hit` instead of `Hit_A` / `Hit_B` |
+| Attack while blocking | `Melee_Block_Attack`, a shield bash |
+| Release | blends back to the normal idle or movement (the packs have no lower-shield clip) |
+
+Not blocking, the sword or axe combos as usual with the shield on the forearm.
+
 Grips: the bow is held in the left hand turned 180° with the bow stance, the crossbows are turned
 90° so they point along the forearm, the one-handed axe is turned 180° so the blade leads, and the
 dagger is turned 180° so its curved edge faces up. The sword, axe and dagger attack; the other
@@ -120,7 +137,7 @@ the current stance.
 
 Browsed animations play on the spot, one-shots repeat, and moving cancels them.
 
-A row of the ten weapons the player has animations for lies in front of the spawn, grips toward
+A row of the ten weapons the player has animations for, plus a round shield, lies in front of the spawn, grips toward
 you: one- and two-handed sword and axe, dagger, wand, staff, both crossbows and the bow. Walk up to
 one and press 2 to pick it up; picking up another puts the held one back where it was.
 

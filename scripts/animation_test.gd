@@ -8,7 +8,7 @@ const ZOOM_STEP := 0.5
 const MIN_DISTANCE := 2.0
 const MAX_DISTANCE := 12.0
 const PICK_UP_REACH := 1.6
-const CONTROLS := """WASD move   Shift run   Space jump   Alt dodge   Right mouse (hold) strafe
+const CONTROLS := """WASD move   Shift run   Space jump   Alt dodge   Right mouse (hold) strafe, or block with a shield (attack to bash)
 Left mouse / J attack with the held sword, axe or dagger (keep pressing to combo, Shift + move to lunge)
 C crouch   Z crawl
 1 interact   2 pick up the weapon in front of you   3 throw   4 use item   5 hit   6 die   7 spawn   8 spawn from the air
@@ -138,8 +138,16 @@ func _hud_text() -> String:
 	]
 
 
+func _held_text() -> String:
+	var items: Array[String] = []
+	for item: Node3D in [player.held_item, player.shield]:
+		if item:
+			items.append(item.name.capitalize())
+	return "holding %s" % " + ".join(items) if not items.is_empty() else "empty-handed"
+
+
 func _weapon_text() -> String:
-	var held := "holding %s" % player.held_item.name.capitalize() if player.held_item else "empty-handed"
+	var held := _held_text()
 	var nearby := _nearest_weapon()
 	if nearby:
 		return "%s   press 2 to pick up %s" % [held, nearby.name.capitalize()]
