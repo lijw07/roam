@@ -254,8 +254,9 @@ func _check_enemy_scenes() -> void:
 				continue
 			_holder.add_child(enemy)
 			await process_frame
-			if not enemy.animation_player.has_animation(enemy.idle_animation):
-				_fail("%s: idle animation %s doesn't exist" % [path, enemy.idle_animation])
+			for animation in [enemy.idle_animation, enemy.walk_animation, enemy.run_animation, enemy.fall_animation]:
+				if not enemy.animation_player.has_animation(animation):
+					_fail("%s: animation %s doesn't exist" % [path, animation])
 			for slot in enemy.find_children("Handslot*", "BoneAttachment3D", true, false):
 				var meshes: Array = slot.find_children("*", "MeshInstance3D", true, false)
 				if meshes.is_empty() or not meshes.all(func(m): return m.is_visible_in_tree()):
