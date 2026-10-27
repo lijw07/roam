@@ -1,10 +1,12 @@
 extends CharacterBody3D
 
 signal animation_changed(animation: StringName)
+signal item_released(item: Node3D)
 
 enum Stance { STANDING, CROUCHING, CRAWLING }
 
 const BLEND_TIME := 0.15
+const RIGHT_HAND := &"handslot.r"
 const ROOT_MOTION_TRACK := ^"Rig_Medium/Skeleton3D:root"
 const SKELETON_PATH := ^"Model/Rig_Medium/Skeleton3D"
 const JUMP_START_ANIMATION := &"movement_basic/Jump_Start"
@@ -30,6 +32,12 @@ const DEATH_POSES := {
 }
 const INTERACT_ANIMATION := &"general/Interact"
 const PICK_UP_ANIMATION := &"general/PickUp"
+const PICK_UP_GRAB_TIME := 0.5
+const PICK_UP_HAND_OFFSET := Vector3(-0.36, 0.0, 0.43)
+const PICK_UP_ALIGN_TIME := 0.2
+const ATTACK_QUEUE_FRACTION := 0.4
+const COMBO_RESET_TIME := 0.5
+const LUNGE_DURATION := 0.7
 const THROW_ANIMATION := &"general/Throw"
 const USE_ITEM_ANIMATION := &"general/Use_Item"
 const SPAWN_GROUND_ANIMATION := &"general/Spawn_Ground"
@@ -38,7 +46,13 @@ const SPAWN_AIR_HEIGHT := 2.0
 const AIRBORNE_DELAY := 0.15
 const LANDING_AIR_TIME := 0.3
 const STANCE_HEIGHT_RATIOS: Array[float] = [1.0, 0.94, 0.68]
-const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"crouch", &"crawl"]
+const STANCE_LIBRARY := &"weapon_stance"
+const UPPER_BODY_BONES: Array[StringName] = [
+	&"chest", &"head",
+	&"upperarm.l", &"lowerarm.l", &"wrist.l", &"hand.l", &"handslot.l",
+	&"upperarm.r", &"lowerarm.r", &"wrist.r", &"hand.r", &"handslot.r",
+]
+const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"crouch", &"crawl", &"attack"]
 
 @export var walk_speed := 3.0
 @export var run_speed := 6.5
@@ -48,6 +62,7 @@ const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"crouch", &"crawl
 @export var crouch_run_speed := 3.0
 @export var crawl_speed := 1.0
 @export var dodge_speed := 6.0
+@export var lunge_speed := 4.0
 @export var jump_velocity := 8.0
 @export var turn_speed := 12.0
 @export var gravity_multiplier := 2.0
@@ -67,14 +82,25 @@ const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"crouch", &"crawl
 
 var stance := Stance.STANDING
 var dead := false
+var held_item: Node3D = null
 
 var _action: StringName = &""
 var _action_cancellable := false
 var _action_velocity := Vector3.ZERO
+var _action_velocity_duration := INF
+var _attacking := false
+var _attack_queued := false
+var _combo_index := 0
+var _since_attack := INF
 var _air_time := 0.0
 var _idle_time := 0.0
 var _capsule: CapsuleShape3D
 var _standing_height := 0.0
+var _hand_slots: Dictionary[StringName, BoneAttachment3D] = {}
+var _pick_up_item: Node3D = null
+var _held_hand := RIGHT_HAND
+var _held_grip := Transform3D.IDENTITY
+var _held_weapon: Weapon = null
 
 
 class Gait:
@@ -96,7 +122,10 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_update_held_item()
+	_since_attack += delta
 	var direction := _input_direction()
+	_queue_attack_input()
 	if _action_cancellable and _has_new_input(direction):
 		_end_action()
 	if dead or is_acting():
@@ -117,8 +146,23 @@ func interact() -> void:
 	_perform(INTERACT_ANIMATION)
 
 
-func pick_up() -> void:
-	_perform(PICK_UP_ANIMATION)
+func pick_up(item: Node3D = null) -> void:
+	if not _perform(PICK_UP_ANIMATION) or item == null:
+		return
+	_pick_up_item = item
+	_held_hand = item.hand if item is Weapon else RIGHT_HAND
+	_held_grip = item.grip() if item is Weapon else Transform3D.IDENTITY
+	_align_hand_with(item.global_position)
+
+
+func release_held_item() -> void:
+	if held_item == null:
+		return
+	var item := held_item
+	held_item = null
+	_held_weapon = null
+	item.reparent(get_parent())
+	item_released.emit(item)
 
 
 func throw() -> void:
@@ -177,6 +221,9 @@ func _move_with_input(direction: Vector3, delta: float) -> void:
 		if stance == Stance.STANDING and Input.is_action_just_pressed("dodge"):
 			_dodge(direction)
 			return
+		if Input.is_action_just_pressed("attack") and _can_attack():
+			_attack(direction)
+			return
 	var gait := _gait(direction)
 	velocity.x = direction.x * gait.speed
 	velocity.z = direction.z * gait.speed
@@ -187,10 +234,16 @@ func _move_with_input(direction: Vector3, delta: float) -> void:
 	_animate(direction, gait, delta)
 
 
+func _update_held_item() -> void:
+	_update_pick_up()
+	_settle_held_item()
+
+
 func _move_with_action(delta: float) -> void:
 	var root_motion := skeleton.global_basis * animation_player.get_root_motion_position() / delta
-	velocity.x = _action_velocity.x + root_motion.x
-	velocity.z = _action_velocity.z + root_motion.z
+	var action_velocity := _action_velocity if animation_player.current_animation_position < _action_velocity_duration else Vector3.ZERO
+	velocity.x = action_velocity.x + root_motion.x
+	velocity.z = action_velocity.z + root_motion.z
 	if _action == SPAWN_AIR_ANIMATION:
 		velocity.y = root_motion.y
 	elif not is_on_floor():
@@ -232,7 +285,15 @@ func _gait(direction: Vector3) -> Gait:
 
 
 func _forward_gait(sprinting: bool) -> Gait:
-	return Gait.new(run_animation, run_speed) if sprinting else Gait.new(walk_animation, walk_speed)
+	if sprinting:
+		return Gait.new(_weapon_run_animation(), run_speed)
+	return Gait.new(walk_animation, walk_speed)
+
+
+func _weapon_run_animation() -> StringName:
+	if _held_weapon != null and _held_weapon.run_animation != &"":
+		return _held_weapon.run_animation
+	return run_animation
 
 
 func _strafe_gait(local_direction: Vector3, sprinting: bool) -> Gait:
@@ -254,7 +315,7 @@ func _apply_vertical_motion(delta: float) -> void:
 	elif stance == Stance.STANDING and Input.is_action_just_pressed("jump"):
 		velocity.y = jump_velocity
 		_air_time = AIRBORNE_DELAY
-		_play(JUMP_START_ANIMATION, BLEND_TIME, JUMP_TAKEOFF_TIME)
+		_play(_stanced(JUMP_START_ANIMATION), BLEND_TIME, JUMP_TAKEOFF_TIME)
 
 
 func _face(direction: Vector3, delta: float) -> void:
@@ -272,9 +333,9 @@ func _animate(direction: Vector3, gait: Gait, delta: float) -> void:
 	_air_time = 0.0
 	if not direction.is_zero_approx():
 		_idle_time = 0.0
-		_play(gait.animation)
+		_play(_stanced(gait.animation))
 	elif air_time >= LANDING_AIR_TIME and stance == Stance.STANDING:
-		_start_action(JUMP_LAND_ANIMATION, true)
+		_start_action(_stanced(JUMP_LAND_ANIMATION), true)
 	else:
 		_animate_idle(delta)
 
@@ -282,15 +343,15 @@ func _animate(direction: Vector3, gait: Gait, delta: float) -> void:
 func _animate_airborne() -> void:
 	if _air_time < AIRBORNE_DELAY:
 		return
-	if current_animation() == JUMP_START_ANIMATION and animation_player.is_playing():
+	if current_animation() == _stanced(JUMP_START_ANIMATION) and animation_player.is_playing():
 		return
-	_play(JUMP_AIR_ANIMATION)
+	_play(_stanced(JUMP_AIR_ANIMATION))
 
 
 func _animate_idle(delta: float) -> void:
 	match stance:
 		Stance.CROUCHING:
-			_hold(SNEAK_ANIMATION, SNEAK_HOLD_TIME)
+			_hold(_stanced(SNEAK_ANIMATION), SNEAK_HOLD_TIME)
 		Stance.CRAWLING:
 			_hold(CRAWL_ANIMATION, CRAWL_HOLD_TIME)
 		Stance.STANDING:
@@ -298,6 +359,9 @@ func _animate_idle(delta: float) -> void:
 
 
 func _animate_standing_idle(delta: float) -> void:
+	if _held_weapon != null and _held_weapon.idle_animation != &"":
+		_play(_held_weapon.idle_animation)
+		return
 	_idle_time += delta
 	var fidget_length := animation_player.get_animation(fidget_animation).length
 	if _idle_time >= fidget_delay + fidget_length:
@@ -308,7 +372,7 @@ func _animate_standing_idle(delta: float) -> void:
 func _dodge(direction: Vector3) -> void:
 	var heading := -model.global_basis.z if direction.is_zero_approx() else direction.normalized()
 	var animation := _dodge_animation(_to_local_direction(heading))
-	_start_action(animation, false, heading * dodge_speed)
+	_start_action(_stanced(animation), false, heading * dodge_speed)
 
 
 func _dodge_animation(local_heading: Vector3) -> StringName:
@@ -317,17 +381,109 @@ func _dodge_animation(local_heading: Vector3) -> StringName:
 	return DODGE_FORWARD_ANIMATION if local_heading.z > 0.0 else DODGE_BACKWARD_ANIMATION
 
 
-func _perform(animation: StringName) -> void:
-	if dead or (is_acting() and not _action_cancellable):
+func _can_attack() -> bool:
+	return _held_weapon != null and _held_weapon.has_attacks()
+
+
+func _attack(direction: Vector3) -> void:
+	_set_stance(Stance.STANDING)
+	if not direction.is_zero_approx() and not _is_strafing():
+		model.rotation.y = atan2(direction.x, direction.z)
+	if Input.is_action_pressed("sprint") and not direction.is_zero_approx() and _held_weapon.running_attack_animation != &"":
+		_start_attack(_held_weapon.running_attack_animation, direction.normalized() * lunge_speed)
+		_action_velocity_duration = LUNGE_DURATION
 		return
+	if _since_attack > COMBO_RESET_TIME:
+		_combo_index = 0
+	var attacks := _held_weapon.attack_animations
+	_start_attack(attacks[_combo_index % attacks.size()])
+	_combo_index += 1
+
+
+func _start_attack(animation: StringName, lunge := Vector3.ZERO) -> void:
+	_start_action(animation, false, lunge)
+	_attacking = true
+	_attack_queued = false
+
+
+func _queue_attack_input() -> void:
+	if not _attacking or not Input.is_action_just_pressed("attack"):
+		return
+	var progress := animation_player.current_animation_position / animation_player.current_animation_length
+	if progress >= ATTACK_QUEUE_FRACTION:
+		_attack_queued = true
+
+
+func _finish_attack() -> void:
+	var queued := _attack_queued
+	_attacking = false
+	_attack_queued = false
+	_since_attack = 0.0
+	if queued and _can_attack():
+		_attack(_input_direction())
+
+
+func _perform(animation: StringName) -> bool:
+	if dead or (is_acting() and not _action_cancellable):
+		return false
 	_set_stance(Stance.STANDING)
 	_start_action(animation)
+	return true
+
+
+func _align_hand_with(grip_position: Vector3) -> void:
+	var hand_offset := PICK_UP_HAND_OFFSET * model.scale.x
+	var to_grip := grip_position - global_position
+	var yaw := atan2(to_grip.x, to_grip.z) - atan2(hand_offset.x, hand_offset.z)
+	var target := grip_position - Basis(Vector3.UP, yaw) * hand_offset
+	target.y = global_position.y
+	var target_yaw := model.rotation.y + wrapf(yaw - model.rotation.y, -PI, PI)
+	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).set_parallel()
+	tween.tween_property(self, "global_position", target, PICK_UP_ALIGN_TIME)
+	tween.tween_property(model, "rotation:y", target_yaw, PICK_UP_ALIGN_TIME)
+
+
+func _update_pick_up() -> void:
+	if _pick_up_item == null:
+		return
+	if _action != PICK_UP_ANIMATION or not is_instance_valid(_pick_up_item):
+		_pick_up_item = null
+		return
+	if animation_player.current_animation_position < PICK_UP_GRAB_TIME:
+		return
+	release_held_item()
+	held_item = _pick_up_item
+	_held_weapon = held_item as Weapon
+	_pick_up_item = null
+	_attach_to_hand(held_item, RIGHT_HAND, _held_grip if _held_hand == RIGHT_HAND else Transform3D.IDENTITY)
+
+
+func _settle_held_item() -> void:
+	if held_item == null or _action == PICK_UP_ANIMATION or held_item.get_parent() == _hand_slot(_held_hand):
+		return
+	_attach_to_hand(held_item, _held_hand, _held_grip)
+
+
+func _attach_to_hand(item: Node3D, hand: StringName, grip: Transform3D) -> void:
+	item.reparent(_hand_slot(hand), false)
+	item.transform = grip
+
+
+func _hand_slot(hand: StringName) -> BoneAttachment3D:
+	if not _hand_slots.has(hand):
+		var slot := BoneAttachment3D.new()
+		slot.bone_name = hand
+		skeleton.add_child(slot)
+		_hand_slots[hand] = slot
+	return _hand_slots[hand]
 
 
 func _start_action(animation: StringName, cancellable := false, action_velocity := Vector3.ZERO, blend := BLEND_TIME) -> void:
 	_action = animation
 	_action_cancellable = cancellable
 	_action_velocity = action_velocity
+	_action_velocity_duration = INF
+	_attacking = false
 	_idle_time = 0.0
 	_play(animation, blend, 0.0)
 
@@ -336,12 +492,17 @@ func _end_action() -> void:
 	_action = &""
 	_action_cancellable = false
 	_action_velocity = Vector3.ZERO
+	_action_velocity_duration = INF
+	_attacking = false
 
 
 func _on_animation_finished(animation: StringName) -> void:
 	if animation != _action:
 		return
+	var was_attacking := _attacking
 	_end_action()
+	if was_attacking:
+		_finish_attack()
 	if dead and DEATH_POSES.has(animation):
 		_play(DEATH_POSES[animation], 0.0)
 
@@ -353,6 +514,51 @@ func _play(animation: StringName, blend := BLEND_TIME, from := -1.0) -> void:
 	if from >= 0.0:
 		animation_player.seek(from, true)
 	animation_changed.emit(animation)
+
+
+func _stanced(animation: StringName) -> StringName:
+	if _held_weapon == null or _held_weapon.upper_body_animation == &"" or not _takes_upper_body(animation):
+		return animation
+	var stance_name := StringName("%s_with_%s" % [animation.get_file(), _held_weapon.upper_body_animation.get_file()])
+	var path := StringName("%s/%s" % [STANCE_LIBRARY, stance_name])
+	if not animation_player.has_animation(path):
+		_stance_library().add_animation(stance_name, _with_upper_body(animation, _held_weapon.upper_body_animation))
+	return path
+
+
+func _takes_upper_body(animation: StringName) -> bool:
+	return animation not in [CRAWL_ANIMATION, _held_weapon.idle_animation, _held_weapon.run_animation]
+
+
+func _stance_library() -> AnimationLibrary:
+	if not animation_player.has_animation_library(STANCE_LIBRARY):
+		animation_player.add_animation_library(STANCE_LIBRARY, AnimationLibrary.new())
+	return animation_player.get_animation_library(STANCE_LIBRARY)
+
+
+func _with_upper_body(base_name: StringName, upper_name: StringName) -> Animation:
+	var merged: Animation = animation_player.get_animation(base_name).duplicate(true)
+	for track in range(merged.get_track_count() - 1, -1, -1):
+		if _is_upper_body_track(merged, track):
+			merged.remove_track(track)
+	var upper := animation_player.get_animation(upper_name)
+	var time_scale := merged.length / upper.length
+	for track in upper.get_track_count():
+		if _is_upper_body_track(upper, track):
+			_copy_track(upper, track, merged, time_scale)
+	return merged
+
+
+func _is_upper_body_track(animation: Animation, track: int) -> bool:
+	return StringName(animation.track_get_path(track).get_concatenated_subnames()) in UPPER_BODY_BONES
+
+
+func _copy_track(source: Animation, track: int, target: Animation, time_scale: float) -> void:
+	var copy := target.add_track(source.track_get_type(track))
+	target.track_set_path(copy, source.track_get_path(track))
+	target.track_set_interpolation_type(copy, source.track_get_interpolation_type(track))
+	for key in source.track_get_key_count(track):
+		target.track_insert_key(copy, source.track_get_key_time(track, key) * time_scale, source.track_get_key_value(track, key))
 
 
 func _is_playing(animation: StringName) -> bool:
