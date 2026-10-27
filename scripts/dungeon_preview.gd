@@ -4,6 +4,7 @@ extends Node3D
 ##   Overview  top-down map; WASD or right/middle-drag to pan, wheel to zoom
 ##   Fly       free camera through walls; mouse looks, WASD moves, Q/E down/up, Shift fast, wheel sets speed
 ##   Walk      play as a knight; mouse orbits the camera, WASD moves, Shift runs, Space jumps,
+##             Alt dodges, C crouches, Z crawls, right mouse strafes,
 ##             F opens or closes the nearest door, wheel sets camera distance
 ## R builds a new dungeon. Esc frees the mouse; click to capture it again.
 
@@ -15,7 +16,7 @@ const MODE_NAMES := ["Overview", "Fly", "Walk"]
 const CONTROLS := [
 	"WASD / right-drag: pan   Wheel: zoom",
 	"Mouse: look   WASD: move   Q/E: down/up   Shift: fast   Wheel: speed",
-	"Mouse: camera   WASD: move   Shift: run   Space: jump   F: door   Wheel: distance",
+	"Mouse: camera   WASD: move   Shift: run   Space: jump   Alt: dodge   C: crouch   Z: crawl   RMB: strafe   F: door   Wheel: distance",
 ]
 
 @export var mouse_sensitivity := 0.003
@@ -107,6 +108,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				var door := _nearest_door()
 				if mode == Mode.WALK and door:
 					door.toggle()
+					_explorer.interact()
 	elif event is InputEventMouseButton:
 		_on_mouse_button(event)
 	elif event is InputEventMouseMotion:
@@ -182,7 +184,7 @@ func _on_generated(_used_seed: int) -> void:
 	overview_camera.position = Vector3(center.x, 80.0, center.y)
 	overview_camera.size = maxf(bounds.size.y, bounds.size.x / aspect) * 1.1
 	_explorer.global_position = generator.get_spawn_position()
-	_explorer.velocity = Vector3.ZERO
+	_explorer.spawn()
 	_doors.clear()
 	for node in generator.find_children("*", "", true, false):
 		if node is Door:
