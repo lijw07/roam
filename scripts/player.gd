@@ -3,25 +3,17 @@ extends CharacterBody3D
 signal animation_changed(animation: StringName)
 signal item_released(item: Node3D)
 
-enum Stance { STANDING, CROUCHING, CRAWLING }
-
 const BLEND_TIME := 0.15
 const RIGHT_HAND := &"handslot.r"
 const LEFT_HAND := &"handslot.l"
-const ROOT_MOTION_TRACK := ^"Rig_Medium/Skeleton3D:root"
 const SKELETON_PATH := ^"Model/Rig_Medium/Skeleton3D"
 const JUMP_START_ANIMATION := &"movement_basic/Jump_Start"
 const JUMP_AIR_ANIMATION := &"movement_basic/Jump_Idle"
 const JUMP_LAND_ANIMATION := &"movement_basic/Jump_Land"
 const JUMP_TAKEOFF_TIME := 0.27
 const WALK_BACKWARDS_ANIMATION := &"movement_advanced/Walking_Backwards"
-const STRAFE_LEFT_ANIMATION := &"movement_advanced/Running_Strafe_Left"
-const STRAFE_RIGHT_ANIMATION := &"movement_advanced/Running_Strafe_Right"
-const SNEAK_ANIMATION := &"movement_advanced/Sneaking"
-const SNEAK_HOLD_TIME := 0.72
-const CROUCH_RUN_ANIMATION := &"movement_advanced/Crouching"
-const CRAWL_ANIMATION := &"movement_advanced/Crawling"
-const CRAWL_HOLD_TIME := 0.28
+const BACKWARD_ARC := deg_to_rad(100.0)
+const MAX_TWIST := deg_to_rad(90.0)
 const DODGE_FORWARD_ANIMATION := &"movement_advanced/Dodge_Forward"
 const DODGE_BACKWARD_ANIMATION := &"movement_advanced/Dodge_Backward"
 const DODGE_LEFT_ANIMATION := &"movement_advanced/Dodge_Left"
@@ -43,25 +35,24 @@ const THROW_ANIMATION := &"general/Throw"
 const USE_ITEM_ANIMATION := &"general/Use_Item"
 const SPAWN_GROUND_ANIMATION := &"general/Spawn_Ground"
 const SPAWN_AIR_ANIMATION := &"general/Spawn_Air"
-const SPAWN_AIR_HEIGHT := 2.0
 const AIRBORNE_DELAY := 0.15
 const LANDING_AIR_TIME := 0.3
-const STANCE_HEIGHT_RATIOS: Array[float] = [1.0, 0.94, 0.68]
 const STANCE_LIBRARY := &"weapon_stance"
 const UPPER_BODY_BONES: Array[StringName] = [
 	&"chest", &"head",
 	&"upperarm.l", &"lowerarm.l", &"wrist.l", &"hand.l", &"handslot.l",
 	&"upperarm.r", &"lowerarm.r", &"wrist.r", &"hand.r", &"handslot.r",
 ]
-const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"crouch", &"crawl", &"attack"]
+const ROOT_TRACK := ^"Rig_Medium/Skeleton3D:root"
+const HIPS_TRACK := ^"Rig_Medium/Skeleton3D:hips"
+const IN_PLACE_LIBRARY := &"in_place"
+const SPINE_TRACK := ^"Rig_Medium/Skeleton3D:spine"
+const LAYER_SAMPLE_STEP := 1.0 / 30.0
+const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"attack"]
 
 @export var walk_speed := 3.0
 @export var run_speed := 6.5
-@export var backwards_speed := 2.0
-@export var strafe_speed := 4.5
-@export var sneak_speed := 1.5
-@export var crouch_run_speed := 3.0
-@export var crawl_speed := 1.0
+@export var backwards_speed := 2.5
 @export var dodge_speed := 6.0
 @export var lunge_speed := 4.0
 @export var jump_velocity := 8.0
@@ -78,10 +69,8 @@ const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"crouch", &"crawl
 @onready var model: Node3D = $Model
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
 @onready var skeleton: Skeleton3D = get_node(SKELETON_PATH)
-@onready var collision_shape: CollisionShape3D = $CollisionShape3D
 @onready var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity") * gravity_multiplier
 
-var stance := Stance.STANDING
 var dead := false
 var held_item: Node3D = null
 var shield: Shield = null
@@ -98,38 +87,37 @@ var _combo_grace := 0.0
 var _was_blocking := false
 var _air_time := 0.0
 var _idle_time := 0.0
-var _capsule: CapsuleShape3D
-var _standing_height := 0.0
 var _hand_slots: Dictionary[StringName, BoneAttachment3D] = {}
 var _pick_up_item: Node3D = null
 var _held_hand := RIGHT_HAND
 var _held_grip := Transform3D.IDENTITY
 var _held_weapon: Weapon = null
+var _upper_body_twist := UpperBodyTwist.new()
+var _facing_yaw := 0.0
 
 
 class Gait:
 	var animation: StringName
 	var speed: float
+	var facing_offset: float
 
-	func _init(gait_animation: StringName, gait_speed: float) -> void:
+	func _init(gait_animation: StringName, gait_speed: float, gait_facing_offset := 0.0) -> void:
 		animation = gait_animation
 		speed = gait_speed
+		facing_offset = gait_facing_offset
 
 
 func _ready() -> void:
-	animation_player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
-	animation_player.root_motion_track = ROOT_MOTION_TRACK
 	animation_player.animation_finished.connect(_on_animation_finished)
-	_capsule = collision_shape.shape.duplicate()
-	collision_shape.shape = _capsule
-	_standing_height = _capsule.height
+	skeleton.add_child(_upper_body_twist)
+	_facing_yaw = model.rotation.y
 
 
 func _physics_process(delta: float) -> void:
 	_update_held_item()
 	_combo_grace = maxf(_combo_grace - delta, 0.0)
 	var direction := _input_direction()
-	_update_attack(direction)
+	_update_attack()
 	_lower_shield_if_released()
 	if _action_cancellable and _has_new_input(direction):
 		_end_action()
@@ -137,6 +125,8 @@ func _physics_process(delta: float) -> void:
 		_move_with_action(delta)
 	else:
 		_move_with_input(direction, delta)
+	_update_facing(direction, delta)
+	_update_upper_body_twist(direction, delta)
 	_was_blocking = _is_blocking()
 
 
@@ -195,7 +185,6 @@ func take_hit() -> void:
 	if _is_blocking() and _can_react_with_shield():
 		_start_action(shield.hit_animation)
 		return
-	_set_stance(Stance.STANDING)
 	_start_action(HIT_ANIMATIONS.pick_random())
 
 
@@ -203,30 +192,29 @@ func die() -> void:
 	if dead:
 		return
 	dead = true
-	_set_stance(Stance.STANDING)
 	_start_action(DEATH_POSES.keys().pick_random())
 
 
 func spawn(from_air := false) -> void:
 	dead = false
-	_set_stance(Stance.STANDING)
 	velocity = Vector3.ZERO
-	if from_air:
-		global_position.y += SPAWN_AIR_HEIGHT
 	_start_action(SPAWN_AIR_ANIMATION if from_air else SPAWN_GROUND_ANIMATION, false, Vector3.ZERO, 0.0)
 
 
 func preview(animation: StringName) -> void:
 	if dead or not animation_player.has_animation(animation):
 		return
-	_set_stance(Stance.STANDING)
 	_start_action(animation, true)
 
 
 func _has_new_input(direction: Vector3) -> bool:
-	if not direction.is_zero_approx():
+	if not direction.is_zero_approx() and not _is_blocking():
 		return true
 	return CANCEL_ACTIONS.any(func(action: StringName) -> bool: return Input.is_action_just_pressed(action))
+
+
+func _camera_yaw() -> float:
+	return 0.0
 
 
 func _input_direction() -> Vector3:
@@ -236,11 +224,10 @@ func _input_direction() -> Vector3:
 
 func _move_with_input(direction: Vector3, delta: float) -> void:
 	if is_on_floor():
-		_update_stance()
-		if stance == Stance.STANDING and Input.is_action_just_pressed("dodge"):
+		if Input.is_action_just_pressed("dodge"):
 			_dodge(direction)
 			return
-		if _is_blocking() and not _was_blocking and direction.is_zero_approx():
+		if _is_blocking() and not _was_blocking:
 			_start_action(shield.raise_animation, true)
 			return
 		if Input.is_action_just_pressed("attack") and _is_blocking():
@@ -249,13 +236,15 @@ func _move_with_input(direction: Vector3, delta: float) -> void:
 		if Input.is_action_just_pressed("attack") and _can_attack():
 			_attack(direction)
 			return
+	if _is_blocking():
+		direction = Vector3.ZERO
 	var gait := _gait(direction)
 	velocity.x = direction.x * gait.speed
 	velocity.z = direction.z * gait.speed
 	_apply_vertical_motion(delta)
 	move_and_slide()
-	if not _is_strafing():
-		_face(direction, delta)
+	if not direction.is_zero_approx():
+		_turn_toward(atan2(direction.x, direction.z) + gait.facing_offset, delta)
 	_animate(direction, gait, delta)
 
 
@@ -265,40 +254,45 @@ func _update_held_item() -> void:
 
 
 func _move_with_action(delta: float) -> void:
-	var root_motion := skeleton.global_basis * animation_player.get_root_motion_position() / delta
 	var action_velocity := _action_velocity if animation_player.current_animation_position < _action_velocity_duration else Vector3.ZERO
-	velocity.x = action_velocity.x + root_motion.x
-	velocity.z = action_velocity.z + root_motion.z
-	if _action == SPAWN_AIR_ANIMATION:
-		velocity.y = root_motion.y
-	elif not is_on_floor():
+	velocity.x = action_velocity.x
+	velocity.z = action_velocity.z
+	if not is_on_floor():
 		velocity.y -= gravity * delta
 	move_and_slide()
 
 
-func _update_stance() -> void:
-	if Input.is_action_just_pressed("crouch"):
-		_set_stance(Stance.STANDING if stance == Stance.CROUCHING else Stance.CROUCHING)
-	elif Input.is_action_just_pressed("crawl"):
-		_set_stance(Stance.STANDING if stance == Stance.CRAWLING else Stance.CRAWLING)
-
-
-func _set_stance(new_stance: Stance) -> void:
-	var height := _standing_height * STANCE_HEIGHT_RATIOS[new_stance]
-	var growth := height - _capsule.height
-	if growth > 0.0 and test_move(global_transform, Vector3.UP * growth):
-		return
-	stance = new_stance
-	_capsule.height = height
-	collision_shape.position.y = height / 2.0
-
-
-func _is_strafing() -> bool:
-	return stance == Stance.STANDING and Input.is_action_pressed("secondary")
-
-
 func _is_blocking() -> bool:
-	return shield != null and _is_strafing()
+	return shield != null and Input.is_action_pressed("secondary")
+
+
+func _follows_camera() -> bool:
+	return not dead and (_attacking or _is_blocking())
+
+
+func _update_facing(direction: Vector3, delta: float) -> void:
+	if dead:
+		return
+	if _follows_camera() or (not is_acting() and not direction.is_zero_approx()):
+		_facing_yaw = _view_yaw()
+	if _follows_camera():
+		_turn_toward(_facing_yaw, delta)
+	elif not is_acting() and direction.is_zero_approx():
+		_turn_toward(_facing_yaw, delta)
+
+
+func _view_yaw() -> float:
+	return _camera_yaw() + PI
+
+
+func _update_upper_body_twist(direction: Vector3, delta: float) -> void:
+	var twisting := not dead and not is_acting() and not direction.is_zero_approx()
+	var target := clampf(wrapf(_view_yaw() - model.rotation.y, -PI, PI), -MAX_TWIST, MAX_TWIST) if twisting else 0.0
+	_upper_body_twist.twist = lerp_angle(_upper_body_twist.twist, target, 1.0 - exp(-turn_speed * delta))
+
+
+func _turn_toward(target_yaw: float, delta: float) -> void:
+	model.rotation.y = lerp_angle(model.rotation.y, target_yaw, 1.0 - exp(-turn_speed * delta))
 
 
 func _can_react_with_shield() -> bool:
@@ -311,19 +305,10 @@ func _lower_shield_if_released() -> void:
 
 
 func _gait(direction: Vector3) -> Gait:
-	var sprinting := Input.is_action_pressed("sprint") and not _is_blocking()
-	match stance:
-		Stance.CROUCHING:
-			return Gait.new(CROUCH_RUN_ANIMATION, crouch_run_speed) if sprinting else Gait.new(SNEAK_ANIMATION, sneak_speed)
-		Stance.CRAWLING:
-			return Gait.new(CRAWL_ANIMATION, crawl_speed)
-	if _is_strafing():
-		return _strafe_gait(_to_local_direction(direction), sprinting)
-	return _forward_gait(sprinting)
-
-
-func _forward_gait(sprinting: bool) -> Gait:
-	if sprinting:
+	var travel_from_view := wrapf(atan2(direction.x, direction.z) - _view_yaw(), -PI, PI)
+	if absf(travel_from_view) > BACKWARD_ARC:
+		return Gait.new(WALK_BACKWARDS_ANIMATION, backwards_speed, PI)
+	if Input.is_action_pressed("sprint"):
 		return Gait.new(_weapon_run_animation(), run_speed)
 	return Gait.new(walk_animation, walk_speed)
 
@@ -334,14 +319,6 @@ func _weapon_run_animation() -> StringName:
 	return run_animation
 
 
-func _strafe_gait(local_direction: Vector3, sprinting: bool) -> Gait:
-	if absf(local_direction.x) > absf(local_direction.z):
-		return Gait.new(STRAFE_LEFT_ANIMATION if local_direction.x > 0.0 else STRAFE_RIGHT_ANIMATION, strafe_speed)
-	if local_direction.z < 0.0:
-		return Gait.new(WALK_BACKWARDS_ANIMATION, backwards_speed)
-	return _forward_gait(sprinting)
-
-
 func _to_local_direction(direction: Vector3) -> Vector3:
 	return model.global_basis.inverse() * direction
 
@@ -350,17 +327,10 @@ func _apply_vertical_motion(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 		_air_time += delta
-	elif stance == Stance.STANDING and Input.is_action_just_pressed("jump"):
+	elif not _is_blocking() and Input.is_action_just_pressed("jump"):
 		velocity.y = jump_velocity
 		_air_time = AIRBORNE_DELAY
 		_play(_stanced(JUMP_START_ANIMATION), BLEND_TIME, JUMP_TAKEOFF_TIME)
-
-
-func _face(direction: Vector3, delta: float) -> void:
-	if direction.is_zero_approx():
-		return
-	var target_yaw := atan2(direction.x, direction.z)
-	model.rotation.y = lerp_angle(model.rotation.y, target_yaw, 1.0 - exp(-turn_speed * delta))
 
 
 func _animate(direction: Vector3, gait: Gait, delta: float) -> void:
@@ -372,7 +342,7 @@ func _animate(direction: Vector3, gait: Gait, delta: float) -> void:
 	if not direction.is_zero_approx():
 		_idle_time = 0.0
 		_play(_stanced(gait.animation))
-	elif air_time >= LANDING_AIR_TIME and stance == Stance.STANDING:
+	elif air_time >= LANDING_AIR_TIME:
 		_start_action(_stanced(JUMP_LAND_ANIMATION), true)
 	else:
 		_animate_idle(delta)
@@ -387,16 +357,6 @@ func _animate_airborne() -> void:
 
 
 func _animate_idle(delta: float) -> void:
-	match stance:
-		Stance.CROUCHING:
-			_hold(_stanced(SNEAK_ANIMATION), SNEAK_HOLD_TIME)
-		Stance.CRAWLING:
-			_hold(CRAWL_ANIMATION, CRAWL_HOLD_TIME)
-		Stance.STANDING:
-			_animate_standing_idle(delta)
-
-
-func _animate_standing_idle(delta: float) -> void:
 	if _is_blocking():
 		_play(shield.hold_animation)
 		return
@@ -413,7 +373,7 @@ func _animate_standing_idle(delta: float) -> void:
 func _dodge(direction: Vector3) -> void:
 	var heading := -model.global_basis.z if direction.is_zero_approx() else direction.normalized()
 	var animation := _dodge_animation(_to_local_direction(heading))
-	_start_action(_stanced(animation), false, heading * dodge_speed)
+	_start_action(_stanced(_in_place(animation)), false, heading * dodge_speed)
 
 
 func _dodge_animation(local_heading: Vector3) -> StringName:
@@ -427,8 +387,6 @@ func _can_attack() -> bool:
 
 
 func _attack(direction: Vector3) -> void:
-	_set_stance(Stance.STANDING)
-	_face_attack_direction(direction)
 	if Input.is_action_pressed("sprint") and not direction.is_zero_approx() and _held_weapon.running_attack_animation != &"":
 		_start_running_attack(direction)
 		return
@@ -447,11 +405,6 @@ func _start_running_attack(direction: Vector3) -> void:
 	_attack_step = null
 
 
-func _face_attack_direction(direction: Vector3) -> void:
-	if not direction.is_zero_approx() and not _is_strafing():
-		model.rotation.y = atan2(direction.x, direction.z)
-
-
 func _start_attack_step(step: AttackStep, from: float, blend: float) -> void:
 	_start_action(step.animation, false, Vector3.ZERO, blend, from)
 	_attacking = true
@@ -459,25 +412,20 @@ func _start_attack_step(step: AttackStep, from: float, blend: float) -> void:
 	_attack_step = step
 
 
-func _update_attack(direction: Vector3) -> void:
+func _update_attack() -> void:
 	if not _attacking or _attack_step == null:
 		return
 	if Input.is_action_just_pressed("attack") and not _action_cancellable:
 		_attack_queued = true
 	var playback_time := animation_player.current_animation_position
 	if _attack_queued and _has_next_attack_step() and playback_time >= _attack_step.combo_time:
-		_chain_attack(direction)
+		_continue_combo()
 	elif playback_time >= _attack_step.window_end and not _action_cancellable:
-		_close_combo_window(direction)
+		_close_combo_window()
 
 
 func _has_next_attack_step() -> bool:
 	return _combo_index + 1 < _held_weapon.combo.size()
-
-
-func _chain_attack(direction: Vector3) -> void:
-	_face_attack_direction(direction)
-	_continue_combo()
 
 
 func _continue_combo() -> void:
@@ -486,9 +434,9 @@ func _continue_combo() -> void:
 	_start_attack_step(step, step.chain_start, CHAIN_BLEND)
 
 
-func _close_combo_window(direction: Vector3) -> void:
+func _close_combo_window() -> void:
 	if _attack_queued:
-		_chain_attack(direction)
+		_continue_combo()
 		return
 	_action_cancellable = true
 	_combo_grace = animation_player.current_animation_length - animation_player.current_animation_position + COMBO_GRACE
@@ -497,7 +445,6 @@ func _close_combo_window(direction: Vector3) -> void:
 func _perform(animation: StringName) -> bool:
 	if dead or (is_acting() and not _action_cancellable):
 		return false
-	_set_stance(Stance.STANDING)
 	_start_action(animation)
 	return true
 
@@ -509,6 +456,7 @@ func _align_hand_with(grip_position: Vector3) -> void:
 	var target := grip_position - Basis(Vector3.UP, yaw) * hand_offset
 	target.y = global_position.y
 	var target_yaw := model.rotation.y + wrapf(yaw - model.rotation.y, -PI, PI)
+	_facing_yaw = target_yaw
 	var tween := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS).set_parallel()
 	tween.tween_property(self, "global_position", target, PICK_UP_ALIGN_TIME)
 	tween.tween_property(model, "rotation:y", target_yaw, PICK_UP_ALIGN_TIME)
@@ -624,14 +572,10 @@ func _stanced(animation: StringName) -> StringName:
 
 
 func _upper_body_animation() -> StringName:
-	if _is_blocking():
-		return shield.hold_animation
 	return _held_weapon.upper_body_animation if _held_weapon != null else &""
 
 
 func _takes_upper_body(animation: StringName) -> bool:
-	if animation == CRAWL_ANIMATION:
-		return false
 	return _held_weapon == null or animation not in [_held_weapon.idle_animation, _held_weapon.run_animation]
 
 
@@ -651,7 +595,54 @@ func _with_upper_body(base_name: StringName, upper_name: StringName) -> Animatio
 	for track in upper.get_track_count():
 		if _is_upper_body_track(upper, track):
 			_copy_track(upper, track, merged, time_scale)
+	_face_spine_like_upper_body(merged, upper, time_scale)
 	return merged
+
+
+func _face_spine_like_upper_body(merged: Animation, upper: Animation, time_scale: float) -> void:
+	var times: Array[float] = []
+	var rotations: Array[Quaternion] = []
+	var time := 0.0
+	while time < merged.length + LAYER_SAMPLE_STEP:
+		var sample_time := minf(time, merged.length)
+		var upper_time := sample_time / time_scale
+		var upper_spine := _pelvis_rotation_at(upper, upper_time) * _rotation_at(upper, SPINE_TRACK, upper_time)
+		times.append(sample_time)
+		rotations.append(_pelvis_rotation_at(merged, sample_time).inverse() * upper_spine)
+		time += LAYER_SAMPLE_STEP
+	var base_spine := merged.find_track(SPINE_TRACK, Animation.TYPE_ROTATION_3D)
+	if base_spine >= 0:
+		merged.remove_track(base_spine)
+	var spine := merged.add_track(Animation.TYPE_ROTATION_3D)
+	merged.track_set_path(spine, SPINE_TRACK)
+	for i in times.size():
+		merged.rotation_track_insert_key(spine, times[i], rotations[i])
+
+
+func _pelvis_rotation_at(animation: Animation, time: float) -> Quaternion:
+	return _rotation_at(animation, ROOT_TRACK, time) * _rotation_at(animation, HIPS_TRACK, time)
+
+
+func _in_place(animation: StringName) -> StringName:
+	var path := StringName("%s/%s" % [IN_PLACE_LIBRARY, animation.get_file()])
+	if animation_player.has_animation(path):
+		return path
+	if not animation_player.has_animation_library(IN_PLACE_LIBRARY):
+		animation_player.add_animation_library(IN_PLACE_LIBRARY, AnimationLibrary.new())
+	var copy: Animation = animation_player.get_animation(animation).duplicate(true)
+	var root_slide := copy.find_track(ROOT_TRACK, Animation.TYPE_POSITION_3D)
+	if root_slide >= 0:
+		copy.remove_track(root_slide)
+	animation_player.get_animation_library(IN_PLACE_LIBRARY).add_animation(animation.get_file(), copy)
+	return path
+
+
+func _rotation_at(animation: Animation, path: NodePath, time: float) -> Quaternion:
+	var track := animation.find_track(path, Animation.TYPE_ROTATION_3D)
+	if track >= 0:
+		return animation.rotation_track_interpolate(track, time)
+	var bone := skeleton.find_bone(path.get_concatenated_subnames())
+	return skeleton.get_bone_rest(bone).basis.get_rotation_quaternion()
 
 
 func _is_upper_body_track(animation: Animation, track: int) -> bool:
@@ -668,11 +659,3 @@ func _copy_track(source: Animation, track: int, target: Animation, time_scale: f
 
 func _is_playing(animation: StringName) -> bool:
 	return current_animation() == animation and animation_player.is_playing() and animation_player.get_playing_speed() > 0.0
-
-
-func _hold(animation: StringName, time: float) -> void:
-	if current_animation() == animation and is_zero_approx(animation_player.get_playing_speed()):
-		return
-	animation_player.play(animation, BLEND_TIME, 0.0)
-	animation_player.seek(time, true)
-	animation_changed.emit(animation)

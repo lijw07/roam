@@ -25,6 +25,7 @@ scripts/
   animation_test.gd       Animation test scene: camera, HUD, action keys and animation browser
   weapon.gd               How a weapon is held, its combo and the stance it gives the player
   shield.gd               An off-hand shield and its block animations
+  upper_body_twist.gd     Twists the spine, chest and head toward the camera while the legs walk another way
   attack_step.gd          One step of a combo: its animation and when it can chain
   projectile.gd           Moves an effect forward and frees it after its lifetime
 ```
@@ -35,18 +36,21 @@ preview's walk mode.
 
 | Key | Action | Animations |
 | --- | --- | --- |
-| W A S D | Walk | `Walking_A`, idle `Idle_A` (`Idle_B` after standing still for a while) |
-| Shift | Run | `Running_A` |
+| W | Walk forward (Shift: run) | `Walking_A` / `Running_A`, idle `Idle_A` (`Idle_B` after standing still for a while) |
+| A / D, diagonals | Walk or run sideways | `Walking_A` / `Running_A` with the legs turned toward the direction of travel |
+| S (and back diagonals) | Walk backwards (2.5 m/s) | `Walking_Backwards` |
 | Space | Jump | `Jump_Start`, `Jump_Idle`, `Jump_Land` |
-| Right mouse (hold) | Strafe: keep facing one way; with a shield, block | `Walking_Backwards`, `Running_Strafe_Left`, `Running_Strafe_Right` |
+| Right mouse (hold) | With a shield, block in place | see Shields |
 | Alt | Dodge toward the move direction, or back when standing still | `Dodge_Forward`, `Dodge_Backward`, `Dodge_Left`, `Dodge_Right` |
-| C | Crouch (Shift for a crouch run) | `Sneaking`, `Crouching` |
-| Z | Crawl | `Crawling` |
-| Left mouse / J | Attack with the held weapon | the weapon's `attack_animations`, or its `running_attack_animation` while sprinting |
+| Left mouse / J | Attack with the held weapon | the weapon's combo, or its `running_attack_animation` while sprinting |
 
-Crouching and crawling shrink the collision capsule (to 94% and 68% of standing height, measured
-from the posed meshes), and you only stand back up when there is room overhead. The packs have no
-crouch or crawl idle, so standing still holds the cycle on its feet-together frame.
+The camera, not WASD, decides which way the character faces. While moving, the legs turn toward the
+direction of travel and play the normal walk or run (or the backwards walk when moving more than
+100° away from the view), and `upper_body_twist.gd`, a `SkeletonModifier3D`, twists the spine, chest
+and head back toward the camera (up to 90°, split 35/35/30). Attacking or blocking turns the whole
+character to the camera. When it stops, it settles facing where it was looking, and the camera then
+orbits freely without turning it. The camera's yaw comes from `_camera_yaw()`, which
+`dungeon_explorer.gd` overrides with the camera rig's rotation.
 
 The general animations are methods for gameplay code to call: `interact()`, `pick_up(item)`,
 `throw()`, `use_item()`, `take_hit()` (`Hit_A` or `Hit_B`), `die()` (`Death_A` or `Death_B`,
@@ -63,8 +67,14 @@ or `handslot.l`), `grip_rotation_degrees`, `combo` (a list of `AttackStep` resou
 
 Its **Stance** group changes how the player moves while holding it: `idle_animation` and
 `run_animation` replace the player's own, and `upper_body_animation` keeps the arms, chest and head
-in that pose on top of every other movement clip (walk, strafe, sneak, jump, dodge). The player
-builds those combined clips on first use. The bow uses `Ranged_Bow_Idle` and `Running_HoldingBow`,
+in that pose on top of every other movement clip (walk, strafe, jump, dodge). The player
+builds those combined clips on first use, counter-rotating the spine so the upper body keeps facing
+forward even when the legs' clip turns the body (the strafes turn the root bone 60° toward the
+direction of travel).
+
+The player plays every clip as authored, root bone included, so the strafes, aiming poses and spins
+keep their body turns and `Spawn_Air` shows its drop. Dodges play from in-place copies with the root
+bone's slide removed, since the controller moves the body itself. The bow uses `Ranged_Bow_Idle` and `Running_HoldingBow`,
 so it stays upright in front of the body instead of swinging out like a rifle.
 
 ### Combos
@@ -105,7 +115,7 @@ blocks:
 | Situation | Animation |
 | --- | --- |
 | Start blocking while standing still | `Melee_Block` raises the shield, then `Melee_Blocking` holds it |
-| Move while blocking | the strafe and walk cycles with `Melee_Blocking` on the arms, facing locked, no sprint |
+| Move or jump while blocking | nothing: blocking is a planted stance, so movement input waits until you let go (dodging still works) |
 | Hit while blocking (`take_hit()`) | `Melee_Block_Hit` instead of `Hit_A` / `Hit_B` |
 | Attack while blocking | `Melee_Block_Attack`, a shield bash |
 | Release | blends back to the normal idle or movement (the packs have no lower-shield clip) |
@@ -132,7 +142,8 @@ the current stance.
 | 1 – 8 | Interact, pick up the weapon in front of you, throw, use item, hit, die, spawn, spawn from the air |
 | Left / Right | Previous / next animation in the current library |
 | Up / Down | Previous / next library (`movement_basic`, `movement_advanced`, `general`) |
-| Q / E | Orbit the camera |
+| Mouse | Look: turns the character while it moves, attacks or blocks; orbits around it while it stands still |
+| Click / Esc | Capture / free the mouse |
 | Mouse wheel | Zoom |
 
 Browsed animations play on the spot, one-shots repeat, and moving cancels them.

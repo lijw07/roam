@@ -1,21 +1,23 @@
 extends Node3D
 
 const LIBRARIES: Array[StringName] = [&"movement_basic", &"movement_advanced", &"general"]
-const STANCE_NAMES: Array[String] = ["Standing", "Crouching", "Crawling"]
 const RIG_HEIGHT := 1.4
-const ORBIT_SPEED := 2.0
+const MOUSE_SENSITIVITY := 0.003
+const MIN_PITCH := -1.2
+const MAX_PITCH := 0.3
 const ZOOM_STEP := 0.5
 const MIN_DISTANCE := 2.0
 const MAX_DISTANCE := 12.0
 const PICK_UP_REACH := 1.6
-const CONTROLS := """WASD move   Shift run   Space jump   Alt dodge   Right mouse (hold) strafe, or block with a shield (attack to bash)
+const CONTROLS := """WASD move without turning (W forward, S back, A / D sideways)   Shift run   Space jump   Alt dodge   Right mouse (hold) block with a shield (attack to bash)
 Left mouse / J attack with the held sword, axe or dagger (keep pressing to combo, Shift + move to lunge)
-C crouch   Z crawl
 1 interact   2 pick up the weapon in front of you   3 throw   4 use item   5 hit   6 die   7 spawn   8 spawn from the air
-Left / Right animation   Up / Down library   Q / E orbit   Wheel zoom"""
+Mouse turns you while moving, attacking or blocking; orbits around you while standing still   Click capture mouse   Esc free mouse
+Left / Right animation   Up / Down library   Wheel zoom"""
 
 @onready var player: CharacterBody3D = $Player
 @onready var camera_rig: Node3D = $CameraRig
+@onready var camera_pitch: Node3D = $CameraRig/Pitch
 @onready var camera: Camera3D = $CameraRig/Pitch/Camera3D
 @onready var info: Label = $HUD/Info
 @onready var weapons: Node3D = $Weapons
@@ -43,10 +45,10 @@ func _ready() -> void:
 	player.item_released.connect(_on_item_released)
 	player.animation_changed.connect(_on_player_animation_changed)
 	player.animation_player.animation_finished.connect(_on_animation_finished)
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
-func _process(delta: float) -> void:
-	camera_rig.rotation.y += Input.get_axis("camera_right", "camera_left") * ORBIT_SPEED * delta
+func _process(_delta: float) -> void:
 	camera_rig.global_position = player.global_position + Vector3.UP * RIG_HEIGHT
 	player.camera_yaw = camera_rig.rotation.y
 	info.text = _hud_text()
@@ -61,14 +63,32 @@ func _unhandled_input(event: InputEvent) -> void:
 		_browse(1, 0)
 	elif event.is_action_pressed("anim_library_prev"):
 		_browse(-1, 0)
+	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		_look(event.relative)
 	elif event is InputEventMouseButton and event.pressed:
-		_zoom(event.button_index)
+		_on_mouse_button(event.button_index)
+	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_ESCAPE:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif event is InputEventKey and event.pressed and not event.echo and _key_actions.has(event.physical_keycode):
 		_key_actions[event.physical_keycode].call()
 
 
+func _look(mouse_motion: Vector2) -> void:
+	camera_pitch.rotation.x = clampf(camera_pitch.rotation.x - mouse_motion.y * MOUSE_SENSITIVITY, MIN_PITCH, MAX_PITCH)
+	camera_rig.rotation.y -= mouse_motion.x * MOUSE_SENSITIVITY
+
+
+func _on_mouse_button(button: MouseButton) -> void:
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and button == MOUSE_BUTTON_LEFT:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		return
+	_zoom(button)
+
+
 func _pick_up_nearest_weapon() -> void:
-	player.pick_up(_nearest_weapon())
+	var weapon := _nearest_weapon()
+	if weapon:
+		player.pick_up(weapon)
 
 
 func _nearest_weapon() -> Node3D:
@@ -128,13 +148,12 @@ func _on_animation_finished(animation: StringName) -> void:
 
 
 func _hud_text() -> String:
-	var stance: String = "Dead" if player.dead else STANCE_NAMES[player.stance]
 	var selection := "press Left / Right to start"
 	if _animation_index >= 0:
 		var names := _library_animations()
 		selection = "%d / %d  %s" % [_animation_index + 1, names.size(), names[_animation_index]]
-	return "Animation   %s\nStance      %s\nWeapon      %s\nBrowser     %s  %s\n\n%s" % [
-		player.current_animation(), stance, _weapon_text(), LIBRARIES[_library_index], selection, CONTROLS,
+	return "Animation   %s\nWeapon      %s\nBrowser     %s  %s\n\n%s" % [
+		player.current_animation(), _weapon_text(), LIBRARIES[_library_index], selection, CONTROLS,
 	]
 
 
