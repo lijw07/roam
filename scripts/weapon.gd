@@ -15,7 +15,3 @@ class_name Weapon
 
 func grip() -> Transform3D:
 	return Transform3D(Basis.from_euler(grip_rotation_degrees * (PI / 180.0)), Vector3.ZERO)
-
-
-func has_attacks() -> bool:
-	return not combo.is_empty()

@@ -42,7 +42,7 @@ preview's walk mode.
 | Space | Jump | `Jump_Start`, `Jump_Idle`, `Jump_Land` |
 | Right mouse (hold) | With a shield, block in place | see Shields |
 | Alt | Dodge toward the move direction, or back when standing still | `Dodge_Forward`, `Dodge_Backward`, `Dodge_Left`, `Dodge_Right` |
-| Left mouse / J | Attack with the held weapon | the weapon's combo, or its `running_attack_animation` while sprinting |
+| Left mouse / J | Attack with the held weapon, or punch and kick with an empty main hand | the weapon's combo, or its `running_attack_animation` while sprinting |
 
 The camera, not WASD, decides which way the character faces. While moving, the legs turn toward the
 direction of travel and play the normal walk or run (or the backwards walk when moving more than
@@ -107,11 +107,12 @@ place. Attacking while
 sprinting plays `Melee_1H_Attack_Jump_Chop` and lunges about 2.8 m forward.
 
 ### Two-handed weapons
-The packs have no two-handed walk, so the two-handed sword and axe use the bow's approach:
-`Melee_2H_Idle` as the idle and on the arms over every other movement clip, and
-`Running_HoldingRifle` (both hands on the weapon, raised) as the run. They don't allow a shield.
+The packs have no two-handed walk or run, so the two-handed sword and axe use `Melee_2H_Idle` as
+the idle and keep its arms over the player's normal `Walking_A` and `Running_A` (and every other
+movement clip), so both hands stay on the weapon. They don't allow a shield.
 
-The two-handed sword combos through `resources/attacks/two_handed/`:
+Both combo through `resources/attacks/two_handed/`, the sword Slice → Stab → Chop → Spin and the axe
+Slice → Chop → Spin:
 
 | Clip | Swing | `combo_time` | `window_end` | `chain_start` |
 | --- | --- | --- | --- | --- |
@@ -120,8 +121,20 @@ The two-handed sword combos through `resources/attacks/two_handed/`:
 | `Melee_2H_Attack_Chop` | 0.70–0.87 | 1.12 | 1.50 | 0.25 |
 | `Melee_2H_Attack_Spin` (finisher, turns the body a full circle) | 0.63–1.33 | 1.60 | 2.20 | 0.15 |
 
-There is no two-handed sprint attack, so sprinting into an attack starts the combo. The two-handed
-axe has the stance but no attacks yet, and `Melee_2H_Attack_Spinning` (a looping whirlwind) is unused.
+There is no two-handed sprint attack, so sprinting into an attack starts the combo.
+`Melee_2H_Attack_Spinning` (a looping whirlwind) is unused.
+
+### Unarmed
+With nothing in the main hand (including holding only a shield) the player fights with the
+`unarmed_combo` export, `resources/attacks/unarmed/`:
+
+| Clip | Swing | `combo_time` | `window_end` | `chain_start` |
+| --- | --- | --- | --- | --- |
+| `Melee_Unarmed_Attack_Punch_A` | 0.38–0.47 | 0.62 | 1.00 | 0.05 |
+| `Melee_Unarmed_Attack_Kick` | 0.25–0.40 | 0.60 | 0.85 | 0.05 |
+
+There is no unarmed sprint attack. Holding a weapon without a combo (the bow, crossbows, wand, staff)
+doesn't attack.
 
 ### Shields
 A shield's root runs `shield.gd` and is held in the left hand alongside a main-hand weapon whose
@@ -143,7 +156,7 @@ through it; all nine adventurer shields share that back depth.
 
 Grips: the bow is held in the left hand turned 180° with the bow stance, the crossbows are turned
 90° so they point along the forearm, the one-handed axe is turned 180° so the blade leads, and the
-dagger is turned 180° so its curved edge faces up. The sword, axe and dagger attack; the other
+dagger is turned 180° so its curved edge faces up. The swords, axes and dagger attack; the other
 weapons hold correctly but have no attacks yet.
 
 The idle, fidget, walk and run animations are exports under **Animations**, so a character can

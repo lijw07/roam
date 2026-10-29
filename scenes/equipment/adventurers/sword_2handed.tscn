@@ -15,7 +15,6 @@ points = PackedVector3Array(0.011146148, 1.9064171, 0.007433325, -0.43819162, 0.
 script = ExtResource("2_weapon")
 combo = Array[ExtResource("3_attack_step")]([ExtResource("4_slice"), ExtResource("5_stab"), ExtResource("6_chop"), ExtResource("7_spin")])
 idle_animation = &"combat_melee/Melee_2H_Idle"
-run_animation = &"movement_advanced/Running_HoldingRifle"
 upper_body_animation = &"combat_melee/Melee_2H_Idle"
 
 [node name="Model" parent="." unique_id=1969823212 instance=ExtResource("1_3pdnt")]

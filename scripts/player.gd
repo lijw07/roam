@@ -60,6 +60,11 @@ const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"attack"]
 @export var gravity_multiplier := 2.0
 @export var fidget_delay := 6.0
 
+@export var unarmed_combo: Array[AttackStep] = [
+	preload("res://resources/attacks/unarmed/punch.tres"),
+	preload("res://resources/attacks/unarmed/kick.tres"),
+]
+
 @export_group("Animations")
 @export var idle_animation: StringName = &"general/Idle_A"
 @export var fidget_animation: StringName = &"general/Idle_B"
@@ -383,22 +388,32 @@ func _dodge_animation(local_heading: Vector3) -> StringName:
 
 
 func _can_attack() -> bool:
-	return _held_weapon != null and _held_weapon.has_attacks()
+	return not _combo().is_empty()
+
+
+func _combo() -> Array[AttackStep]:
+	if _held_weapon != null:
+		return _held_weapon.combo
+	return unarmed_combo if held_item == null else ([] as Array[AttackStep])
+
+
+func _running_attack_animation() -> StringName:
+	return _held_weapon.running_attack_animation if _held_weapon != null else &""
 
 
 func _attack(direction: Vector3) -> void:
-	if Input.is_action_pressed("sprint") and not direction.is_zero_approx() and _held_weapon.running_attack_animation != &"":
+	if Input.is_action_pressed("sprint") and not direction.is_zero_approx() and _running_attack_animation() != &"":
 		_start_running_attack(direction)
 		return
 	if _combo_grace > 0.0:
 		_continue_combo()
 		return
 	_combo_index = 0
-	_start_attack_step(_held_weapon.combo[0], 0.0, BLEND_TIME)
+	_start_attack_step(_combo()[0], 0.0, BLEND_TIME)
 
 
 func _start_running_attack(direction: Vector3) -> void:
-	_start_action(_held_weapon.running_attack_animation, false, direction.normalized() * lunge_speed)
+	_start_action(_running_attack_animation(), false, direction.normalized() * lunge_speed)
 	_action_velocity_duration = LUNGE_DURATION
 	_attacking = true
 	_attack_queued = false
@@ -425,12 +440,12 @@ func _update_attack() -> void:
 
 
 func _has_next_attack_step() -> bool:
-	return _combo_index + 1 < _held_weapon.combo.size()
+	return _combo_index + 1 < _combo().size()
 
 
 func _continue_combo() -> void:
 	_combo_index = _combo_index + 1 if _has_next_attack_step() else 0
-	var step := _held_weapon.combo[_combo_index]
+	var step := _combo()[_combo_index]
 	_start_attack_step(step, step.chain_start, CHAIN_BLEND)
 
 
