@@ -9,17 +9,24 @@ const ZOOM_STEP := 0.5
 const MIN_DISTANCE := 2.0
 const MAX_DISTANCE := 12.0
 const PICK_UP_REACH := 1.6
-const CONTROLS := """WASD move without turning (W forward, S back, A / D sideways)   Shift run   Space jump   Alt dodge   Right mouse (hold) block with a shield (attack to bash)
-Left mouse / J attack with the held sword, axe or dagger (keep pressing to combo, Shift + move to lunge)
-1 interact   2 pick up the weapon in front of you   3 throw   4 use item   5 hit   6 die   7 spawn   8 spawn from the air
-Mouse turns you while moving, attacking or blocking; orbits around you while standing still   Click capture mouse   Esc free mouse
-Left / Right animation   Up / Down library   Wheel zoom"""
+const CONTROL_GROUPS := [
+	["Move", [["W A S D", "move"], ["Shift", "run"], ["Space", "jump"], ["Alt", "dodge"], ["Mouse", "look / turn"]]],
+	["Combat", [["LMB / J", "attack (combo)"], ["Shift + move + LMB", "lunge"], ["RMB", "block with shield"], ["LMB while blocking", "bash"]]],
+	["Actions", [["1", "interact"], ["2", "pick up"], ["3", "throw"], ["4", "use item"], ["5", "hit"], ["6", "die"], ["7", "spawn"], ["8", "spawn from air"]]],
+	["Test", [["Left / Right", "animation"], ["Up / Down", "library"], ["Wheel", "zoom"], ["Click", "capture mouse"], ["Esc", "free mouse"]]],
+]
+const KEY_CHIP_COLOR := Color(1, 1, 1, 0.14)
+const KEY_CHIP_BORDER := Color(1, 1, 1, 0.35)
+const GROUP_TITLE_COLOR := Color(1.0, 0.82, 0.45)
+const ACTION_COLOR := Color(0.85, 0.87, 0.9)
+const GROUP_TITLE_WIDTH := 64.0
 
 @onready var player: CharacterBody3D = $Player
 @onready var camera_rig: Node3D = $CameraRig
 @onready var camera_pitch: Node3D = $CameraRig/Pitch
 @onready var camera: Camera3D = $CameraRig/Pitch/Camera3D
 @onready var info: Label = $HUD/Info
+@onready var control_rows: VBoxContainer = $HUD/Controls/Margin/Rows
 @onready var weapons: Node3D = $Weapons
 
 var _library_index := 0
@@ -46,6 +53,7 @@ func _ready() -> void:
 	player.animation_changed.connect(_on_player_animation_changed)
 	player.animation_player.animation_finished.connect(_on_animation_finished)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	_build_controls()
 
 
 func _process(_delta: float) -> void:
@@ -152,9 +160,55 @@ func _hud_text() -> String:
 	if _animation_index >= 0:
 		var names := _library_animations()
 		selection = "%d / %d  %s" % [_animation_index + 1, names.size(), names[_animation_index]]
-	return "Animation   %s\nWeapon      %s\nBrowser     %s  %s\n\n%s" % [
-		player.current_animation(), _weapon_text(), LIBRARIES[_library_index], selection, CONTROLS,
+	return "Animation   %s\nWeapon      %s\nBrowser     %s  %s" % [
+		player.current_animation(), _weapon_text(), LIBRARIES[_library_index], selection,
 	]
+
+
+func _build_controls() -> void:
+	var chip_style := _key_chip_style()
+	for group: Array in CONTROL_GROUPS:
+		var row := HFlowContainer.new()
+		row.add_theme_constant_override("h_separation", 18)
+		row.add_theme_constant_override("v_separation", 6)
+		var title := _label(group[0], GROUP_TITLE_COLOR)
+		title.custom_minimum_size.x = GROUP_TITLE_WIDTH
+		row.add_child(title)
+		for binding: Array in group[1]:
+			row.add_child(_control_hint(binding[0], binding[1], chip_style))
+		control_rows.add_child(row)
+
+
+func _control_hint(keys: String, action: String, chip_style: StyleBoxFlat) -> HBoxContainer:
+	var hint := HBoxContainer.new()
+	hint.add_theme_constant_override("separation", 6)
+	var chip := PanelContainer.new()
+	chip.add_theme_stylebox_override("panel", chip_style)
+	chip.add_child(_label(keys, Color.WHITE))
+	hint.add_child(chip)
+	hint.add_child(_label(action, ACTION_COLOR))
+	return hint
+
+
+func _label(text: String, color: Color) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_font_size_override("font_size", 14)
+	return label
+
+
+func _key_chip_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = KEY_CHIP_COLOR
+	style.border_color = KEY_CHIP_BORDER
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(4)
+	style.content_margin_left = 6
+	style.content_margin_right = 6
+	style.content_margin_top = 1
+	style.content_margin_bottom = 1
+	return style
 
 
 func _held_text() -> String:

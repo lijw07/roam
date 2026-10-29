@@ -120,7 +120,9 @@ blocks:
 | Attack while blocking | `Melee_Block_Attack`, a shield bash |
 | Release | blends back to the normal idle or movement (the packs have no lower-shield clip) |
 
-Not blocking, the sword or axe combos as usual with the shield on the forearm.
+Not blocking, the sword or axe combos as usual with the shield on the forearm. `grip_offset` (default 0.145 along the hand
+slot's Z) moves the shield out so its back face sits on the hand instead of the forearm passing
+through it; all nine adventurer shields share that back depth.
 
 Grips: the bow is held in the left hand turned 180° with the bow stance, the crossbows are turned
 90° so they point along the forearm, the one-handed axe is turned 180° so the blade leads, and the
