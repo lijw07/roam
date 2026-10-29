@@ -146,6 +146,7 @@ blocks:
 | --- | --- |
 | Start blocking while standing still | `Melee_Block` raises the shield, then `Melee_Blocking` holds it |
 | Move or jump while blocking | nothing: blocking is a planted stance, so movement input waits until you let go (dodging still works) |
+| Right mouse in the air | nothing: the shield only comes up on the ground, so a jump keeps its arc, and holding it through the landing raises the shield once the landing finishes |
 | Hit while blocking (`take_hit()`) | `Melee_Block_Hit` instead of `Hit_A` / `Hit_B` |
 | Attack while blocking | `Melee_Block_Attack`, a shield bash |
 | Release | blends back to the normal idle or movement (the packs have no lower-shield clip) |

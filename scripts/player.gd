@@ -89,7 +89,7 @@ var _attack_queued := false
 var _attack_step: AttackStep = null
 var _combo_index := 0
 var _combo_grace := 0.0
-var _was_blocking := false
+var _shield_raised := false
 var _air_time := 0.0
 var _idle_time := 0.0
 var _hand_slots: Dictionary[StringName, BoneAttachment3D] = {}
@@ -132,7 +132,8 @@ func _physics_process(delta: float) -> void:
 		_move_with_input(direction, delta)
 	_update_facing(direction, delta)
 	_update_upper_body_twist(direction, delta)
-	_was_blocking = _is_blocking()
+	if not _is_blocking():
+		_shield_raised = false
 
 
 func is_acting() -> bool:
@@ -232,7 +233,8 @@ func _move_with_input(direction: Vector3, delta: float) -> void:
 		if Input.is_action_just_pressed("dodge"):
 			_dodge(direction)
 			return
-		if _is_blocking() and not _was_blocking:
+		if _is_blocking() and not _shield_raised:
+			_shield_raised = true
 			_start_action(shield.raise_animation, true)
 			return
 		if Input.is_action_just_pressed("attack") and _is_blocking():
@@ -268,7 +270,7 @@ func _move_with_action(delta: float) -> void:
 
 
 func _is_blocking() -> bool:
-	return shield != null and Input.is_action_pressed("secondary")
+	return shield != null and is_on_floor() and Input.is_action_pressed("secondary")
 
 
 func _follows_camera() -> bool:
