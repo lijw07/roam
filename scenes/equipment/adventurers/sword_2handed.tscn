@@ -1,11 +1,22 @@
 [gd_scene format=3 uid="uid://dp2ijyijl2j61"]
 
 [ext_resource type="PackedScene" path="res://assets/equipment/adventurers/sword_2handed.gltf" id="1_3pdnt"]
+[ext_resource type="Script" path="res://scripts/weapon.gd" id="2_weapon"]
+[ext_resource type="Script" path="res://scripts/attack_step.gd" id="3_attack_step"]
+[ext_resource type="Resource" path="res://resources/attacks/two_handed/slice.tres" id="4_slice"]
+[ext_resource type="Resource" path="res://resources/attacks/two_handed/stab.tres" id="5_stab"]
+[ext_resource type="Resource" path="res://resources/attacks/two_handed/chop.tres" id="6_chop"]
+[ext_resource type="Resource" path="res://resources/attacks/two_handed/spin.tres" id="7_spin"]
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_oxprn"]
 points = PackedVector3Array(0.011146148, 1.9064171, 0.007433325, -0.43819162, 0.406035, -0.030089647, -0.3255786, 0.36862966, -0.067642026, 0.0123450365, 0.10561597, 0.15764284, 0.42534402, 0.406035, -0.030089647, 0.04979817, 0.10561597, -0.14277619, 0.12495807, -0.38253558, -0.030089647, 0.0123450365, 1.8328489, -0.067642026, -0.025192639, 1.757803, 0.08253808, 0.42534402, 0.48108095, 0.044985704, -0.13780567, -0.3448949, -0.067642026, -0.40065393, 0.36862966, 0.044985704, -0.06264577, -0.38253558, 0.08253808, -0.1752588, 1.7201624, -0.030089647, 0.1624112, 1.757803, 0.007433325, -0.06264577, 0.406035, -0.14277619, 0.08742039, -0.3448949, 0.08253808, -0.025192639, 0.4436756, 0.15764284, 0.08742039, 1.7201624, -0.067642026, -0.13780567, 1.757803, 0.044985704, 0.35026866, 0.36862966, -0.067642026, 0.12495807, -0.3448949, -0.067642026, 0.0123450365, 1.757803, 0.08253808, 0.04979817, 0.406035, -0.14277619, -0.06264577, 1.7952083, -0.067642026, -0.40065393, 0.48108095, 0.044985704, -0.06264577, 0.10561597, -0.14277619, 0.0123450365, 0.4436756, 0.15764284, -0.13780567, -0.3448949, 0.044985704, 0.42534402, 0.406035, 0.044985704, 0.1624112, 1.757803, -0.030089647, 0.12495807, 1.7952083, 0.044985704)
 
 [node name="Sword2Handed" type="Area3D" unique_id=581818623]
+script = ExtResource("2_weapon")
+combo = Array[ExtResource("3_attack_step")]([ExtResource("4_slice"), ExtResource("5_stab"), ExtResource("6_chop"), ExtResource("7_spin")])
+idle_animation = &"combat_melee/Melee_2H_Idle"
+run_animation = &"movement_advanced/Running_HoldingRifle"
+upper_body_animation = &"combat_melee/Melee_2H_Idle"
 
 [node name="Model" parent="." unique_id=1969823212 instance=ExtResource("1_3pdnt")]
 

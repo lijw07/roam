@@ -106,6 +106,23 @@ Horizontal. Chained, hits land about 0.6–0.85 s apart instead of about 1.3 s, 
 place. Attacking while
 sprinting plays `Melee_1H_Attack_Jump_Chop` and lunges about 2.8 m forward.
 
+### Two-handed weapons
+The packs have no two-handed walk, so the two-handed sword and axe use the bow's approach:
+`Melee_2H_Idle` as the idle and on the arms over every other movement clip, and
+`Running_HoldingRifle` (both hands on the weapon, raised) as the run. They don't allow a shield.
+
+The two-handed sword combos through `resources/attacks/two_handed/`:
+
+| Clip | Swing | `combo_time` | `window_end` | `chain_start` |
+| --- | --- | --- | --- | --- |
+| `Melee_2H_Attack_Slice` | 0.37–0.43 | 0.72 | 1.05 | 0.05 |
+| `Melee_2H_Attack_Stab` | about 0.40 | 0.78 | 1.35 | 0.05 |
+| `Melee_2H_Attack_Chop` | 0.70–0.87 | 1.12 | 1.50 | 0.25 |
+| `Melee_2H_Attack_Spin` (finisher, turns the body a full circle) | 0.63–1.33 | 1.60 | 2.20 | 0.15 |
+
+There is no two-handed sprint attack, so sprinting into an attack starts the combo. The two-handed
+axe has the stance but no attacks yet, and `Melee_2H_Attack_Spinning` (a looping whirlwind) is unused.
+
 ### Shields
 A shield's root runs `shield.gd` and is held in the left hand alongside a main-hand weapon whose
 `allows_shield` is on (the one-handed sword and axe); picking up a weapon that doesn't allow one, or
