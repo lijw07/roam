@@ -64,6 +64,11 @@ const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"attack"]
 	preload("res://resources/attacks/unarmed/punch.tres"),
 	preload("res://resources/attacks/unarmed/kick.tres"),
 ]
+@export var dual_wield_combo: Array[AttackStep] = [
+	preload("res://resources/attacks/dual_wield/chop.tres"),
+	preload("res://resources/attacks/dual_wield/stab.tres"),
+	preload("res://resources/attacks/dual_wield/slice.tres"),
+]
 
 @export_group("Animations")
 @export var idle_animation: StringName = &"general/Idle_A"
@@ -79,6 +84,7 @@ const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"attack"]
 var dead := false
 var held_item: Node3D = null
 var shield: Shield = null
+var off_hand_weapon: Weapon = null
 
 var _action: StringName = &""
 var _action_cancellable := false
@@ -152,7 +158,7 @@ func pick_up(item: Node3D = null) -> void:
 	if not _perform(PICK_UP_ANIMATION) or item == null:
 		return
 	_pick_up_item = item
-	if not item is Shield:
+	if not item is Shield and not _fits_off_hand(item):
 		_held_hand = item.hand if item is Weapon else RIGHT_HAND
 		_held_grip = item.grip() if item is Weapon else Transform3D.IDENTITY
 	_align_hand_with(item.global_position)
@@ -161,9 +167,19 @@ func pick_up(item: Node3D = null) -> void:
 func release_held_item() -> void:
 	if held_item == null:
 		return
+	release_off_hand_weapon()
 	var item := held_item
 	held_item = null
 	_held_weapon = null
+	item.reparent(get_parent())
+	item_released.emit(item)
+
+
+func release_off_hand_weapon() -> void:
+	if off_hand_weapon == null:
+		return
+	var item := off_hand_weapon
+	off_hand_weapon = null
 	item.reparent(get_parent())
 	item_released.emit(item)
 
@@ -394,6 +410,8 @@ func _can_attack() -> bool:
 
 
 func _combo() -> Array[AttackStep]:
+	if off_hand_weapon != null:
+		return dual_wield_combo
 	if _held_weapon != null:
 		return _held_weapon.combo
 	return unarmed_combo if held_item == null else ([] as Array[AttackStep])
@@ -491,6 +509,8 @@ func _update_pick_up() -> void:
 	_pick_up_item = null
 	if item is Shield:
 		_take_shield(item)
+	elif _fits_off_hand(item):
+		_take_off_hand_weapon(item)
 	else:
 		_take_main_hand_item(item)
 
@@ -504,8 +524,19 @@ func _take_main_hand_item(item: Node3D) -> void:
 	_attach_to_hand(item, RIGHT_HAND, _held_grip if _held_hand == RIGHT_HAND else Transform3D.IDENTITY)
 
 
+func _take_off_hand_weapon(item: Weapon) -> void:
+	release_off_hand_weapon()
+	off_hand_weapon = item
+	_attach_to_hand(item, RIGHT_HAND, item.grip())
+
+
+func _fits_off_hand(item: Node3D) -> bool:
+	return item is Weapon and item.dual_wieldable and shield == null and _held_weapon != null and _held_weapon.dual_wieldable
+
+
 func _take_shield(item: Shield) -> void:
 	release_shield()
+	release_off_hand_weapon()
 	if not _allows_shield():
 		release_held_item()
 	shield = item
@@ -517,9 +548,12 @@ func _allows_shield() -> bool:
 
 
 func _settle_held_item() -> void:
-	if held_item == null or _action == PICK_UP_ANIMATION or held_item.get_parent() == _hand_slot(_held_hand):
+	if _action == PICK_UP_ANIMATION:
 		return
-	_attach_to_hand(held_item, _held_hand, _held_grip)
+	if held_item != null and held_item.get_parent() != _hand_slot(_held_hand):
+		_attach_to_hand(held_item, _held_hand, _held_grip)
+	if off_hand_weapon != null and off_hand_weapon.get_parent() != _hand_slot(LEFT_HAND):
+		_attach_to_hand(off_hand_weapon, LEFT_HAND, off_hand_weapon.off_hand_grip())
 
 
 func _attach_to_hand(item: Node3D, hand: StringName, grip: Transform3D) -> void:

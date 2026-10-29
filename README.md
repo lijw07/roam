@@ -62,8 +62,8 @@ spawn and `Interact` when you open a door.
 
 ## Weapons
 A weapon scene's root runs `weapon.gd`, which says how it is held and swung: `hand` (`handslot.r`
-or `handslot.l`), `grip_rotation_degrees`, `combo` (a list of `AttackStep` resources) and
-`running_attack_animation`.
+or `handslot.l`), `grip_rotation_degrees`, `combo` (a list of `AttackStep` resources),
+`running_attack_animation`, `allows_shield` and `dual_wieldable`.
 
 Its **Stance** group changes how the player moves while holding it: `idle_animation` and
 `run_animation` replace the player's own, and `upper_body_animation` keeps the arms, chest and head
@@ -123,6 +123,28 @@ Slice → Chop → Spin:
 
 There is no two-handed sprint attack, so sprinting into an attack starts the combo.
 `Melee_2H_Attack_Spinning` (a looping whirlwind) is unused.
+
+### Dual wielding
+The one-handed sword, axe and dagger are `dual_wieldable`. Picking one up while holding another and
+no shield puts it in the left hand (the right hand grabs it, then passes it over once the player is
+back up); picking up a third swaps the left-hand weapon. A shield replaces the left-hand weapon, and
+any other weapon replaces both. The left hand uses `Weapon.off_hand_grip()`, the right-hand grip
+mirrored: the hand slots mirror each other with the forearm axis flipped, so the grip is flipped
+back along that axis and through the blade's thickness, which keeps the axe's blade and the dagger's
+curved edge leading in either hand.
+
+Dual wielding attacks with the player's `dual_wield_combo`, `resources/attacks/dual_wield/`, in the
+order Chop → Stab → Slice (each follow-through flows closest into the next wind-up, and the two-part
+slice finishes):
+
+| Clip | Swing | `combo_time` | `window_end` | `chain_start` |
+| --- | --- | --- | --- | --- |
+| `Melee_Dualwield_Attack_Chop` | right 0.45–0.60, left 0.85–0.90 | 0.95 | 1.15 | 0.00 |
+| `Melee_Dualwield_Attack_Stab` | both 0.38–0.45 | 0.60 | 1.30 | 0.20 |
+| `Melee_Dualwield_Attack_Slice` | both 0.55–0.68 and 0.75–0.83 | 0.90 | 1.10 | 0.20 |
+
+The packs have no dual-wield idle, walk, run or sprint attack, so the player moves as with one
+weapon and sprinting into an attack still plays the main-hand weapon's `Melee_1H_Attack_Jump_Chop`.
 
 ### Unarmed
 With nothing in the main hand (including holding only a shield) the player fights with the

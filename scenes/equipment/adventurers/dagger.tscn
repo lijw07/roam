@@ -15,6 +15,7 @@ script = ExtResource("2_weapon")
 grip_rotation_degrees = Vector3(0, 180, 0)
 combo = Array[ExtResource("3_attack_step")]([ExtResource("4_slice_diagonal"), ExtResource("5_stab"), ExtResource("6_slice_horizontal")])
 running_attack_animation = &"combat_melee/Melee_1H_Attack_Jump_Chop"
+dual_wieldable = true
 
 [node name="Model" parent="." unique_id=334446404 instance=ExtResource("1_0n88g")]
 

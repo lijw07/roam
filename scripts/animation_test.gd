@@ -213,7 +213,7 @@ func _key_chip_style() -> StyleBoxFlat:
 
 func _held_text() -> String:
 	var items: Array[String] = []
-	for item: Node3D in [player.held_item, player.shield]:
+	for item: Node3D in [player.held_item, player.off_hand_weapon, player.shield]:
 		if item:
 			items.append(item.name.capitalize())
 	return "holding %s" % " + ".join(items) if not items.is_empty() else "empty-handed"
