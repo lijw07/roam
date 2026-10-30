@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://b2273dmtprfgq"]
+
+[ext_resource type="PackedScene" path="res://assets/equipment/weapons/staff_A.gltf" id="1_l7y6o"]
+[ext_resource type="Script" path="res://scripts/weapon.gd" id="2_weapon"]
+[ext_resource type="Script" path="res://scripts/attack_step.gd" id="3_attack_step"]
+[ext_resource type="Resource" path="res://resources/attacks/magic/long_spellcast.tres" id="4_long_spellcast"]
+[ext_resource type="Resource" path="res://resources/attacks/magic/shoot.tres" id="5_shoot"]
+[ext_resource type="Resource" path="res://resources/attacks/magic/raise.tres" id="6_raise"]
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_7vh2m"]
+points = PackedVector3Array(0.07129058, 0.7086607, 0.017676935, -0.06888768, -0.5683696, -0.013449396, 0.05570302, -1.0668056, 0.033252295, -0.022152444, 1.0201832, 0.06441522, 0.024555346, 1.0668056, -0.060187675, 0.040129185, -0.9578787, -0.060187675, -0.06888768, 0.7709652, -0.044587925, -0.037726283, -1.0668056, 0.048827656, -0.037726283, -0.97334886, -0.060187675, -0.06888768, 1.0668056, 0.017676935, 0.024555346, 0.9578787, 0.06441522, -0.037726283, -0.6775085, 0.06441522, 0.05570302, -1.0668056, -0.044587925, 0.05570302, 1.0668056, -0.029036954, -0.0065786075, -0.97334886, 0.06441522, -0.05330012, -1.0668056, -0.044587925, -0.022152444, 1.0668056, -0.060187675, -0.05330012, -1.0668056, 0.033252295, 0.05570302, 1.0668056, 0.033252295, -0.05330012, 1.0513355, 0.048827656, 0.040129185, -1.0668056, 0.048827656, 0.07129058, 0.7086607, -0.013449396, -0.06888768, -0.50606513, -0.044587925, -0.05330012, 1.0824877, -0.029036954, -0.0065786075, 1.0668056, 0.06441522, -0.037726283, -1.0824877, -0.044587925, 0.024555346, -1.0668056, -0.060187675, 0.024555346, -1.0824877, 0.048827656, 0.05570302, -1.0824877, -0.029036954, -0.05330012, 1.0668056, -0.044587925, 0.040129185, 1.0824877, -0.044587925, -0.05330012, 1.0824877, 0.033252295)
+
+[node name="StaffA" type="Area3D" unique_id=1236210172]
+script = ExtResource("2_weapon")
+combo = Array[ExtResource("3_attack_step")]([ExtResource("4_long_spellcast"), ExtResource("5_shoot")])
+secondary_combo = Array[ExtResource("3_attack_step")]([ExtResource("6_raise")])
+
+[node name="Model" parent="." unique_id=1428402660 instance=ExtResource("1_l7y6o")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=764696654]
+shape = SubResource("ConvexPolygonShape3D_7vh2m")

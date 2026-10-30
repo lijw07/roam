@@ -1,0 +1,775 @@
+[gd_scene format=3 uid="uid://bbp51i165ba13"]
+
+[ext_resource type="Script" uid="uid://cgc4hvxx3qqqf" path="res://scripts/animation_test.gd" id="1_test"]
+[ext_resource type="PackedScene" uid="uid://r4kxi28gpfit" path="res://scenes/dungeon/floors/floor_tile_large.tscn" id="2_floor"]
+[ext_resource type="PackedScene" uid="uid://dfofpcqw5hsoy" path="res://scenes/characters/adventurers/knight.tscn" id="3_knight"]
+[ext_resource type="Script" uid="uid://b4x3gwfy0ernd" path="res://scripts/dungeon_explorer.gd" id="4_explorer"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/sword_1handed.tscn" id="10_sword_1handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/sword_2handed.tscn" id="11_sword_2handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/axe_1handed.tscn" id="12_axe_1handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/axe_2handed.tscn" id="13_axe_2handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/dagger.tscn" id="14_dagger"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/wand.tscn" id="15_wand"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/staff.tscn" id="16_staff"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/crossbow_1handed.tscn" id="17_crossbow_1handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/crossbow_2handed.tscn" id="18_crossbow_2handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/bow_withstring.tscn" id="19_bow_withstring"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_round.tscn" id="20_shield_round"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_a.tscn" id="21_sword_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_b.tscn" id="22_sword_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_c.tscn" id="23_sword_c"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_d.tscn" id="24_sword_d"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_e.tscn" id="25_sword_e"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/dagger_a.tscn" id="26_dagger_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/dagger_b.tscn" id="27_dagger_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/axe_a.tscn" id="28_axe_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/axe_b.tscn" id="29_axe_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/axe_c.tscn" id="30_axe_c"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/hammer_a.tscn" id="31_hammer_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/hammer_b.tscn" id="32_hammer_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/hammer_c.tscn" id="33_hammer_c"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/halberd.tscn" id="34_halberd"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/spear_a.tscn" id="35_spear_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/staff_a.tscn" id="36_staff_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/staff_b.tscn" id="37_staff_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/wand_a.tscn" id="38_wand_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/bow_a_withstring.tscn" id="39_bow_a_withstring"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/bow_b_withstring.tscn" id="40_bow_b_withstring"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/bow_a.tscn" id="41_bow_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/bow_b.tscn" id="42_bow_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/fistweapon_a.tscn" id="43_fistweapon_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/fistweapon_a_stacked.tscn" id="44_fistweapon_a_stacked"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/fistweapon_b.tscn" id="45_fistweapon_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/shield_a.tscn" id="47_shield_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/shield_b.tscn" id="48_shield_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/shield_c.tscn" id="49_shield_c"]
+
+[sub_resource type="Environment" id="Environment_test"]
+background_mode = 1
+background_color = Color(0.05, 0.05, 0.07, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.5, 0.5, 0.6, 1)
+ambient_light_energy = 0.6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_controls"]
+bg_color = Color(0.06, 0.07, 0.09, 0.72)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="AnimationTest" type="Node3D" unique_id=1844858767]
+script = ExtResource("1_test")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1061498190]
+environment = SubResource("Environment_test")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1694216878]
+transform = Transform3D(0.81915206, -0.46984634, 0.32898995, 0, 0.57357645, 0.81915206, -0.57357645, -0.6710101, 0.46984634, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Floor" type="Node3D" parent="." unique_id=2121162053]
+
+[node name="FloorTileLarge1" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, -22)
+
+[node name="FloorTileLarge2" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, -18)
+
+[node name="FloorTileLarge3" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, -14)
+
+[node name="FloorTileLarge4" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, -10)
+
+[node name="FloorTileLarge5" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, -6)
+
+[node name="FloorTileLarge6" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, -2)
+
+[node name="FloorTileLarge7" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, 2)
+
+[node name="FloorTileLarge8" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, 6)
+
+[node name="FloorTileLarge9" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, 10)
+
+[node name="FloorTileLarge10" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, 14)
+
+[node name="FloorTileLarge11" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, 18)
+
+[node name="FloorTileLarge12" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, 22)
+
+[node name="FloorTileLarge13" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -22)
+
+[node name="FloorTileLarge14" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -18)
+
+[node name="FloorTileLarge15" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -14)
+
+[node name="FloorTileLarge16" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -10)
+
+[node name="FloorTileLarge17" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -6)
+
+[node name="FloorTileLarge18" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -2)
+
+[node name="FloorTileLarge19" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, 2)
+
+[node name="FloorTileLarge20" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, 6)
+
+[node name="FloorTileLarge21" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, 10)
+
+[node name="FloorTileLarge22" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, 14)
+
+[node name="FloorTileLarge23" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, 18)
+
+[node name="FloorTileLarge24" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, 22)
+
+[node name="FloorTileLarge25" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -22)
+
+[node name="FloorTileLarge26" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -18)
+
+[node name="FloorTileLarge27" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -14)
+
+[node name="FloorTileLarge28" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -10)
+
+[node name="FloorTileLarge29" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -6)
+
+[node name="FloorTileLarge30" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -2)
+
+[node name="FloorTileLarge31" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 2)
+
+[node name="FloorTileLarge32" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 6)
+
+[node name="FloorTileLarge33" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 10)
+
+[node name="FloorTileLarge34" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 14)
+
+[node name="FloorTileLarge35" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 18)
+
+[node name="FloorTileLarge36" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 22)
+
+[node name="FloorTileLarge37" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -22)
+
+[node name="FloorTileLarge38" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -18)
+
+[node name="FloorTileLarge39" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -14)
+
+[node name="FloorTileLarge40" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -10)
+
+[node name="FloorTileLarge41" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -6)
+
+[node name="FloorTileLarge42" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -2)
+
+[node name="FloorTileLarge43" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 2)
+
+[node name="FloorTileLarge44" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 6)
+
+[node name="FloorTileLarge45" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 10)
+
+[node name="FloorTileLarge46" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 14)
+
+[node name="FloorTileLarge47" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 18)
+
+[node name="FloorTileLarge48" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 22)
+
+[node name="FloorTileLarge49" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -22)
+
+[node name="FloorTileLarge50" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -18)
+
+[node name="FloorTileLarge51" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -14)
+
+[node name="FloorTileLarge52" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -10)
+
+[node name="FloorTileLarge53" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -6)
+
+[node name="FloorTileLarge54" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -2)
+
+[node name="FloorTileLarge55" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 2)
+
+[node name="FloorTileLarge56" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 6)
+
+[node name="FloorTileLarge57" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 10)
+
+[node name="FloorTileLarge58" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 14)
+
+[node name="FloorTileLarge59" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 18)
+
+[node name="FloorTileLarge60" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 22)
+
+[node name="FloorTileLarge61" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -22)
+
+[node name="FloorTileLarge62" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -18)
+
+[node name="FloorTileLarge63" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -14)
+
+[node name="FloorTileLarge64" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -10)
+
+[node name="FloorTileLarge65" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -6)
+
+[node name="FloorTileLarge66" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -2)
+
+[node name="FloorTileLarge67" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 2)
+
+[node name="FloorTileLarge68" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 6)
+
+[node name="FloorTileLarge69" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 10)
+
+[node name="FloorTileLarge70" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 14)
+
+[node name="FloorTileLarge71" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 18)
+
+[node name="FloorTileLarge72" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 22)
+
+[node name="FloorTileLarge73" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -22)
+
+[node name="FloorTileLarge74" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -18)
+
+[node name="FloorTileLarge75" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -14)
+
+[node name="FloorTileLarge76" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -10)
+
+[node name="FloorTileLarge77" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -6)
+
+[node name="FloorTileLarge78" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -2)
+
+[node name="FloorTileLarge79" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 2)
+
+[node name="FloorTileLarge80" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 6)
+
+[node name="FloorTileLarge81" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 10)
+
+[node name="FloorTileLarge82" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 14)
+
+[node name="FloorTileLarge83" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 18)
+
+[node name="FloorTileLarge84" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 22)
+
+[node name="FloorTileLarge85" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -22)
+
+[node name="FloorTileLarge86" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -18)
+
+[node name="FloorTileLarge87" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -14)
+
+[node name="FloorTileLarge88" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -10)
+
+[node name="FloorTileLarge89" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -6)
+
+[node name="FloorTileLarge90" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -2)
+
+[node name="FloorTileLarge91" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 2)
+
+[node name="FloorTileLarge92" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 6)
+
+[node name="FloorTileLarge93" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 10)
+
+[node name="FloorTileLarge94" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 14)
+
+[node name="FloorTileLarge95" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 18)
+
+[node name="FloorTileLarge96" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 22)
+
+[node name="FloorTileLarge97" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -22)
+
+[node name="FloorTileLarge98" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -18)
+
+[node name="FloorTileLarge99" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -14)
+
+[node name="FloorTileLarge100" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -10)
+
+[node name="FloorTileLarge101" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -6)
+
+[node name="FloorTileLarge102" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -2)
+
+[node name="FloorTileLarge103" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 2)
+
+[node name="FloorTileLarge104" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 6)
+
+[node name="FloorTileLarge105" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 10)
+
+[node name="FloorTileLarge106" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 14)
+
+[node name="FloorTileLarge107" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 18)
+
+[node name="FloorTileLarge108" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 22)
+
+[node name="FloorTileLarge109" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, -22)
+
+[node name="FloorTileLarge110" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, -18)
+
+[node name="FloorTileLarge111" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, -14)
+
+[node name="FloorTileLarge112" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, -10)
+
+[node name="FloorTileLarge113" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, -6)
+
+[node name="FloorTileLarge114" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, -2)
+
+[node name="FloorTileLarge115" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 2)
+
+[node name="FloorTileLarge116" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 6)
+
+[node name="FloorTileLarge117" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 10)
+
+[node name="FloorTileLarge118" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 14)
+
+[node name="FloorTileLarge119" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 18)
+
+[node name="FloorTileLarge120" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 22)
+
+[node name="FloorTileLarge121" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, -22)
+
+[node name="FloorTileLarge122" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, -18)
+
+[node name="FloorTileLarge123" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, -14)
+
+[node name="FloorTileLarge124" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, -10)
+
+[node name="FloorTileLarge125" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, -6)
+
+[node name="FloorTileLarge126" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, -2)
+
+[node name="FloorTileLarge127" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 2)
+
+[node name="FloorTileLarge128" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 6)
+
+[node name="FloorTileLarge129" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 10)
+
+[node name="FloorTileLarge130" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 14)
+
+[node name="FloorTileLarge131" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 18)
+
+[node name="FloorTileLarge132" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, 22)
+
+[node name="FloorTileLarge133" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -22)
+
+[node name="FloorTileLarge134" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -18)
+
+[node name="FloorTileLarge135" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -14)
+
+[node name="FloorTileLarge136" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -10)
+
+[node name="FloorTileLarge137" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -6)
+
+[node name="FloorTileLarge138" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -2)
+
+[node name="FloorTileLarge139" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 2)
+
+[node name="FloorTileLarge140" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 6)
+
+[node name="FloorTileLarge141" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 10)
+
+[node name="FloorTileLarge142" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 14)
+
+[node name="FloorTileLarge143" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 18)
+
+[node name="FloorTileLarge144" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 22)
+
+[node name="Player" parent="." unique_id=1153986931 instance=ExtResource("3_knight")]
+script = ExtResource("4_explorer")
+
+[node name="Weapons" type="Node3D" parent="."]
+
+[node name="Sword1Handed" parent="Weapons" instance=ExtResource("10_sword_1handed")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -20, 0.120317, -5)
+
+[node name="SwordA" parent="Weapons" instance=ExtResource("21_sword_a")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -17.5, 0.119338, -5)
+
+[node name="SwordB" parent="Weapons" instance=ExtResource("22_sword_b")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -15, 0.115103, -5)
+
+[node name="SwordC" parent="Weapons" instance=ExtResource("23_sword_c")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -12.5, 0.131804, -5)
+
+[node name="SwordD" parent="Weapons" instance=ExtResource("24_sword_d")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -10, 0.255762, -5)
+
+[node name="Dagger" parent="Weapons" instance=ExtResource("14_dagger")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -5, 0.130871, -5)
+
+[node name="DaggerA" parent="Weapons" instance=ExtResource("26_dagger_a")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -2.5, 0.130027, -5)
+
+[node name="DaggerB" parent="Weapons" instance=ExtResource("27_dagger_b")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0.10314, -5)
+
+[node name="Axe1Handed" parent="Weapons" instance=ExtResource("12_axe_1handed")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 5, 0.14748, -5)
+
+[node name="AxeA" parent="Weapons" instance=ExtResource("28_axe_a")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 7.5, 0.180182, -5)
+
+[node name="AxeC" parent="Weapons" instance=ExtResource("30_axe_c")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 10, 0.156818, -5)
+
+[node name="HammerA" parent="Weapons" instance=ExtResource("31_hammer_a")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 15, 0.279017, -5)
+
+[node name="HammerB" parent="Weapons" instance=ExtResource("32_hammer_b")]
+transform = Transform3D(0, 0, -1, 1, 0, 0, 0, -1, 0, 17.5, 0.37843, -5)
+
+[node name="HammerC" parent="Weapons" instance=ExtResource("33_hammer_c")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 20, 0.286868, -5)
+
+[node name="Sword2Handed" parent="Weapons" instance=ExtResource("11_sword_2handed")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -21.25, 0.17901, -11)
+
+[node name="SwordE" parent="Weapons" instance=ExtResource("25_sword_e")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -18.75, 0.173499, -11)
+
+[node name="Axe2Handed" parent="Weapons" instance=ExtResource("13_axe_2handed")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -13.75, 0.185899, -11)
+
+[node name="AxeB" parent="Weapons" instance=ExtResource("29_axe_b")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -11.25, 0.180182, -11)
+
+[node name="Halberd" parent="Weapons" instance=ExtResource("34_halberd")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -6.25, 0.200543, -11)
+
+[node name="SpearA" parent="Weapons" instance=ExtResource("35_spear_a")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -3.75, 0.177973, -11)
+
+[node name="FistweaponA" parent="Weapons" instance=ExtResource("43_fistweapon_a")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1.25, 0.097948, -11)
+
+[node name="FistweaponB" parent="Weapons" instance=ExtResource("45_fistweapon_b")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 3.75, 0.097817, -11)
+
+[node name="FistweaponAStacked" parent="Weapons" instance=ExtResource("44_fistweapon_a_stacked")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 6.25, 0.057949, -11)
+
+[node name="ShieldRound" parent="Weapons" instance=ExtResource("20_shield_round")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 13.75, 0.199768, -11)
+
+[node name="ShieldA" parent="Weapons" instance=ExtResource("47_shield_a")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 16.25, 0.210196, -11)
+
+[node name="ShieldB" parent="Weapons" instance=ExtResource("48_shield_b")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 18.75, 0.210196, -11)
+
+[node name="ShieldC" parent="Weapons" instance=ExtResource("49_shield_c")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 21.25, 0.220463, -11)
+
+[node name="Wand" parent="Weapons" instance=ExtResource("15_wand")]
+transform = Transform3D(0, 0, -1, 1, 0, 0, 0, -1, 0, -17.5, 0.135327, -17)
+
+[node name="WandA" parent="Weapons" instance=ExtResource("38_wand_a")]
+transform = Transform3D(0, 0, -1, 1, 0, 0, 0, -1, 0, -15, 0.156968, -17)
+
+[node name="Staff" parent="Weapons" instance=ExtResource("16_staff")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -10, 0.201173, -17)
+
+[node name="StaffA" parent="Weapons" instance=ExtResource("36_staff_a")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -7.5, 0.10739, -17)
+
+[node name="StaffB" parent="Weapons" instance=ExtResource("37_staff_b")]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, -5, 0.192094, -17)
+
+[node name="Crossbow1Handed" parent="Weapons" instance=ExtResource("17_crossbow_1handed")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0.226236, -17)
+
+[node name="Crossbow2Handed" parent="Weapons" instance=ExtResource("18_crossbow_2handed")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 2.5, 0.226236, -17)
+
+[node name="BowWithString" parent="Weapons" instance=ExtResource("19_bow_withstring")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 7.5, 0.132799, -17)
+
+[node name="BowAWithString" parent="Weapons" instance=ExtResource("39_bow_a_withstring")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 10, 0.10082, -17)
+
+[node name="BowBWithString" parent="Weapons" instance=ExtResource("40_bow_b_withstring")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 12.5, 0.138283, -17)
+
+[node name="BowA" parent="Weapons" instance=ExtResource("41_bow_a")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 15, 0.10082, -17)
+
+[node name="BowB" parent="Weapons" instance=ExtResource("42_bow_b")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 17.5, 0.138283, -17)
+
+[node name="WeaponLabels" type="Node3D" parent="."]
+
+[node name="1HSwords" type="Label3D" parent="WeaponLabels"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -15, 0.06, -3.1)
+pixel_size = 0.01
+text = "1H SWORDS"
+font_size = 72
+outline_size = 16
+modulate = Color(1, 0.88, 0.6, 1)
+
+[node name="Daggers" type="Label3D" parent="WeaponLabels"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -2.5, 0.06, -3.1)
+pixel_size = 0.01
+text = "DAGGERS"
+font_size = 72
+outline_size = 16
+modulate = Color(1, 0.88, 0.6, 1)
+
+[node name="1HAxes" type="Label3D" parent="WeaponLabels"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 7.5, 0.06, -3.1)
+pixel_size = 0.01
+text = "1H AXES"
+font_size = 72
+outline_size = 16
+modulate = Color(1, 0.88, 0.6, 1)
+
+[node name="HammersMaces" type="Label3D" parent="WeaponLabels"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 17.5, 0.06, -3.1)
+pixel_size = 0.01
+text = "HAMMERS & MACES"
+font_size = 72
+outline_size = 16
+modulate = Color(1, 0.88, 0.6, 1)
+
+[node name="2HSwords" type="Label3D" parent="WeaponLabels"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -20, 0.06, -9.1)
+pixel_size = 0.01
+text = "2H SWORDS"
+font_size = 72
+outline_size = 16
+modulate = Color(1, 0.88, 0.6, 1)
+
+[node name="2HAxes" type="Label3D" parent="WeaponLabels"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -12.5, 0.06, -9.1)
+pixel_size = 0.01
+text = "2H AXES"
+font_size = 72
+outline_size = 16
+modulate = Color(1, 0.88, 0.6, 1)
+
+[node name="Polearms" type="Label3D" parent="WeaponLabels"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -5, 0.06, -9.1)
+pixel_size = 0.01
+text = "POLEARMS"
+font_size = 72
+outline_size = 16
+modulate = Color(1, 0.88, 0.6, 1)
+
+[node name="FistWeapons" type="Label3D" parent="WeaponLabels"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 3.75, 0.06, -9.1)
+pixel_size = 0.01
+text = "FIST WEAPONS"
+font_size = 72
+outline_size = 16
+modulate = Color(1, 0.88, 0.6, 1)
+
+[node name="Shields" type="Label3D" parent="WeaponLabels"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 17.5, 0.06, -9.1)
+pixel_size = 0.01
+text = "SHIELDS"
+font_size = 72
+outline_size = 16
+modulate = Color(1, 0.88, 0.6, 1)
+
+[node name="Wands" type="Label3D" parent="WeaponLabels"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -16.25, 0.06, -15.1)
+pixel_size = 0.01
+text = "WANDS"
+font_size = 72
+outline_size = 16
+modulate = Color(1, 0.88, 0.6, 1)
+
+[node name="Staffs" type="Label3D" parent="WeaponLabels"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -7.5, 0.06, -15.1)
+pixel_size = 0.01
+text = "STAFFS"
+font_size = 72
+outline_size = 16
+modulate = Color(1, 0.88, 0.6, 1)
+
+[node name="Crossbows" type="Label3D" parent="WeaponLabels"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 1.25, 0.06, -15.1)
+pixel_size = 0.01
+text = "CROSSBOWS"
+font_size = 72
+outline_size = 16
+modulate = Color(1, 0.88, 0.6, 1)
+
+[node name="Bows" type="Label3D" parent="WeaponLabels"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 12.5, 0.06, -15.1)
+pixel_size = 0.01
+text = "BOWS"
+font_size = 72
+outline_size = 16
+modulate = Color(1, 0.88, 0.6, 1)
+
+[node name="CameraRig" type="Node3D" parent="." unique_id=709445592]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+
+[node name="Pitch" type="Node3D" parent="CameraRig" unique_id=1236381160]
+transform = Transform3D(1, 0, 0, 0, 0.9393727, 0.3428978, 0, -0.3428978, 0.9393727, 0, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/Pitch" unique_id=1589129751]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+fov = 60.0
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=437735592]
+
+[node name="Info" type="Label" parent="HUD" unique_id=1668441047]
+offset_left = 16.0
+offset_top = 16.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+
+[node name="Controls" type="PanelContainer" parent="HUD"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_controls")
+
+[node name="Margin" type="MarginContainer" parent="HUD/Controls"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="Rows" type="VBoxContainer" parent="HUD/Controls/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8

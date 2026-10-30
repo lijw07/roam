@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://cfu0ac3hlxttf"]
+
+[ext_resource type="PackedScene" path="res://assets/equipment/weapons/hammer_B.gltf" id="1_or1dd"]
+[ext_resource type="Script" path="res://scripts/weapon.gd" id="2_weapon"]
+[ext_resource type="Script" path="res://scripts/attack_step.gd" id="3_attack_step"]
+[ext_resource type="Resource" path="res://resources/attacks/one_handed/slice_diagonal.tres" id="4_slice_diagonal"]
+[ext_resource type="Resource" path="res://resources/attacks/one_handed/chop.tres" id="5_chop"]
+[ext_resource type="Resource" path="res://resources/attacks/one_handed/slice_horizontal.tres" id="6_slice_horizontal"]
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_hujvl"]
+points = PackedVector3Array(-0.023774045, -0.3422807, -0.112460546, 0.023902671, 0.5202157, 0.34276903, -0.023774045, 0.5202157, 0.34276903, -0.023774045, 0.831681, -0.3520801, 0.33550876, 0.831681, -0.112460546, -0.33538014, 0.831681, -0.088450976, 0.023902671, -0.36614722, 0.103149466, 0.21566026, 0.831681, 0.29481792, -0.33538014, 0.47233257, 0.12709102, 0.33550876, 0.47233257, 0.12709102, 0.21566026, 0.47233257, -0.28018746, -0.21553163, 0.831681, 0.29481792, -0.021824723, 0.9846828, 0.006336356, -0.21553163, 0.47233257, -0.28018746, 0.14375116, -0.3422807, -0.016626317, -0.14362253, -0.3422807, -0.016626317, -0.07171344, -0.39016384, 0.079139896, 0.07184207, -0.39016384, 0.079139896, -0.33538014, 0.7837979, -0.112460546, 0.09587744, -0.39016384, -0.06450942, -0.023774045, 0.47233257, 0.34276903, 0.023902671, 0.831681, -0.3520801, 0.023902671, 0.47233257, 0.34276903, 0.33550876, 0.47233257, 0.079139896, -0.09574881, -0.39016384, -0.06450942, 0.021945463, 0.9844292, 0.0063323965, -0.33538014, 0.47233257, 0.079139896, -0.33538014, 0.831681, -0.112460546, -0.022147188, -0.4337544, 0.006498287, 0.33550876, 0.7837979, -0.112460546, -0.023774045, 0.80766445, -0.3520801, 0.023902671, -0.3422807, -0.112460546)
+
+[node name="HammerB" type="Area3D" unique_id=1658260185]
+script = ExtResource("2_weapon")
+combo = Array[ExtResource("3_attack_step")]([ExtResource("4_slice_diagonal"), ExtResource("5_chop"), ExtResource("6_slice_horizontal")])
+running_attack_animation = &"combat_melee/Melee_1H_Attack_Jump_Chop"
+allows_shield = true
+dual_wieldable = true
+
+[node name="Model" parent="." unique_id=156117154 instance=ExtResource("1_or1dd")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1141272702]
+shape = SubResource("ConvexPolygonShape3D_hujvl")

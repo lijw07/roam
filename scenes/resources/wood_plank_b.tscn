@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://c81y3eco5mkve"]
+
+[ext_resource type="PackedScene" path="res://assets/resources/Wood_Plank_B.gltf" id="1_bujqf"]
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_ss8oo"]
+points = PackedVector3Array(-0.21190476, -0.011904776, -0.76175565, 0.2166667, 0.15476191, 0.76175565, 0.2166667, -0.011904776, 0.76175565, 0.2166667, 0.15476191, -0.76175565, -0.19270475, 0.14729524, 0.6935023, -0.21190476, -0.011904776, 0.76175565, 0.2166667, -0.011904776, -0.76175565, -0.19270475, 0.14729524, -0.6935023)
+
+[node name="WoodPlankB" type="Area3D" unique_id=951955059]
+
+[node name="Model" parent="." unique_id=678025604 instance=ExtResource("1_bujqf")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1878024327]
+shape = SubResource("ConvexPolygonShape3D_ss8oo")

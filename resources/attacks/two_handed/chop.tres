@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AttackStep" format=3]
+
+[ext_resource type="Script" path="res://scripts/attack_step.gd" id="1_step"]
+
+[resource]
+script = ExtResource("1_step")
+animation = &"combat_melee/Melee_2H_Attack_Chop"
+combo_time = 1.12
+window_end = 1.5
+chain_start = 0.25

@@ -1,11 +1,22 @@
 [gd_scene format=3 uid="uid://0ejspcuecgio"]
 
 [ext_resource type="PackedScene" path="res://assets/equipment/adventurers/axe_1handed.gltf" id="1_in7u7"]
+[ext_resource type="Script" path="res://scripts/weapon.gd" id="2_weapon"]
+[ext_resource type="Script" path="res://scripts/attack_step.gd" id="3_attack_step"]
+[ext_resource type="Resource" path="res://resources/attacks/one_handed/slice_diagonal.tres" id="4_slice_diagonal"]
+[ext_resource type="Resource" path="res://resources/attacks/one_handed/chop.tres" id="5_chop"]
+[ext_resource type="Resource" path="res://resources/attacks/one_handed/slice_horizontal.tres" id="6_slice_horizontal"]
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_wbdpf"]
 points = PackedVector3Array(0.095070325, 0.81840354, -0.041141503, -0.5987762, 0.6059152, 0.016107153, 0.052940264, -0.28262883, 0.055608045, -0.0062936842, 0.74410844, 0.09514761, -0.045711443, -0.08517459, -0.08259674, -0.32213652, 0.9020965, -0.08259674, -0.38137048, 0.7639033, 0.09514761, -0.4209313, 0.96135753, 0.035867266, 0.072756454, 0.8626304, 0.07536816, 0.0331956, -0.28262883, -0.06283663, 0.013450965, 0.8626304, -0.08259674, -0.5196546, 0.40833724, -0.023335736, -0.045711443, -0.26295763, 0.055608045, -0.3023919, 0.74410844, -0.10237619, -0.38137048, 0.54665416, 0.09514761, -0.55914384, 0.84283555, -0.023335736, -0.4209313, 0.56632537, -0.08259674, -0.045711443, -0.26295763, -0.06283663, 0.0331956, -0.08517459, 0.07536816, 0.072756454, 0.5268593, -0.08259674, 0.072756454, -0.28262883, -0.04309585, -0.44067597, 0.9811524, -0.023335736, 0.095189296, 0.7575476, 0.04963221, -0.06552763, 0.56632537, -0.10237619, -0.5788885, 0.50706434, 0.016107153, -0.20374018, 0.8626304, 0.09514761, -0.5788885, 0.8033694, 0.016107153, 0.109928, 0.77586347, -0.040704396, 0.0331956, -0.08517459, -0.08259674, -0.06552763, -0.26295763, 0.035867266, -0.5788885, 0.54665416, -0.023335736, -0.124761574, 0.44792706, 0.09514761)
 
 [node name="Axe1Handed" type="Area3D" unique_id=2050513907]
+script = ExtResource("2_weapon")
+grip_rotation_degrees = Vector3(0, 180, 0)
+combo = Array[ExtResource("3_attack_step")]([ExtResource("4_slice_diagonal"), ExtResource("5_chop"), ExtResource("6_slice_horizontal")])
+running_attack_animation = &"combat_melee/Melee_1H_Attack_Jump_Chop"
+allows_shield = true
+dual_wieldable = true
 
 [node name="Model" parent="." unique_id=1899791036 instance=ExtResource("1_in7u7")]
 

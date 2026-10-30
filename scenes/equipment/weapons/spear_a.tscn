@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://bcjtnpkn2ey41"]
+
+[ext_resource type="PackedScene" path="res://assets/equipment/weapons/spear_A.gltf" id="1_sr1oh"]
+[ext_resource type="Script" path="res://scripts/weapon.gd" id="2_weapon"]
+[ext_resource type="Script" path="res://scripts/attack_step.gd" id="3_attack_step"]
+[ext_resource type="Resource" path="res://resources/attacks/two_handed/stab.tres" id="4_stab"]
+[ext_resource type="Resource" path="res://resources/attacks/two_handed/slice.tres" id="5_slice"]
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_347qh"]
+points = PackedVector3Array(0.053158242, 1.8736739, 0.028857604, -0.14932516, -0.67774796, -0.011599434, 0.13415161, -0.6978477, 0.028857604, -0.027805388, -0.6978477, 0.13012904, -0.0075570475, -0.6978477, -0.13312516, -0.10879875, 1.6708218, -0.011599434, 0.09365492, 1.6504129, -0.03185372, -0.06830207, 0.9620763, -0.09259082, 0.15442967, 1.0836021, -0.011599434, -0.10879875, 1.549296, 0.028857604, 0.11390326, 1.0434027, 0.04911189, 0.053158242, -0.961308, -0.011599434, -0.0075570475, 1.6303133, 0.06936618, 0.073406585, -0.7182566, -0.09259082, -0.027805388, 2.0759077, -0.011599434, 0.0126615595, -0.6978477, 0.13012904, -0.14932516, 1.0836021, -0.011599434, -0.0075570475, 1.5901139, -0.0723623, 0.13415161, -0.6978477, -0.011599434, -0.06830207, -0.7182566, -0.09259082, -0.006934761, -0.94509625, -0.010977635, 0.13415161, 1.0631931, -0.03185372, 0.073406585, -0.7182566, 0.0895947, -0.06830207, -0.7182566, 0.0895947, 0.11390326, 1.6504129, 0.008603317, 0.0126615595, 2.1167254, -0.011599434, -0.027805388, 1.9951997, 0.028857604, 0.053158242, 1.6504129, -0.05210801, -0.027805388, 1.569705, 0.06936618, 0.0329099, -0.81937337, 0.0895947, 0.13415161, 1.0836021, 0.028857604, -0.04805373, 1.6708218, -0.05210801)
+
+[node name="SpearA" type="Area3D" unique_id=1511509430]
+script = ExtResource("2_weapon")
+combo = Array[ExtResource("3_attack_step")]([ExtResource("4_stab"), ExtResource("5_slice"), ExtResource("4_stab")])
+idle_animation = &"combat_melee/Melee_2H_Idle"
+upper_body_animation = &"combat_melee/Melee_2H_Idle"
+
+[node name="Model" parent="." unique_id=1706900596 instance=ExtResource("1_sr1oh")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=246911709]
+shape = SubResource("ConvexPolygonShape3D_347qh")
