@@ -16,6 +16,19 @@ const FLIP_THICKNESS_AXIS := Basis(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0
 @export var run_animation: StringName = &""
 @export var upper_body_animation: StringName = &""
 
+@export_group("Ranged")
+@export var aim_animation: StringName = &""
+@export var aim_start := 0.0
+@export var aim_ready_time := 0.0
+@export var aim_hold_animation: StringName = &""
+@export var shot_animations: Array[StringName] = []
+@export var aimed_shot_start := 0.0
+@export var shot_ends_aimed := false
+
+
+func is_ranged() -> bool:
+	return aim_animation != &""
+
 
 func grip() -> Transform3D:
 	return Transform3D(Basis.from_euler(grip_rotation_degrees * (PI / 180.0)), Vector3.ZERO)

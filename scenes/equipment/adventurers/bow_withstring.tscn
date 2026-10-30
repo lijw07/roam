@@ -13,6 +13,11 @@ grip_rotation_degrees = Vector3(0, 0, 180)
 idle_animation = &"combat_ranged/Ranged_Bow_Idle"
 run_animation = &"movement_advanced/Running_HoldingBow"
 upper_body_animation = &"combat_ranged/Ranged_Bow_Idle"
+aim_animation = &"combat_ranged/Ranged_Bow_Draw"
+aim_start = 0.3
+aim_ready_time = 1.0
+aim_hold_animation = &"combat_ranged/Ranged_Bow_Aiming_Idle"
+shot_animations = Array[StringName]([&"combat_ranged/Ranged_Bow_Release"])
 
 [node name="Model" parent="." unique_id=1502083608 instance=ExtResource("1_t35k4")]
 

@@ -47,6 +47,7 @@ const ROOT_TRACK := ^"Rig_Medium/Skeleton3D:root"
 const HIPS_TRACK := ^"Rig_Medium/Skeleton3D:hips"
 const IN_PLACE_LIBRARY := &"in_place"
 const MIRRORED_LIBRARY := &"mirrored"
+const AIM_HOLD_LIBRARY := &"aim_hold"
 const MIRROR_ACROSS_X := Transform3D(Basis(Vector3(-1, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1)), Vector3.ZERO)
 const BONE_TRACK_TYPES: Array[Animation.TrackType] = [Animation.TYPE_POSITION_3D, Animation.TYPE_ROTATION_3D, Animation.TYPE_SCALE_3D]
 const SPINE_TRACK := ^"Rig_Medium/Skeleton3D:spine"
@@ -99,13 +100,14 @@ var _attack_step: AttackStep = null
 var _combo_index := 0
 var _combo_grace := 0.0
 var _shield_raised := false
+var _aim_raised := false
+var _shot_queued := false
+var _shot_step := -1
 var _air_time := 0.0
 var _idle_time := 0.0
 var _hand_slots: Dictionary[StringName, BoneAttachment3D] = {}
 var _pick_up_item: Node3D = null
 var _pick_up_animation := PICK_UP_ANIMATION
-var _held_hand := RIGHT_HAND
-var _held_grip := Transform3D.IDENTITY
 var _held_weapon: Weapon = null
 var _upper_body_twist := UpperBodyTwist.new()
 var _facing_yaw := 0.0
@@ -129,10 +131,11 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	_update_held_item()
+	_update_pick_up()
 	_combo_grace = maxf(_combo_grace - delta, 0.0)
 	var direction := _input_direction()
 	_update_attack()
+	_update_aim_raise()
 	_lower_shield_if_released()
 	if _action_cancellable and _has_new_input(direction):
 		_end_action()
@@ -144,6 +147,8 @@ func _physics_process(delta: float) -> void:
 	_update_upper_body_twist(direction, delta)
 	if not _is_blocking():
 		_shield_raised = false
+	if not _is_aiming():
+		_aim_raised = false
 
 
 func is_acting() -> bool:
@@ -159,7 +164,7 @@ func interact() -> void:
 
 
 func pick_up(item: Node3D = null) -> void:
-	var with_left_hand := item != null and _fits_off_hand(item)
+	var with_left_hand := _pick_up_hand(item) == LEFT_HAND
 	var animation := _mirrored(PICK_UP_ANIMATION) if with_left_hand else PICK_UP_ANIMATION
 	if not _perform(animation):
 		return
@@ -167,9 +172,6 @@ func pick_up(item: Node3D = null) -> void:
 	if item == null:
 		return
 	_pick_up_item = item
-	if not item is Shield and not with_left_hand:
-		_held_hand = item.hand if item is Weapon else RIGHT_HAND
-		_held_grip = item.grip() if item is Weapon else Transform3D.IDENTITY
 	_align_hand_with(item.global_position, MIRROR_ACROSS_X * PICK_UP_HAND_OFFSET if with_left_hand else PICK_UP_HAND_OFFSET)
 
 
@@ -239,7 +241,7 @@ func preview(animation: StringName) -> void:
 
 
 func _has_new_input(direction: Vector3) -> bool:
-	if not direction.is_zero_approx() and not _is_blocking():
+	if not direction.is_zero_approx() and not _is_planted():
 		return true
 	return CANCEL_ACTIONS.any(func(action: StringName) -> bool: return Input.is_action_just_pressed(action))
 
@@ -265,10 +267,16 @@ func _move_with_input(direction: Vector3, delta: float) -> void:
 		if Input.is_action_just_pressed("attack") and _is_blocking():
 			_start_action(shield.bash_animation)
 			return
+		if _is_aiming() and not _aim_raised:
+			_raise_aim(false)
+			return
+		if Input.is_action_just_pressed("attack") and _ranged_weapon() != null:
+			_shoot()
+			return
 		if Input.is_action_just_pressed("attack") and _can_attack():
 			_attack(direction)
 			return
-	if _is_blocking():
+	if _is_planted():
 		direction = Vector3.ZERO
 	var gait := _gait(direction)
 	velocity.x = direction.x * gait.speed
@@ -278,11 +286,6 @@ func _move_with_input(direction: Vector3, delta: float) -> void:
 	if not direction.is_zero_approx():
 		_turn_toward(atan2(direction.x, direction.z) + gait.facing_offset, delta)
 	_animate(direction, gait, delta)
-
-
-func _update_held_item() -> void:
-	_update_pick_up()
-	_settle_held_item()
 
 
 func _move_with_action(delta: float) -> void:
@@ -298,8 +301,20 @@ func _is_blocking() -> bool:
 	return shield != null and is_on_floor() and Input.is_action_pressed("secondary")
 
 
+func _is_aiming() -> bool:
+	return _ranged_weapon() != null and is_on_floor() and Input.is_action_pressed("secondary")
+
+
+func _is_planted() -> bool:
+	return _is_blocking() or _is_aiming()
+
+
+func _ranged_weapon() -> Weapon:
+	return _held_weapon if _held_weapon != null and _held_weapon.is_ranged() else null
+
+
 func _follows_camera() -> bool:
-	return not dead and (_attacking or _is_blocking())
+	return not dead and (_attacking or _is_planted())
 
 
 func _update_facing(direction: Vector3, delta: float) -> void:
@@ -359,7 +374,7 @@ func _apply_vertical_motion(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 		_air_time += delta
-	elif not _is_blocking() and Input.is_action_just_pressed("jump"):
+	elif not _is_planted() and Input.is_action_just_pressed("jump"):
 		velocity.y = jump_velocity
 		_air_time = AIRBORNE_DELAY
 		_play(_stanced(JUMP_START_ANIMATION), BLEND_TIME, JUMP_TAKEOFF_TIME)
@@ -391,6 +406,9 @@ func _animate_airborne() -> void:
 func _animate_idle(delta: float) -> void:
 	if _is_blocking():
 		_play(shield.hold_animation)
+		return
+	if _is_aiming():
+		_play(_aim_hold_animation())
 		return
 	if _held_weapon != null and _held_weapon.idle_animation != &"":
 		_play(_held_weapon.idle_animation)
@@ -486,6 +504,61 @@ func _close_combo_window() -> void:
 	_combo_grace = animation_player.current_animation_length - animation_player.current_animation_position + COMBO_GRACE
 
 
+func _raise_aim(then_shoot: bool) -> void:
+	var weapon := _ranged_weapon()
+	_aim_raised = true
+	_start_action(weapon.aim_animation, false, Vector3.ZERO, BLEND_TIME, weapon.aim_start)
+	_attacking = true
+	_shot_queued = then_shoot
+
+
+func _update_aim_raise() -> void:
+	var weapon := _ranged_weapon()
+	if weapon == null or _action != weapon.aim_animation:
+		return
+	if Input.is_action_just_pressed("attack"):
+		_shot_queued = true
+	if animation_player.current_animation_position >= weapon.aim_ready_time:
+		_finish_aim_raise()
+	elif not _shot_queued and not _is_aiming():
+		_end_action()
+
+
+func _finish_aim_raise() -> void:
+	if _shot_queued:
+		_start_shot_step(0, _ranged_weapon().aimed_shot_start)
+	else:
+		_end_action()
+
+
+func _shoot() -> void:
+	if _is_aiming():
+		_start_shot_step(0, _ranged_weapon().aimed_shot_start)
+	else:
+		_raise_aim(true)
+
+
+func _start_shot_step(step: int, from: float) -> void:
+	_start_action(_held_weapon.shot_animations[step], false, Vector3.ZERO, BLEND_TIME, from)
+	_attacking = true
+	_shot_step = step
+
+
+func _continue_shot(finished_step: int) -> void:
+	var weapon := _ranged_weapon()
+	if finished_step + 1 < weapon.shot_animations.size():
+		_start_shot_step(finished_step + 1, 0.0)
+	else:
+		_aim_raised = weapon.shot_ends_aimed
+
+
+func _aim_hold_animation() -> StringName:
+	var weapon := _ranged_weapon()
+	if weapon.aim_hold_animation != &"":
+		return weapon.aim_hold_animation
+	return _derived_animation(AIM_HOLD_LIBRARY, weapon.aim_animation, _looping_tail.bind(weapon.aim_ready_time))
+
+
 func _perform(animation: StringName) -> bool:
 	if dead or (is_acting() and not _action_cancellable):
 		return false
@@ -530,7 +603,17 @@ func _take_main_hand_item(item: Node3D) -> void:
 	_held_weapon = item as Weapon
 	if not _allows_shield():
 		release_shield()
-	_attach_to_hand(item, RIGHT_HAND, _held_grip if _held_hand == RIGHT_HAND else Transform3D.IDENTITY)
+	_attach_to_hand(item, _main_hand_for(item), _held_weapon.grip() if _held_weapon != null else Transform3D.IDENTITY)
+
+
+func _pick_up_hand(item: Node3D) -> StringName:
+	if item != null and _fits_off_hand(item):
+		return LEFT_HAND
+	return _main_hand_for(item)
+
+
+func _main_hand_for(item: Node3D) -> StringName:
+	return item.hand if item is Weapon else RIGHT_HAND
 
 
 func _take_off_hand_weapon(item: Weapon) -> void:
@@ -556,12 +639,6 @@ func _allows_shield() -> bool:
 	return held_item == null or (_held_weapon != null and _held_weapon.allows_shield)
 
 
-func _settle_held_item() -> void:
-	if held_item == null or _action == _pick_up_animation or held_item.get_parent() == _hand_slot(_held_hand):
-		return
-	_attach_to_hand(held_item, _held_hand, _held_grip)
-
-
 func _attach_to_hand(item: Node3D, hand: StringName, grip: Transform3D) -> void:
 	item.reparent(_hand_slot(hand), false)
 	item.transform = grip
@@ -583,6 +660,8 @@ func _start_action(animation: StringName, cancellable := false, action_velocity 
 	_action_velocity_duration = INF
 	_attacking = false
 	_attack_step = null
+	_shot_queued = false
+	_shot_step = -1
 	_combo_grace = 0.0
 	_idle_time = 0.0
 	_play(animation, blend, from)
@@ -595,15 +674,20 @@ func _end_action() -> void:
 	_action_velocity_duration = INF
 	_attacking = false
 	_attack_step = null
+	_shot_queued = false
+	_shot_step = -1
 
 
 func _on_animation_finished(animation: StringName) -> void:
 	if animation != _action:
 		return
 	var finished_combo_step := _attack_step != null
+	var finished_shot_step := _shot_step
 	_end_action()
 	if finished_combo_step:
 		_combo_grace = COMBO_GRACE
+	if finished_shot_step >= 0:
+		_continue_shot(finished_shot_step)
 	if dead and DEATH_POSES.has(animation):
 		_play(DEATH_POSES[animation], 0.0)
 
@@ -696,6 +780,34 @@ func _derived_animation(library: StringName, animation: StringName, derive: Call
 		animation_player.add_animation_library(library, AnimationLibrary.new())
 	animation_player.get_animation_library(library).add_animation(animation.get_file(), derive.call(animation_player.get_animation(animation)))
 	return path
+
+
+func _looping_tail(source: Animation, start: float) -> Animation:
+	var tail := Animation.new()
+	tail.length = source.length - start
+	tail.loop_mode = Animation.LOOP_LINEAR
+	for track in source.get_track_count():
+		var type := source.track_get_type(track)
+		if type not in BONE_TRACK_TYPES:
+			continue
+		var copy := tail.add_track(type)
+		tail.track_set_path(copy, source.track_get_path(track))
+		tail.track_insert_key(copy, 0.0, _track_value_at(source, track, start))
+		for key in source.track_get_key_count(track):
+			var time := source.track_get_key_time(track, key)
+			if time > start:
+				tail.track_insert_key(copy, time - start, source.track_get_key_value(track, key))
+	return tail
+
+
+func _track_value_at(animation: Animation, track: int, time: float) -> Variant:
+	match animation.track_get_type(track):
+		Animation.TYPE_POSITION_3D:
+			return animation.position_track_interpolate(track, time)
+		Animation.TYPE_ROTATION_3D:
+			return animation.rotation_track_interpolate(track, time)
+		_:
+			return animation.scale_track_interpolate(track, time)
 
 
 func _without_root_slide(source: Animation) -> Animation:

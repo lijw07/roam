@@ -9,6 +9,10 @@ points = PackedVector3Array(0.42795295, 0.14881384, 0.6823339, -0.44478714, 0.07
 [node name="Crossbow1Handed" type="Area3D" unique_id=1857614428]
 script = ExtResource("2_weapon")
 grip_rotation_degrees = Vector3(0, 90, 0)
+aim_animation = &"combat_ranged/Ranged_1H_Aiming"
+aim_ready_time = 0.4
+shot_animations = Array[StringName]([&"combat_ranged/Ranged_1H_Shoot", &"combat_ranged/Ranged_1H_Reload"])
+aimed_shot_start = 0.3
 
 [node name="Model" parent="." unique_id=720259807 instance=ExtResource("1_2maoa")]
 
