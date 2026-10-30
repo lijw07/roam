@@ -5,6 +5,6 @@
 [resource]
 script = ExtResource("1_step")
 animation = &"combat_melee/Melee_Dualwield_Attack_Chop"
-combo_time = 0.95
-window_end = 1.15
-chain_start = 0.0
+combo_time = 1.1
+window_end = 1.22
+chain_start = 0.05

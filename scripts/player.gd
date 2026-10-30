@@ -46,6 +46,9 @@ const UPPER_BODY_BONES: Array[StringName] = [
 const ROOT_TRACK := ^"Rig_Medium/Skeleton3D:root"
 const HIPS_TRACK := ^"Rig_Medium/Skeleton3D:hips"
 const IN_PLACE_LIBRARY := &"in_place"
+const MIRRORED_LIBRARY := &"mirrored"
+const MIRROR_ACROSS_X := Transform3D(Basis(Vector3(-1, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1)), Vector3.ZERO)
+const BONE_TRACK_TYPES: Array[Animation.TrackType] = [Animation.TYPE_POSITION_3D, Animation.TYPE_ROTATION_3D, Animation.TYPE_SCALE_3D]
 const SPINE_TRACK := ^"Rig_Medium/Skeleton3D:spine"
 const LAYER_SAMPLE_STEP := 1.0 / 30.0
 const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"attack"]
@@ -100,6 +103,7 @@ var _air_time := 0.0
 var _idle_time := 0.0
 var _hand_slots: Dictionary[StringName, BoneAttachment3D] = {}
 var _pick_up_item: Node3D = null
+var _pick_up_animation := PICK_UP_ANIMATION
 var _held_hand := RIGHT_HAND
 var _held_grip := Transform3D.IDENTITY
 var _held_weapon: Weapon = null
@@ -155,13 +159,18 @@ func interact() -> void:
 
 
 func pick_up(item: Node3D = null) -> void:
-	if not _perform(PICK_UP_ANIMATION) or item == null:
+	var with_left_hand := item != null and _fits_off_hand(item)
+	var animation := _mirrored(PICK_UP_ANIMATION) if with_left_hand else PICK_UP_ANIMATION
+	if not _perform(animation):
+		return
+	_pick_up_animation = animation
+	if item == null:
 		return
 	_pick_up_item = item
-	if not item is Shield and not _fits_off_hand(item):
+	if not item is Shield and not with_left_hand:
 		_held_hand = item.hand if item is Weapon else RIGHT_HAND
 		_held_grip = item.grip() if item is Weapon else Transform3D.IDENTITY
-	_align_hand_with(item.global_position)
+	_align_hand_with(item.global_position, MIRROR_ACROSS_X * PICK_UP_HAND_OFFSET if with_left_hand else PICK_UP_HAND_OFFSET)
 
 
 func release_held_item() -> void:
@@ -484,8 +493,8 @@ func _perform(animation: StringName) -> bool:
 	return true
 
 
-func _align_hand_with(grip_position: Vector3) -> void:
-	var hand_offset := PICK_UP_HAND_OFFSET * model.scale.x
+func _align_hand_with(grip_position: Vector3, reach: Vector3) -> void:
+	var hand_offset := reach * model.scale.x
 	var to_grip := grip_position - global_position
 	var yaw := atan2(to_grip.x, to_grip.z) - atan2(hand_offset.x, hand_offset.z)
 	var target := grip_position - Basis(Vector3.UP, yaw) * hand_offset
@@ -500,7 +509,7 @@ func _align_hand_with(grip_position: Vector3) -> void:
 func _update_pick_up() -> void:
 	if _pick_up_item == null:
 		return
-	if _action != PICK_UP_ANIMATION or not is_instance_valid(_pick_up_item):
+	if _action != _pick_up_animation or not is_instance_valid(_pick_up_item):
 		_pick_up_item = null
 		return
 	if animation_player.current_animation_position < PICK_UP_GRAB_TIME:
@@ -527,7 +536,7 @@ func _take_main_hand_item(item: Node3D) -> void:
 func _take_off_hand_weapon(item: Weapon) -> void:
 	release_off_hand_weapon()
 	off_hand_weapon = item
-	_attach_to_hand(item, RIGHT_HAND, item.grip())
+	_attach_to_hand(item, LEFT_HAND, item.off_hand_grip())
 
 
 func _fits_off_hand(item: Node3D) -> bool:
@@ -548,12 +557,9 @@ func _allows_shield() -> bool:
 
 
 func _settle_held_item() -> void:
-	if _action == PICK_UP_ANIMATION:
+	if held_item == null or _action == _pick_up_animation or held_item.get_parent() == _hand_slot(_held_hand):
 		return
-	if held_item != null and held_item.get_parent() != _hand_slot(_held_hand):
-		_attach_to_hand(held_item, _held_hand, _held_grip)
-	if off_hand_weapon != null and off_hand_weapon.get_parent() != _hand_slot(LEFT_HAND):
-		_attach_to_hand(off_hand_weapon, LEFT_HAND, off_hand_weapon.off_hand_grip())
+	_attach_to_hand(held_item, _held_hand, _held_grip)
 
 
 func _attach_to_hand(item: Node3D, hand: StringName, grip: Transform3D) -> void:
@@ -675,17 +681,121 @@ func _pelvis_rotation_at(animation: Animation, time: float) -> Quaternion:
 
 
 func _in_place(animation: StringName) -> StringName:
-	var path := StringName("%s/%s" % [IN_PLACE_LIBRARY, animation.get_file()])
+	return _derived_animation(IN_PLACE_LIBRARY, animation, _without_root_slide)
+
+
+func _mirrored(animation: StringName) -> StringName:
+	return _derived_animation(MIRRORED_LIBRARY, animation, _mirror)
+
+
+func _derived_animation(library: StringName, animation: StringName, derive: Callable) -> StringName:
+	var path := StringName("%s/%s" % [library, animation.get_file()])
 	if animation_player.has_animation(path):
 		return path
-	if not animation_player.has_animation_library(IN_PLACE_LIBRARY):
-		animation_player.add_animation_library(IN_PLACE_LIBRARY, AnimationLibrary.new())
-	var copy: Animation = animation_player.get_animation(animation).duplicate(true)
+	if not animation_player.has_animation_library(library):
+		animation_player.add_animation_library(library, AnimationLibrary.new())
+	animation_player.get_animation_library(library).add_animation(animation.get_file(), derive.call(animation_player.get_animation(animation)))
+	return path
+
+
+func _without_root_slide(source: Animation) -> Animation:
+	var copy: Animation = source.duplicate(true)
 	var root_slide := copy.find_track(ROOT_TRACK, Animation.TYPE_POSITION_3D)
 	if root_slide >= 0:
 		copy.remove_track(root_slide)
-	animation_player.get_animation_library(IN_PLACE_LIBRARY).add_animation(animation.get_file(), copy)
-	return path
+	return copy
+
+
+func _mirror(source: Animation) -> Animation:
+	var mirrored := Animation.new()
+	mirrored.length = source.length
+	mirrored.loop_mode = source.loop_mode
+	var tracks := _mirrored_tracks(source, mirrored)
+	var rest_corrections := _mirror_rest_corrections()
+	var time := 0.0
+	while time < source.length + LAYER_SAMPLE_STEP:
+		var sample_time := minf(time, source.length)
+		var poses := _skeleton_poses(_animated_bone_pose.bind(source, sample_time))
+		var mirrored_poses: Array[Transform3D] = []
+		for bone in skeleton.get_bone_count():
+			mirrored_poses.append(MIRROR_ACROSS_X * poses[_mirror_bone(bone)] * rest_corrections[bone])
+		for bone: int in tracks:
+			_insert_bone_keys(mirrored, tracks[bone], sample_time, _local_pose(mirrored_poses, bone))
+		time += LAYER_SAMPLE_STEP
+	return mirrored
+
+
+func _mirrored_tracks(source: Animation, mirrored: Animation) -> Dictionary[int, Dictionary]:
+	var tracks: Dictionary[int, Dictionary] = {}
+	for bone in skeleton.get_bone_count():
+		var bone_tracks := {}
+		for type in BONE_TRACK_TYPES:
+			if source.find_track(_bone_track_path(_mirror_bone(bone)), type) < 0:
+				continue
+			var track := mirrored.add_track(type)
+			mirrored.track_set_path(track, _bone_track_path(bone))
+			bone_tracks[type] = track
+		if not bone_tracks.is_empty():
+			tracks[bone] = bone_tracks
+	return tracks
+
+
+func _mirror_rest_corrections() -> Array[Transform3D]:
+	var rests := _skeleton_poses(skeleton.get_bone_rest)
+	var corrections: Array[Transform3D] = []
+	for bone in skeleton.get_bone_count():
+		corrections.append((MIRROR_ACROSS_X * rests[_mirror_bone(bone)]).affine_inverse() * rests[bone])
+	return corrections
+
+
+func _skeleton_poses(local_pose: Callable) -> Array[Transform3D]:
+	var poses: Array[Transform3D] = []
+	for bone in skeleton.get_bone_count():
+		var local: Transform3D = local_pose.call(bone)
+		var parent := skeleton.get_bone_parent(bone)
+		poses.append(local if parent < 0 else poses[parent] * local)
+	return poses
+
+
+func _local_pose(poses: Array[Transform3D], bone: int) -> Transform3D:
+	var parent := skeleton.get_bone_parent(bone)
+	return poses[bone] if parent < 0 else poses[parent].affine_inverse() * poses[bone]
+
+
+func _animated_bone_pose(bone: int, animation: Animation, time: float) -> Transform3D:
+	var path := _bone_track_path(bone)
+	var rest := skeleton.get_bone_rest(bone)
+	var position := rest.origin
+	var scale := rest.basis.get_scale()
+	var position_track := animation.find_track(path, Animation.TYPE_POSITION_3D)
+	if position_track >= 0:
+		position = animation.position_track_interpolate(position_track, time)
+	var scale_track := animation.find_track(path, Animation.TYPE_SCALE_3D)
+	if scale_track >= 0:
+		scale = animation.scale_track_interpolate(scale_track, time)
+	return Transform3D(Basis(_rotation_at(animation, path, time)) * Basis.from_scale(scale), position)
+
+
+func _insert_bone_keys(animation: Animation, tracks: Dictionary, time: float, pose: Transform3D) -> void:
+	if tracks.has(Animation.TYPE_POSITION_3D):
+		animation.position_track_insert_key(tracks[Animation.TYPE_POSITION_3D], time, pose.origin)
+	if tracks.has(Animation.TYPE_ROTATION_3D):
+		animation.rotation_track_insert_key(tracks[Animation.TYPE_ROTATION_3D], time, pose.basis.get_rotation_quaternion())
+	if tracks.has(Animation.TYPE_SCALE_3D):
+		animation.scale_track_insert_key(tracks[Animation.TYPE_SCALE_3D], time, pose.basis.get_scale())
+
+
+func _mirror_bone(bone: int) -> int:
+	var name := skeleton.get_bone_name(bone)
+	if name.ends_with(".l"):
+		return skeleton.find_bone(name.trim_suffix(".l") + ".r")
+	if name.ends_with(".r"):
+		return skeleton.find_bone(name.trim_suffix(".r") + ".l")
+	return bone
+
+
+func _bone_track_path(bone: int) -> NodePath:
+	return NodePath("%s:%s" % [ROOT_TRACK.get_concatenated_names(), skeleton.get_bone_name(bone)])
 
 
 func _rotation_at(animation: Animation, path: NodePath, time: float) -> Quaternion:
