@@ -98,6 +98,8 @@ var _attacking := false
 var _attack_queued := false
 var _attack_step: AttackStep = null
 var _combo_index := 0
+var _attack_combo: Array[AttackStep] = []
+var _attack_input := &"attack"
 var _combo_grace := 0.0
 var _shield_raised := false
 var _aim_raised := false
@@ -136,6 +138,7 @@ func _physics_process(delta: float) -> void:
 	var direction := _input_direction()
 	_update_attack()
 	_update_aim_raise()
+	_update_aim_return()
 	_lower_shield_if_released()
 	if _action_cancellable and _has_new_input(direction):
 		_end_action()
@@ -272,6 +275,9 @@ func _move_with_input(direction: Vector3, delta: float) -> void:
 			return
 		if Input.is_action_just_pressed("attack") and _ranged_weapon() != null:
 			_shoot()
+			return
+		if Input.is_action_just_pressed("secondary") and not _secondary_combo().is_empty():
+			_attack_with(_secondary_combo(), &"secondary")
 			return
 		if Input.is_action_just_pressed("attack") and _can_attack():
 			_attack(direction)
@@ -444,6 +450,10 @@ func _combo() -> Array[AttackStep]:
 	return unarmed_combo if held_item == null else ([] as Array[AttackStep])
 
 
+func _secondary_combo() -> Array[AttackStep]:
+	return _held_weapon.secondary_combo if _held_weapon != null else ([] as Array[AttackStep])
+
+
 func _running_attack_animation() -> StringName:
 	return _held_weapon.running_attack_animation if _held_weapon != null else &""
 
@@ -452,11 +462,17 @@ func _attack(direction: Vector3) -> void:
 	if Input.is_action_pressed("sprint") and not direction.is_zero_approx() and _running_attack_animation() != &"":
 		_start_running_attack(direction)
 		return
-	if _combo_grace > 0.0:
+	_attack_with(_combo(), &"attack")
+
+
+func _attack_with(combo: Array[AttackStep], input: StringName) -> void:
+	if _combo_grace > 0.0 and _attack_input == input and _attack_combo == combo:
 		_continue_combo()
 		return
+	_attack_combo = combo
+	_attack_input = input
 	_combo_index = 0
-	_start_attack_step(_combo()[0], 0.0, BLEND_TIME)
+	_start_attack_step(combo[0], 0.0, BLEND_TIME)
 
 
 func _start_running_attack(direction: Vector3) -> void:
@@ -477,22 +493,23 @@ func _start_attack_step(step: AttackStep, from: float, blend: float) -> void:
 func _update_attack() -> void:
 	if not _attacking or _attack_step == null:
 		return
-	if Input.is_action_just_pressed("attack") and not _action_cancellable:
+	if Input.is_action_just_pressed(_attack_input) and not _action_cancellable:
 		_attack_queued = true
 	var playback_time := animation_player.current_animation_position
-	if _attack_queued and _has_next_attack_step() and playback_time >= _attack_step.combo_time:
+	var wants_next := _attack_queued or _attack_step.continues_automatically
+	if wants_next and _has_next_attack_step() and playback_time >= _attack_step.combo_time:
 		_continue_combo()
 	elif playback_time >= _attack_step.window_end and not _action_cancellable:
 		_close_combo_window()
 
 
 func _has_next_attack_step() -> bool:
-	return _combo_index + 1 < _combo().size()
+	return _combo_index + 1 < _attack_combo.size()
 
 
 func _continue_combo() -> void:
 	_combo_index = _combo_index + 1 if _has_next_attack_step() else 0
-	var step := _combo()[_combo_index]
+	var step := _attack_combo[_combo_index]
 	_start_attack_step(step, step.chain_start, CHAIN_BLEND)
 
 
@@ -549,7 +566,15 @@ func _continue_shot(finished_step: int) -> void:
 	if finished_step + 1 < weapon.shot_animations.size():
 		_start_shot_step(finished_step + 1, 0.0)
 	else:
-		_aim_raised = weapon.shot_ends_aimed
+		_aim_raised = false
+
+
+func _update_aim_return() -> void:
+	var weapon := _ranged_weapon()
+	if weapon == null or weapon.aim_return_time <= 0.0 or _shot_step != weapon.shot_animations.size() - 1:
+		return
+	if _is_aiming() and animation_player.current_animation_position >= weapon.aim_return_time:
+		_end_action()
 
 
 func _aim_hold_animation() -> StringName:

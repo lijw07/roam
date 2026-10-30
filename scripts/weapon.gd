@@ -7,6 +7,7 @@ const FLIP_THICKNESS_AXIS := Basis(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0
 @export var hand: StringName = &"handslot.r"
 @export var grip_rotation_degrees := Vector3.ZERO
 @export var combo: Array[AttackStep] = []
+@export var secondary_combo: Array[AttackStep] = []
 @export var running_attack_animation: StringName = &""
 @export var allows_shield := false
 @export var dual_wieldable := false
@@ -23,7 +24,7 @@ const FLIP_THICKNESS_AXIS := Basis(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0
 @export var aim_hold_animation: StringName = &""
 @export var shot_animations: Array[StringName] = []
 @export var aimed_shot_start := 0.0
-@export var shot_ends_aimed := false
+@export var aim_return_time := 0.0
 
 
 func is_ranged() -> bool:

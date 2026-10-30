@@ -1,11 +1,19 @@
 [gd_scene format=3 uid="uid://dla15ya6vekhr"]
 
 [ext_resource type="PackedScene" path="res://assets/equipment/adventurers/staff.gltf" id="1_7jj04"]
+[ext_resource type="Script" path="res://scripts/weapon.gd" id="2_weapon"]
+[ext_resource type="Script" path="res://scripts/attack_step.gd" id="3_attack_step"]
+[ext_resource type="Resource" path="res://resources/attacks/magic/raise.tres" id="4_raise"]
+[ext_resource type="Resource" path="res://resources/attacks/magic/long_spellcast.tres" id="5_long_spellcast"]
+[ext_resource type="Resource" path="res://resources/attacks/magic/shoot.tres" id="6_shoot"]
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_r8xm1"]
 points = PackedVector3Array(0.14092834, 1.1650827, 0.07143792, -0.26250082, 0.92922425, -0.026474353, -0.26250082, 0.92922425, 0.04185517, 0.045313478, -0.84906924, 0.007707149, 0.14787807, 1.1002054, -0.16330078, -0.09141922, -0.7803731, -0.09487083, -0.05719085, -0.7803731, 0.11025165, 0.35312778, 0.96350616, 0.04185517, -0.09141922, 1.1344874, 0.17871508, -0.1598157, 1.1002054, -0.16330078, 0.07948159, -0.7803731, -0.09487083, 0.07948159, -0.7803731, 0.11025165, 0.14787807, 0.96350616, 0.17871508, 0.3188994, 1.0318558, -0.09487083, -0.12558733, -0.7803731, 0.04185517, -0.22827244, 1.1002054, 0.11025165, -0.086025685, 1.2282293, 0.007707149, 0.11370996, -0.7803731, -0.06068933, 0.284671, 1.1687694, -0.06068933, -0.22827244, 1.0318558, -0.12908581, 0.284671, 0.8263784, 0.11025165, -0.12558733, 0.92922425, 0.17871508, 0.14787807, 0.89515656, -0.16330078, -0.12558733, -0.7803731, -0.06068933, 0.11370996, -0.7803731, 0.07607015, 0.284671, 1.1344874, 0.07607015, 0.07948159, 1.1687694, -0.16330078, -0.22827244, 0.89515656, 0.11025165, 0.35312778, 0.96350616, -0.026474353, -0.1598157, 0.92922425, -0.16330078, -0.26250082, 1.0661378, -0.06068933, 0.07948159, 1.1344874, 0.17871508)
 
 [node name="Staff" type="Area3D" unique_id=1175034526]
+script = ExtResource("2_weapon")
+combo = Array[ExtResource("3_attack_step")]([ExtResource("5_long_spellcast"), ExtResource("6_shoot")])
+secondary_combo = Array[ExtResource("3_attack_step")]([ExtResource("4_raise")])
 
 [node name="Model" parent="." unique_id=280043721 instance=ExtResource("1_7jj04")]
 

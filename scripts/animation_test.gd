@@ -11,7 +11,7 @@ const MAX_DISTANCE := 12.0
 const PICK_UP_REACH := 1.6
 const CONTROL_GROUPS := [
 	["Move", [["W A S D", "move"], ["Shift", "run"], ["Space", "jump"], ["Alt", "dodge"], ["Mouse", "look / turn"]]],
-	["Combat", [["LMB / J", "attack (combo)"], ["Shift + move + LMB", "lunge"], ["RMB", "block / aim"], ["LMB while blocking", "bash"], ["LMB while aiming", "shoot"]]],
+	["Combat", [["LMB / J", "attack (combo)"], ["Shift + move + LMB", "lunge"], ["RMB", "block / aim / cast"], ["LMB while blocking", "bash"], ["LMB while aiming", "shoot"]]],
 	["Actions", [["1", "interact"], ["2", "pick up"], ["3", "throw"], ["4", "use item"], ["5", "hit"], ["6", "die"], ["7", "spawn"], ["8", "spawn from air"]]],
 	["Test", [["Left / Right", "animation"], ["Up / Down", "library"], ["Wheel", "zoom"], ["C", "freeze facing"], ["Click", "capture mouse"], ["Esc", "free mouse"]]],
 ]

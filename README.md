@@ -40,7 +40,7 @@ preview's walk mode.
 | A / D, diagonals | Walk or run sideways | `Walking_A` / `Running_A` with the legs turned toward the direction of travel |
 | S (and back diagonals) | Walk backwards (2.5 m/s) | `Walking_Backwards` |
 | Space | Jump | `Jump_Start`, `Jump_Idle`, `Jump_Land` |
-| Right mouse (hold) | With a shield, block in place; with a crossbow or bow, aim in place | see Shields and Ranged weapons |
+| Right mouse | Hold with a shield to block in place, or with a crossbow or bow to aim in place; press with a wand for a long cast, or with a staff to raise it overhead | see Shields, Ranged weapons and Magic |
 | Alt | Dodge toward the move direction, or back when standing still | `Dodge_Forward`, `Dodge_Backward`, `Dodge_Left`, `Dodge_Right` |
 | Left mouse / J | Attack with the held weapon, or punch and kick with an empty main hand | the weapon's combo, or its `running_attack_animation` while sprinting |
 
@@ -64,7 +64,7 @@ spawn and `Interact` when you open a door.
 
 ## Weapons
 A weapon scene's root runs `weapon.gd`, which says how it is held and swung: `hand` (`handslot.r`
-or `handslot.l`), `grip_rotation_degrees`, `combo` (a list of `AttackStep` resources),
+or `handslot.l`), `grip_rotation_degrees`, `combo` (a list of `AttackStep` resources), `secondary_combo` (right mouse),
 `running_attack_animation`, `allows_shield` and `dual_wieldable`, plus a **Ranged** group for
 crossbows and bows.
 
@@ -90,6 +90,7 @@ attacks, so each `AttackStep` (in `resources/attacks/`) marks where in its clip 
 | `combo_time` | After the swing's follow-through: a buffered press cuts the recovery here and blends (0.2 s) into the next step |
 | `window_end` | Last moment a press continues the string; after it the player can move or dodge out of the recovery |
 | `chain_start` | How far into the wind-up the step starts when it follows another, skipping the slow neutral part |
+| `continues_automatically` | Moves on to the next step at `combo_time` without waiting for a press (the wand and staff's build-up into the shot) |
 
 A press any time during a swing is remembered. A press after `window_end`, during the rest of the
 recovery or up to 0.4 s after the swing ends, still continues the string from the next step; only a
@@ -174,18 +175,34 @@ Letting go before the aim is ready lowers it.
 
 Left mouse while aiming fires: the `shot_animations` play back to back, the first from
 `aimed_shot_start`, and can't be cancelled. Left mouse without aiming raises the weapon and fires
-the moment the aim is ready. After the last shot clip, if right mouse is still held, the player
-holds the aim when `shot_ends_aimed` is on and raises again when it isn't.
+the moment the aim is ready, unless the weapon also has a `combo`, which then plays instead (the wand
+and staff's quick cast). If right mouse is still held, the last shot clip hands straight back to the
+aim hold at `aim_return_time` (when set); otherwise the player raises again once the shots finish.
 
-| Weapon | Aim (`aim_start` → `aim_ready_time`) | Hold | Shot | Ends aimed |
+| Weapon | Aim (`aim_start` → `aim_ready_time`) | Hold | Shot | `aim_return_time` |
 | --- | --- | --- | --- | --- |
-| One-handed crossbow | `Ranged_1H_Aiming` 0 → 0.4 | rest of the aim clip | `Ranged_1H_Shoot` from 0.3, `Ranged_1H_Reload` | no (lowers to reload) |
-| Two-handed crossbow | `Ranged_2H_Aiming` 0 → 0.4 | rest of the aim clip | `Ranged_2H_Shoot` from 0.3, `Ranged_2H_Reload` | yes |
-| Bow | `Ranged_Bow_Draw` 0.3 → 1.0 | `Ranged_Bow_Aiming_Idle` | `Ranged_Bow_Release` | no (redraws) |
+| One-handed crossbow | `Ranged_1H_Aiming` 0 → 0.4 | rest of the aim clip | `Ranged_1H_Shoot` from 0.3, `Ranged_1H_Reload` | none (lowers to reload, raises again) |
+| Two-handed crossbow | `Ranged_2H_Aiming` 0 → 0.4 | rest of the aim clip | `Ranged_2H_Shoot` from 0.3, `Ranged_2H_Reload` | 1.5 (the reload ends aimed) |
+| Bow | `Ranged_Bow_Draw` 0.3 → 1.0 | `Ranged_Bow_Aiming_Idle` | `Ranged_Bow_Release` | none (lowers, redraws) |
 
 The bow's draw starts at 0.3 s because its first 0.3 s rises from the plain idle, not the bow's.
 There are no projectiles yet. `Ranged_1H_Shooting` / `Ranged_2H_Shooting` (rapid-fire loops) and
 the bow's `_Up` variants (aiming upward) are unused, since the player doesn't know the camera's pitch.
+
+### Magic
+The wand and staff build up before they shoot: those buttons run a two-step combo
+(`resources/attacks/magic/`) whose first step has `continues_automatically` on, so it hands to the
+second at its `combo_time` without another press. The staff's right mouse is a single step:
+
+| Weapon | Button | Steps | Spammed |
+| --- | --- | --- | --- |
+| Wand | Left mouse (`combo`) | `Ranged_Magic_Spellcasting` for 0.6 s, then `Ranged_Magic_Shoot` from 0.15 | about one cast every 1.4 s |
+| Wand | Right mouse (`secondary_combo`) | `Ranged_Magic_Spellcasting_Long` up to its channel's end (1.4 s), then `Ranged_Magic_Shoot` from 0.15 | about one cast every 2.2 s |
+| Staff | Left mouse (`combo`) | `Ranged_Magic_Spellcasting_Long` (1.4 s), then `Ranged_Magic_Shoot` from 0.15 | about one cast every 2.2 s |
+| Staff | Right mouse (`secondary_combo`) | `Ranged_Magic_Raise` on its own: the staff lifted overhead, held, lowered | about once every 2.0 s |
+
+Presses only queue the combo that the same button started, so clicking one button during the
+other's cast doesn't cut it short. `Ranged_Magic_Summon` is unused.
 
 ### Shields
 A shield's root runs `shield.gd` and is held in the left hand alongside a main-hand weapon whose
@@ -208,8 +225,7 @@ through it; all nine adventurer shields share that back depth.
 
 Grips: the bow is held in the left hand turned 180° with the bow stance, the crossbows are turned
 90° so they point along the forearm, the one-handed axe is turned 180° so the blade leads, and the
-dagger is turned 180° so its curved edge faces up. The swords, axes, dagger, crossbows and bow
-attack; the wand and staff hold correctly but have no attacks yet.
+dagger is turned 180° so its curved edge faces up. Every adventurer weapon now attacks.
 
 The idle, fidget, walk and run animations are exports under **Animations**, so a character can
 use a variant such as `Walking_B` or `Running_B`.
