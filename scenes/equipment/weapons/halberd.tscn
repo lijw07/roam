@@ -1,11 +1,21 @@
 [gd_scene format=3 uid="uid://c034avu4ctagt"]
 
 [ext_resource type="PackedScene" path="res://assets/equipment/weapons/halberd.gltf" id="1_ulytf"]
+[ext_resource type="Script" path="res://scripts/weapon.gd" id="2_weapon"]
+[ext_resource type="Script" path="res://scripts/attack_step.gd" id="3_attack_step"]
+[ext_resource type="Resource" path="res://resources/attacks/two_handed/slice.tres" id="4_slice"]
+[ext_resource type="Resource" path="res://resources/attacks/two_handed/chop.tres" id="5_chop"]
+[ext_resource type="Resource" path="res://resources/attacks/two_handed/spin.tres" id="6_spin"]
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_yp20y"]
 points = PackedVector3Array(-0.46248657, 1.3130634, 0.09426588, -0.72418046, 0.65916586, -0.080099985, 0.5401, 0.8771317, -0.036499985, 0.060371965, -0.6046537, 0.13790002, 0.060371965, -0.6046537, -0.12369999, 0.10403171, 1.0513952, -0.16729999, 0.016712219, 1.7926977, 0.05063173, 0.060371965, 0.52833176, 0.18150002, -0.72418046, 0.7025952, 0.09426588, -0.026815228, -0.954, 0.007100016, -0.72418046, 1.1388, -0.080099985, -0.026815228, 1.8364, -0.036499985, 0.5401, 0.920561, 0.007100016, -0.11413472, 0.61546344, -0.16729999, 0.060371965, -0.91029763, -0.036499985, 0.14769146, 1.0513952, 0.13790002, -0.680653, 1.1388, 0.09426588, -0.11413472, -0.73576105, -0.080099985, -0.070474975, 0.65916586, 0.18150002, -0.026815228, -0.6046537, 0.13790002, -0.11413472, 1.0513952, -0.16729999, 0.10403171, -0.6923317, 0.09426588, 0.060371965, 1.7926977, -0.036499985, -0.026815228, -0.6046537, -0.12369999, -0.11413472, -0.6486293, 0.09426588, -0.7678402, 0.96399033, -0.080099985, 0.060371965, 0.52833176, -0.16729999, -0.72418046, 1.0513952, 0.09426588, 0.14769146, -0.6046537, 0.05063173, 0.10403171, -0.6923317, -0.080099985, -0.026815228, 1.8364, 0.007100016, -0.5934658, 1.269361, -0.080099985)
 
 [node name="Halberd" type="Area3D" unique_id=13030607]
+script = ExtResource("2_weapon")
+grip_rotation_degrees = Vector3(0, 180, 0)
+combo = Array[ExtResource("3_attack_step")]([ExtResource("4_slice"), ExtResource("5_chop"), ExtResource("6_spin")])
+idle_animation = &"combat_melee/Melee_2H_Idle"
+upper_body_animation = &"combat_melee/Melee_2H_Idle"
 
 [node name="Model" parent="." unique_id=324139365 instance=ExtResource("1_ulytf")]
 

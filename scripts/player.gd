@@ -65,7 +65,10 @@ const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"attack"]
 @export var fidget_delay := 6.0
 
 @export var unarmed_combo: Array[AttackStep] = [
+	preload("res://resources/attacks/fists/left_punch.tres"),
 	preload("res://resources/attacks/unarmed/punch.tres"),
+]
+@export var unarmed_secondary_combo: Array[AttackStep] = [
 	preload("res://resources/attacks/unarmed/kick.tres"),
 ]
 @export var dual_wield_combo: Array[AttackStep] = [
@@ -110,6 +113,7 @@ var _idle_time := 0.0
 var _hand_slots: Dictionary[StringName, BoneAttachment3D] = {}
 var _pick_up_item: Node3D = null
 var _pick_up_animation := PICK_UP_ANIMATION
+var _left_hand_pair: Node3D = null
 var _held_weapon: Weapon = null
 var _upper_body_twist := UpperBodyTwist.new()
 var _facing_yaw := 0.0
@@ -182,6 +186,7 @@ func release_held_item() -> void:
 	if held_item == null:
 		return
 	release_off_hand_weapon()
+	_remove_left_hand_pair()
 	var item := held_item
 	held_item = null
 	_held_weapon = null
@@ -451,7 +456,9 @@ func _combo() -> Array[AttackStep]:
 
 
 func _secondary_combo() -> Array[AttackStep]:
-	return _held_weapon.secondary_combo if _held_weapon != null else ([] as Array[AttackStep])
+	if _held_weapon != null:
+		return _held_weapon.secondary_combo
+	return unarmed_secondary_combo if held_item == null and shield == null else ([] as Array[AttackStep])
 
 
 func _running_attack_animation() -> StringName:
@@ -484,7 +491,7 @@ func _start_running_attack(direction: Vector3) -> void:
 
 
 func _start_attack_step(step: AttackStep, from: float, blend: float) -> void:
-	_start_action(step.animation, false, Vector3.ZERO, blend, from)
+	_start_action(_mirrored(step.animation) if step.mirrored else step.animation, false, Vector3.ZERO, blend, from)
 	_attacking = true
 	_attack_queued = false
 	_attack_step = step
@@ -629,6 +636,21 @@ func _take_main_hand_item(item: Node3D) -> void:
 	if not _allows_shield():
 		release_shield()
 	_attach_to_hand(item, _main_hand_for(item), _held_weapon.grip() if _held_weapon != null else Transform3D.IDENTITY)
+	if _held_weapon != null and _held_weapon.worn_on_both_hands:
+		_wear_pair_on_left_hand(_held_weapon)
+
+
+func _wear_pair_on_left_hand(weapon: Weapon) -> void:
+	_left_hand_pair = weapon.get_node("Model").duplicate()
+	_hand_slot(LEFT_HAND).add_child(_left_hand_pair)
+	_left_hand_pair.transform = weapon.off_hand_grip()
+
+
+func _remove_left_hand_pair() -> void:
+	if _left_hand_pair == null:
+		return
+	_left_hand_pair.queue_free()
+	_left_hand_pair = null
 
 
 func _pick_up_hand(item: Node3D) -> StringName:

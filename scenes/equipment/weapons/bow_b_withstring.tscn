@@ -1,11 +1,23 @@
 [gd_scene format=3 uid="uid://cjq6xekuqnc3k"]
 
 [ext_resource type="PackedScene" path="res://assets/equipment/weapons/bow_B_withString.gltf" id="1_v7pga"]
+[ext_resource type="Script" path="res://scripts/weapon.gd" id="2_weapon"]
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_vfnat"]
 points = PackedVector3Array(0.18218103, -0.037689302, 0.31109506, -0.91147625, -0.037689302, -0.32699367, -0.91147625, 0.053436913, -0.32699367, 0.91147625, 0.053436913, -0.32699367, 0.82029057, -0.09849365, -0.17504823, -0.60746044, 0.08383016, 0.09839882, -0.57700175, -0.09849365, 0.09839882, 0.60746044, 0.08383016, 0.09839882, -0.18218103, 0.02304366, 0.3719143, -0.91147625, 0.08383016, -0.26617444, 0.88120794, -0.068082556, -0.32699367, -0.82029057, -0.09849365, -0.17504823, 0.57700175, -0.09849365, 0.09839882, 0.91147625, 0.08383016, -0.20542362, -0.97239363, -0.037689302, -0.20542362, 0.97239363, -0.037689302, -0.20542362, 0.18218103, 0.02304366, 0.3719143, -0.88120794, -0.068082556, -0.32699367, 0.60746044, -0.068082556, 0.12877423, -0.60746044, -0.068082556, 0.12877423, -0.39501113, -0.09849365, 0.15914963, -0.94193494, 0.053436913, -0.17504823, 0.91147625, 0.08383016, -0.26617444, 0.60746044, 0.053436913, 0.12877423, 0.39501113, -0.09849365, 0.15914963, -0.60746044, 0.053436913, 0.12877423, -0.18218103, -0.037689302, 0.31109506, 0.94193494, 0.053436913, -0.17504823, 0.94193494, -0.068082556, -0.20542362, -0.94193494, -0.068082556, -0.20542362, -0.97239363, 0.02304366, -0.23579904, 0.85074925, -0.037689302, -0.0838536)
 
 [node name="BowBWithString" type="Area3D" unique_id=1945299057]
+script = ExtResource("2_weapon")
+hand = &"handslot.l"
+grip_rotation_degrees = Vector3(0, -90, 180)
+idle_animation = &"combat_ranged/Ranged_Bow_Idle"
+run_animation = &"movement_advanced/Running_HoldingBow"
+upper_body_animation = &"combat_ranged/Ranged_Bow_Idle"
+aim_animation = &"combat_ranged/Ranged_Bow_Draw"
+aim_start = 0.3
+aim_ready_time = 1.0
+aim_hold_animation = &"combat_ranged/Ranged_Bow_Aiming_Idle"
+shot_animations = Array[StringName]([&"combat_ranged/Ranged_Bow_Release"])
 
 [node name="Model" parent="." unique_id=1765061292 instance=ExtResource("1_v7pga")]
 

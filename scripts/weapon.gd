@@ -11,6 +11,7 @@ const FLIP_THICKNESS_AXIS := Basis(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0
 @export var running_attack_animation: StringName = &""
 @export var allows_shield := false
 @export var dual_wieldable := false
+@export var worn_on_both_hands := false
 
 @export_group("Stance")
 @export var idle_animation: StringName = &""

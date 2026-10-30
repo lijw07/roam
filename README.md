@@ -65,7 +65,7 @@ spawn and `Interact` when you open a door.
 ## Weapons
 A weapon scene's root runs `weapon.gd`, which says how it is held and swung: `hand` (`handslot.r`
 or `handslot.l`), `grip_rotation_degrees`, `combo` (a list of `AttackStep` resources), `secondary_combo` (right mouse),
-`running_attack_animation`, `allows_shield` and `dual_wieldable`, plus a **Ranged** group for
+`running_attack_animation`, `allows_shield`, `dual_wieldable` and `worn_on_both_hands`, plus a **Ranged** group for
 crossbows and bows.
 
 Its **Stance** group changes how the player moves while holding it: `idle_animation` and
@@ -80,6 +80,29 @@ keep their body turns and `Spawn_Air` shows its drop. Dodges play from in-place 
 bone's slide removed, since the controller moves the body itself. The bow uses `Ranged_Bow_Idle` and `Running_HoldingBow`,
 so it stays upright in front of the body instead of swinging out like a rifle.
 
+### Fantasy Weapons pack
+The weapons in `scenes/equipment/weapons/` reuse the adventurer setups. They share the adventurer
+models' conventions (blade along +Y from the grip, axe heads toward -X, shield faces toward +Z), so
+most need no grip rotation:
+
+| Type | Weapons | Setup |
+| --- | --- | --- |
+| One-handed sword | `sword_a`, `sword_b`, `sword_c` (curved), `sword_d` (rapier) | the one-handed sword's combo, `allows_shield`, `dual_wieldable` |
+| Two-handed sword | `sword_e` | two-handed stance and the two-handed sword's combo |
+| Dagger | `dagger_a`, `dagger_b` | the dagger's combo, `dual_wieldable` (straight blades, so no flip) |
+| One-handed axe | `axe_a`, `axe_c` (cleaver, turned 180° so the blade leads) | the one-handed axe's combo, `allows_shield`, `dual_wieldable` |
+| Hammer and mace | `hammer_a`, `hammer_b`, `hammer_c` | the one-handed axe's combo (there are no hammer clips), `allows_shield`, `dual_wieldable` |
+| Two-handed axe | `axe_b` | two-handed stance and the two-handed axe's combo |
+| Polearm | `halberd` (turned 180° so the blade leads), `spear_a` | two-handed stance; the halberd uses the two-handed axe's combo, the spear Stab → Slice → Stab |
+| Fist weapon | `fistweapon_a`, `fistweapon_b` | a two-handed pair: `worn_on_both_hands` puts a mirrored copy of the model on the left hand (with `off_hand_grip()`), so no shield or off-hand weapon; turned (-90, 180, 0) so the knuckles and claws face the punch; left mouse punches left then right (`fists/left_punch.tres`, `Punch_A` mirrored, then the unarmed punch), right mouse kicks |
+| Staff | `staff_a`, `staff_b` | the staff's casts |
+| Wand | `wand_a` | the wand's casts |
+| Bow | `bow_a_withString`, `bow_b_withString` | the bow's setup, turned (0, -90, 180) because these bows are modelled lying along X |
+| Shield | `shield_a`, `shield_b`, `shield_c` | `shield.gd` with `grip_offset` set to each back's depth (0.16, 0.16, 0.17) |
+
+`fistweapon_b_stacked` is the drop display for the claws, so it isn't in the test scene;
+`fistweapon_a_stacked`, the unstrung `bow_a` and `bow_b` and the arrows are props with no setup.
+
 ### Combos
 Every KayKit attack is a standalone move: it winds up from a neutral stance, swings for about a tenth
 of a second, then spends 0.5–1.2 s returning to neutral. Played back to back that reads as separate
@@ -90,6 +113,7 @@ attacks, so each `AttackStep` (in `resources/attacks/`) marks where in its clip 
 | `combo_time` | After the swing's follow-through: a buffered press cuts the recovery here and blends (0.2 s) into the next step |
 | `window_end` | Last moment a press continues the string; after it the player can move or dodge out of the recovery |
 | `chain_start` | How far into the wind-up the step starts when it follows another, skipping the slow neutral part |
+| `mirrored` | Plays the clip mirrored left to right (built on first use, see Dual wielding), so a right-handed clip strikes with the left hand |
 | `continues_automatically` | Moves on to the next step at `combo_time` without waiting for a press (the wand and staff's build-up into the shot) |
 
 A press any time during a swing is remembered. A press after `window_end`, during the rest of the
@@ -155,16 +179,19 @@ The packs have no dual-wield idle, walk, run or sprint attack, so the player mov
 weapon and sprinting into an attack still plays the main-hand weapon's `Melee_1H_Attack_Jump_Chop`.
 
 ### Unarmed
-With nothing in the main hand (including holding only a shield) the player fights with the
-`unarmed_combo` export, `resources/attacks/unarmed/`:
+With nothing in the main hand (including holding only a shield) left mouse runs the `unarmed_combo`
+export: a left punch (`fists/left_punch.tres`, `Melee_Unarmed_Attack_Punch_A` mirrored) then a right
+punch (`unarmed/punch.tres`), alternating while mashed. With both hands empty, right mouse runs
+`unarmed_secondary_combo`, a kick (`unarmed/kick.tres`); with a shield, right mouse blocks instead.
+The fist weapons use the same moves.
 
-| Clip | Swing | `combo_time` | `window_end` | `chain_start` |
+| Step | Swing | `combo_time` | `window_end` | `chain_start` |
 | --- | --- | --- | --- | --- |
-| `Melee_Unarmed_Attack_Punch_A` | 0.38–0.47 | 0.62 | 1.00 | 0.05 |
-| `Melee_Unarmed_Attack_Kick` | 0.25–0.40 | 0.60 | 0.85 | 0.05 |
+| Left punch (`Punch_A` mirrored) | 0.38–0.47 | 0.62 | 1.00 | 0.05 |
+| Right punch (`Punch_A`) | 0.38–0.47 | 0.62 | 1.00 | 0.05 |
+| Kick (`Melee_Unarmed_Attack_Kick`) | 0.25–0.40 | 0.60 | 0.85 | 0.05 |
 
-There is no unarmed sprint attack. Holding a weapon without a combo (the bow, crossbows, wand, staff)
-doesn't attack.
+There is no unarmed sprint attack.
 
 ### Ranged weapons
 The crossbows and the bow aim and shoot instead of swinging. Holding right mouse aims: the player
@@ -249,9 +276,11 @@ the current stance.
 
 Browsed animations play on the spot, one-shots repeat, and moving cancels them.
 
-A row of the ten weapons the player has animations for, plus a round shield, lies in front of the spawn, grips toward
-you: one- and two-handed sword and axe, dagger, wand, staff, both crossbows and the bow. Walk up to
-one and press 2 to pick it up; picking up another puts the held one back where it was.
+Every weapon from both packs lies on the floor in front of the spawn, grips toward you, grouped by type
+with a label on the floor in front of each group (the `WeaponLabels` node): one-handed melee (1H swords,
+daggers, 1H axes, hammers and maces) at z = -5, two-handed and special (2H swords, 2H axes, polearms,
+fist weapons, shields) at z = -11, and ranged and magic (wands, staffs, crossbows, bows) at z = -17.
+Walk up to one and press 2 to pick it up; picking up another puts the held one back where it was.
 
 ## Characters
 Every character scene loads the same eight rig_medium libraries, so any animation works on any
