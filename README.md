@@ -229,6 +229,7 @@ the current stance.
 | Mouse | Look: turns the character while it moves, attacks or blocks; orbits around it while it stands still |
 | Click / Esc | Capture / free the mouse |
 | Mouse wheel | Zoom |
+| C | Freeze / release the character's facing: it locks the direction the character is facing, so the camera orbits and zooms freely without turning it, and attacks, aiming and WASD all use that locked direction. Use it to watch an animation from the front or side |
 
 Browsed animations play on the spot, one-shots repeat, and moving cancels them.
 

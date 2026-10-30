@@ -11,9 +11,9 @@ const MAX_DISTANCE := 12.0
 const PICK_UP_REACH := 1.6
 const CONTROL_GROUPS := [
 	["Move", [["W A S D", "move"], ["Shift", "run"], ["Space", "jump"], ["Alt", "dodge"], ["Mouse", "look / turn"]]],
-	["Combat", [["LMB / J", "attack (combo)"], ["Shift + move + LMB", "lunge"], ["RMB", "block with shield / aim ranged"], ["LMB while blocking", "bash"], ["LMB while aiming", "shoot"]]],
+	["Combat", [["LMB / J", "attack (combo)"], ["Shift + move + LMB", "lunge"], ["RMB", "block / aim"], ["LMB while blocking", "bash"], ["LMB while aiming", "shoot"]]],
 	["Actions", [["1", "interact"], ["2", "pick up"], ["3", "throw"], ["4", "use item"], ["5", "hit"], ["6", "die"], ["7", "spawn"], ["8", "spawn from air"]]],
-	["Test", [["Left / Right", "animation"], ["Up / Down", "library"], ["Wheel", "zoom"], ["Click", "capture mouse"], ["Esc", "free mouse"]]],
+	["Test", [["Left / Right", "animation"], ["Up / Down", "library"], ["Wheel", "zoom"], ["C", "freeze facing"], ["Click", "capture mouse"], ["Esc", "free mouse"]]],
 ]
 const KEY_CHIP_COLOR := Color(1, 1, 1, 0.14)
 const KEY_CHIP_BORDER := Color(1, 1, 1, 0.35)
@@ -34,6 +34,7 @@ var _animation_index := -1
 var _replaying: StringName = &""
 var _key_actions: Dictionary[Key, Callable] = {}
 var _resting_places: Dictionary[Node3D, Transform3D] = {}
+var _facing_frozen := false
 
 
 func _ready() -> void:
@@ -46,6 +47,7 @@ func _ready() -> void:
 		KEY_6: player.die,
 		KEY_7: player.spawn,
 		KEY_8: player.spawn.bind(true),
+		KEY_C: _toggle_facing_freeze,
 	}
 	for weapon: Node3D in weapons.get_children():
 		_resting_places[weapon] = weapon.transform
@@ -58,7 +60,8 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	camera_rig.global_position = player.global_position + Vector3.UP * RIG_HEIGHT
-	player.camera_yaw = camera_rig.rotation.y
+	if not _facing_frozen:
+		player.camera_yaw = camera_rig.rotation.y
 	info.text = _hud_text()
 
 
@@ -135,6 +138,12 @@ func _selected_animation() -> StringName:
 	return StringName("%s/%s" % [LIBRARIES[_library_index], _library_animations()[_animation_index]])
 
 
+func _toggle_facing_freeze() -> void:
+	_facing_frozen = not _facing_frozen
+	if _facing_frozen:
+		player.camera_yaw = player.model.rotation.y - PI
+
+
 func _zoom(button: MouseButton) -> void:
 	var step := 0.0
 	if button == MOUSE_BUTTON_WHEEL_UP:
@@ -160,9 +169,13 @@ func _hud_text() -> String:
 	if _animation_index >= 0:
 		var names := _library_animations()
 		selection = "%d / %d  %s" % [_animation_index + 1, names.size(), names[_animation_index]]
-	return "Animation   %s\nWeapon      %s\nBrowser     %s  %s" % [
-		player.current_animation(), _weapon_text(), LIBRARIES[_library_index], selection,
+	return "Animation   %s\nWeapon      %s\nBrowser     %s  %s\nCamera      %s" % [
+		player.current_animation(), _weapon_text(), LIBRARIES[_library_index], selection, _camera_text(),
 	]
+
+
+func _camera_text() -> String:
+	return "orbiting freely, character keeps its direction (C to release)" if _facing_frozen else "character faces where the camera looks"
 
 
 func _build_controls() -> void:
