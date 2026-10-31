@@ -2,6 +2,8 @@
 
 [ext_resource type="PackedScene" path="res://assets/equipment/adventurers/wand.gltf" id="1_3s0bw"]
 [ext_resource type="Script" path="res://scripts/weapon.gd" id="2_weapon"]
+[ext_resource type="PackedScene" path="res://scenes/effects/magic_bolt.tscn" id="9_left_projectile"]
+[ext_resource type="PackedScene" path="res://scenes/effects/magic_bolt_charged.tscn" id="10_right_projectile"]
 [ext_resource type="Script" path="res://scripts/attack_step.gd" id="3_attack_step"]
 [ext_resource type="Resource" path="res://resources/attacks/magic/spellcast.tres" id="4_spellcast"]
 [ext_resource type="Resource" path="res://resources/attacks/magic/long_spellcast.tres" id="5_long_spellcast"]
@@ -12,6 +14,9 @@ points = PackedVector3Array(-0.087967455, -0.1352211, -0.026626272, -0.07262803,
 
 [node name="Wand" type="Area3D" unique_id=1497751001]
 script = ExtResource("2_weapon")
+projectile = ExtResource("9_left_projectile")
+secondary_projectile = ExtResource("10_right_projectile")
+projectile_origin = Vector3(0, 0.7, 0)
 combo = Array[ExtResource("3_attack_step")]([ExtResource("4_spellcast"), ExtResource("6_shoot")])
 secondary_combo = Array[ExtResource("3_attack_step")]([ExtResource("5_long_spellcast"), ExtResource("6_shoot")])
 

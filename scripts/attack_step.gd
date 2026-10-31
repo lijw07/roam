@@ -8,3 +8,4 @@ class_name AttackStep
 @export var continues_automatically := false
 @export var mirrored := false
 @export var uses_legs := false
+@export var projectile_time := -1.0

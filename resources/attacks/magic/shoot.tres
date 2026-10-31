@@ -8,3 +8,4 @@ animation = &"combat_ranged/Ranged_Magic_Shoot"
 combo_time = 0.9
 window_end = 0.9
 chain_start = 0.15
+projectile_time = 0.3

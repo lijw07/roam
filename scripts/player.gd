@@ -106,6 +106,7 @@ var _combo_index := 0
 var _attack_combo: Array[AttackStep] = []
 var _attack_input := &"attack"
 var _combo_grace := 0.0
+var _projectile_released := false
 var _shield_raised := false
 var _aim_raised := false
 var _shot_queued := false
@@ -143,6 +144,7 @@ func _physics_process(delta: float) -> void:
 	_combo_grace = maxf(_combo_grace - delta, 0.0)
 	var direction := _input_direction()
 	_update_attack()
+	_release_projectile_when_due()
 	_update_aim_raise()
 	_update_aim_return()
 	_lower_shield_if_released()
@@ -533,6 +535,7 @@ func _start_attack_step(step: AttackStep, from: float, blend: float) -> void:
 	_attacking = true
 	_attack_queued = false
 	_attack_step = step
+	_projectile_released = false
 
 
 func _update_attack() -> void:
@@ -546,6 +549,28 @@ func _update_attack() -> void:
 		_continue_combo()
 	elif playback_time >= _attack_step.window_end and not _action_cancellable:
 		_close_combo_window()
+
+
+func _release_projectile_when_due() -> void:
+	if _attack_step == null or _projectile_released or _attack_step.projectile_time < 0.0:
+		return
+	var scene := _current_projectile()
+	if scene == null or animation_player.current_animation_position < _attack_step.projectile_time:
+		return
+	_projectile_released = true
+	_launch_projectile(scene, _held_weapon)
+
+
+func _current_projectile() -> PackedScene:
+	if _held_weapon == null:
+		return null
+	return _held_weapon.secondary_projectile if _attack_input == &"secondary" else _held_weapon.projectile
+
+
+func _launch_projectile(scene: PackedScene, weapon: Weapon) -> void:
+	var projectile: Node3D = scene.instantiate()
+	get_parent().add_child(projectile)
+	projectile.global_transform = Transform3D(Basis(Vector3.UP, _view_yaw()), weapon.global_transform * weapon.projectile_origin)
 
 
 func _has_next_attack_step() -> bool:

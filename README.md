@@ -123,6 +123,8 @@ attacks, so each `AttackStep` (in `resources/attacks/`) marks where in its clip 
 | `combo_time` | After the swing's follow-through: a buffered press cuts the recovery here and blends (0.2 s) into the next step |
 | `window_end` | Last moment a press continues the string; after it the player can move or dodge out of the recovery |
 | `chain_start` | How far into the wind-up the step starts when it follows another, skipping the slow neutral part |
+| `projectile_time` | When to launch the held weapon's `projectile` during this step (-1 for none) |
+| `uses_legs` | Plants the player for this step instead of letting the action play over the walk or run |
 | `mirrored` | Plays the clip mirrored left to right (built on first use, see Dual wielding), so a right-handed clip strikes with the left hand |
 | `continues_automatically` | Moves on to the next step at `combo_time` without waiting for a press (the wand and staff's build-up into the shot) |
 
@@ -237,6 +239,24 @@ second at its `combo_time` without another press. The staff's right mouse is a s
 | Wand | Right mouse (`secondary_combo`) | `Ranged_Magic_Spellcasting_Long` up to its channel's end (1.4 s), then `Ranged_Magic_Shoot` from 0.15 | about one cast every 2.2 s |
 | Staff | Left mouse (`combo`) | `Ranged_Magic_Spellcasting_Long` (1.4 s), then `Ranged_Magic_Shoot` from 0.15 | about one cast every 2.2 s |
 | Staff | Right mouse (`secondary_combo`) | `Ranged_Magic_Raise` on its own: the staff lifted overhead, held, lowered | about once every 2.0 s |
+
+The wands and staffs fire projectiles. A step with `projectile_time` set spawns one projectile at that
+point in its clip: the Shoot step at 0.3 s, when the thrust has finished and the weapon points level,
+and the staff's Raise at 0.7 s, with the staff held overhead. The weapon's `projectile` is used for
+left mouse and `secondary_projectile` for right mouse; it spawns at `projectile_origin` in the weapon's
+space (the tip or head), facing the camera's direction, parented to the player's parent so it flies on
+its own. All are in `scenes/effects/` and use `projectile.gd` (they fly straight for 2.5 s and don't
+collide yet):
+
+| Weapon | Left mouse | Right mouse |
+| --- | --- | --- |
+| Wand | `magic_bolt` (blue, small, 15 m/s) | `magic_bolt_charged` (blue, large, 10 m/s) |
+| Wand A | `arcane_bolt` (violet, small, 18 m/s) | `arcane_bolt_charged` (violet, large, 11 m/s) |
+| Staff | `nature_bolt` (green, 14 m/s) | `nature_burst` (green, very large, 9 m/s, from the raised staff) |
+| Staff A | `ember_bolt` (amber, 14 m/s) | `ember_burst` (amber, very large, 9 m/s, from the raised staff) |
+| Staff B | `frost_bolt` (white-cyan, 14 m/s) | `frost_burst` (white-cyan, very large, 9 m/s, from the raised staff) |
+
+The variants are copies of `magic_bolt` with a different core size and colour, light and trail.
 
 Presses only queue the combo that the same button started, so clicking one button during the
 other's cast doesn't cut it short. `Ranged_Magic_Summon` is unused.
