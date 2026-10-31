@@ -552,19 +552,29 @@ func _update_attack() -> void:
 
 
 func _release_projectile_when_due() -> void:
-	if _attack_step == null or _projectile_released or _attack_step.projectile_time < 0.0:
+	var release_time := _projectile_release_time()
+	if _projectile_released or release_time < 0.0:
 		return
 	var scene := _current_projectile()
-	if scene == null or animation_player.current_animation_position < _attack_step.projectile_time:
+	if scene == null or animation_player.current_animation_position < release_time:
 		return
 	_projectile_released = true
 	_launch_projectile(scene, _held_weapon)
 
 
+func _projectile_release_time() -> float:
+	if _attack_step != null:
+		return _attack_step.projectile_time
+	if _shot_step == 0 and _held_weapon != null:
+		return _held_weapon.shot_release_time
+	return -1.0
+
+
 func _current_projectile() -> PackedScene:
 	if _held_weapon == null:
 		return null
-	return _held_weapon.secondary_projectile if _attack_input == &"secondary" else _held_weapon.projectile
+	var secondary := _attack_step != null and _attack_input == &"secondary"
+	return _held_weapon.secondary_projectile if secondary else _held_weapon.projectile
 
 
 func _launch_projectile(scene: PackedScene, weapon: Weapon) -> void:
@@ -629,6 +639,7 @@ func _start_shot_step(step: int, from: float) -> void:
 	_start_action(_held_weapon.shot_animations[step], false, Vector3.ZERO, BLEND_TIME, from)
 	_attacking = true
 	_shot_step = step
+	_projectile_released = false
 
 
 func _continue_shot(finished_step: int) -> void:

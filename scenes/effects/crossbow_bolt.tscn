@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/projectile.gd" id="1_projectile"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/arrow_crossbow.tscn" id="2_model"]
+
+[node name="CrossbowBolt" type="Node3D"]
+script = ExtResource("1_projectile")
+speed = 32.0
+lifetime = 3.0
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+monitoring = false
+monitorable = false

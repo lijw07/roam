@@ -224,8 +224,21 @@ aim hold at `aim_return_time` (when set); otherwise the player raises again once
 | Two-handed crossbow | `Ranged_2H_Aiming` 0 → 0.4 | rest of the aim clip | `Ranged_2H_Shoot` from 0.3, `Ranged_2H_Reload` | 1.5 (the reload ends aimed) |
 | Bow | `Ranged_Bow_Draw` 0.3 → 1.0 | `Ranged_Bow_Aiming_Idle` | `Ranged_Bow_Release` | none (lowers, redraws) |
 
+Each shot launches the weapon's `projectile` once, `shot_release_time` into the first shot clip, at
+`projectile_origin` in the weapon's space and facing the camera's direction (the same launch as the
+wands). The arrow and bolt models point along +Z, the way `projectile.gd` flies them:
+
+| Weapon | Projectile (`scenes/effects/`) | Release | Origin |
+| --- | --- | --- | --- |
+| One-handed crossbow | `crossbow_bolt` (`arrow_crossbow`, 32 m/s) | 0.34 s, at the trigger recoil | (0, 0.12, 0.4), on the rail |
+| Two-handed crossbow | `crossbow_bolt` | 0.34 s, at the trigger recoil | (0, 0.15, 0.75), on the rail |
+| Bow | `arrow` (`arrow_bow`, 26 m/s) | 0.02 s, as the string hand opens | the grip |
+| Bow A, bow B | `arrow_a`, `arrow_b` (the Fantasy pack's arrows, 26 m/s) | 0.02 s | the grip |
+
+The projectiles fly straight for 3 s and don't collide yet; no arrow is shown nocked while aiming.
+
 The bow's draw starts at 0.3 s because its first 0.3 s rises from the plain idle, not the bow's.
-There are no projectiles yet. `Ranged_1H_Shooting` / `Ranged_2H_Shooting` (rapid-fire loops) and
+`Ranged_1H_Shooting` / `Ranged_2H_Shooting` (rapid-fire loops) and
 the bow's `_Up` variants (aiming upward) are unused, since the player doesn't know the camera's pitch.
 
 ### Magic

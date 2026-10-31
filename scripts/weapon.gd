@@ -29,6 +29,7 @@ const FLIP_THICKNESS_AXIS := Basis(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0
 @export var shot_animations: Array[StringName] = []
 @export var aimed_shot_start := 0.0
 @export var aim_return_time := 0.0
+@export var shot_release_time := -1.0
 
 
 func is_ranged() -> bool:
