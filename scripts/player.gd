@@ -48,6 +48,8 @@ const HIPS_TRACK := ^"Rig_Medium/Skeleton3D:hips"
 const IN_PLACE_LIBRARY := &"in_place"
 const MIRRORED_LIBRARY := &"mirrored"
 const AIM_HOLD_LIBRARY := &"aim_hold"
+const MOVING_ACTION_LIBRARY := &"moving_action"
+const MOVING_HOLD_LIBRARY := &"moving_hold"
 const MIRROR_ACROSS_X := Transform3D(Basis(Vector3(-1, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1)), Vector3.ZERO)
 const BONE_TRACK_TYPES: Array[Animation.TrackType] = [Animation.TYPE_POSITION_3D, Animation.TYPE_ROTATION_3D, Animation.TYPE_SCALE_3D]
 const SPINE_TRACK := ^"Rig_Medium/Skeleton3D:spine"
@@ -104,6 +106,7 @@ var _combo_index := 0
 var _attack_combo: Array[AttackStep] = []
 var _attack_input := &"attack"
 var _combo_grace := 0.0
+var _projectile_released := false
 var _shield_raised := false
 var _aim_raised := false
 var _shot_queued := false
@@ -141,13 +144,16 @@ func _physics_process(delta: float) -> void:
 	_combo_grace = maxf(_combo_grace - delta, 0.0)
 	var direction := _input_direction()
 	_update_attack()
+	_release_projectile_when_due()
 	_update_aim_raise()
 	_update_aim_return()
 	_lower_shield_if_released()
 	if _action_cancellable and _has_new_input(direction):
 		_end_action()
-	if dead or is_acting():
+	if dead or (is_acting() and not _action_allows_movement()):
 		_move_with_action(delta)
+	elif is_acting():
+		_move_while_acting(direction, delta)
 	else:
 		_move_with_input(direction, delta)
 	_update_facing(direction, delta)
@@ -249,7 +255,7 @@ func preview(animation: StringName) -> void:
 
 
 func _has_new_input(direction: Vector3) -> bool:
-	if not direction.is_zero_approx() and not _is_planted():
+	if not direction.is_zero_approx() and not _is_guarding():
 		return true
 	return CANCEL_ACTIONS.any(func(action: StringName) -> bool: return Input.is_action_just_pressed(action))
 
@@ -287,16 +293,43 @@ func _move_with_input(direction: Vector3, delta: float) -> void:
 		if Input.is_action_just_pressed("attack") and _can_attack():
 			_attack(direction)
 			return
-	if _is_planted():
-		direction = Vector3.ZERO
 	var gait := _gait(direction)
+	_apply_vertical_motion(delta)
+	_travel(direction, gait, delta)
+	_animate(direction, gait, delta)
+
+
+func _move_while_acting(direction: Vector3, delta: float) -> void:
+	var gait := _gait(direction)
+	if not is_on_floor():
+		velocity.y -= gravity * delta
+	_travel(direction, gait, delta)
+	var clip := _action if direction.is_zero_approx() else _action_on_the_move(_action, gait.animation)
+	if animation_player.assigned_animation != clip:
+		_play(clip, BLEND_TIME, animation_player.current_animation_position)
+
+
+func _travel(direction: Vector3, gait: Gait, delta: float) -> void:
 	velocity.x = direction.x * gait.speed
 	velocity.z = direction.z * gait.speed
-	_apply_vertical_motion(delta)
 	move_and_slide()
 	if not direction.is_zero_approx():
 		_turn_toward(atan2(direction.x, direction.z) + gait.facing_offset, delta)
-	_animate(direction, gait, delta)
+
+
+func _action_allows_movement() -> bool:
+	if _attack_step != null:
+		return not _attack_step.uses_legs
+	if _shot_step >= 0:
+		return true
+	var weapon := _ranged_weapon()
+	if weapon != null and _action == weapon.aim_animation:
+		return true
+	return shield != null and _action in [shield.raise_animation, shield.hit_animation, shield.bash_animation]
+
+
+func _travels(direction: Vector3) -> bool:
+	return not dead and not direction.is_zero_approx() and (not is_acting() or _action_allows_movement())
 
 
 func _move_with_action(delta: float) -> void:
@@ -316,7 +349,7 @@ func _is_aiming() -> bool:
 	return _ranged_weapon() != null and is_on_floor() and Input.is_action_pressed("secondary")
 
 
-func _is_planted() -> bool:
+func _is_guarding() -> bool:
 	return _is_blocking() or _is_aiming()
 
 
@@ -325,17 +358,16 @@ func _ranged_weapon() -> Weapon:
 
 
 func _follows_camera() -> bool:
-	return not dead and (_attacking or _is_planted())
+	return not dead and (_attacking or _is_guarding())
 
 
 func _update_facing(direction: Vector3, delta: float) -> void:
 	if dead:
 		return
-	if _follows_camera() or (not is_acting() and not direction.is_zero_approx()):
+	var travelling := _travels(direction)
+	if _follows_camera() or travelling:
 		_facing_yaw = _view_yaw()
-	if _follows_camera():
-		_turn_toward(_facing_yaw, delta)
-	elif not is_acting() and direction.is_zero_approx():
+	if not travelling and (_follows_camera() or not is_acting()):
 		_turn_toward(_facing_yaw, delta)
 
 
@@ -344,7 +376,7 @@ func _view_yaw() -> float:
 
 
 func _update_upper_body_twist(direction: Vector3, delta: float) -> void:
-	var twisting := not dead and not is_acting() and not direction.is_zero_approx()
+	var twisting := _travels(direction)
 	var target := clampf(wrapf(_view_yaw() - model.rotation.y, -PI, PI), -MAX_TWIST, MAX_TWIST) if twisting else 0.0
 	_upper_body_twist.twist = lerp_angle(_upper_body_twist.twist, target, 1.0 - exp(-turn_speed * delta))
 
@@ -366,7 +398,7 @@ func _gait(direction: Vector3) -> Gait:
 	var travel_from_view := wrapf(atan2(direction.x, direction.z) - _view_yaw(), -PI, PI)
 	if absf(travel_from_view) > BACKWARD_ARC:
 		return Gait.new(WALK_BACKWARDS_ANIMATION, backwards_speed, PI)
-	if Input.is_action_pressed("sprint"):
+	if Input.is_action_pressed("sprint") and not _is_guarding():
 		return Gait.new(_weapon_run_animation(), run_speed)
 	return Gait.new(walk_animation, walk_speed)
 
@@ -385,7 +417,7 @@ func _apply_vertical_motion(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 		_air_time += delta
-	elif not _is_planted() and Input.is_action_just_pressed("jump"):
+	elif not _is_guarding() and Input.is_action_just_pressed("jump"):
 		velocity.y = jump_velocity
 		_air_time = AIRBORNE_DELAY
 		_play(_stanced(JUMP_START_ANIMATION), BLEND_TIME, JUMP_TAKEOFF_TIME)
@@ -399,11 +431,19 @@ func _animate(direction: Vector3, gait: Gait, delta: float) -> void:
 	_air_time = 0.0
 	if not direction.is_zero_approx():
 		_idle_time = 0.0
-		_play(_stanced(gait.animation))
+		_play(_moving_clip(gait.animation))
 	elif air_time >= LANDING_AIR_TIME:
 		_start_action(_stanced(JUMP_LAND_ANIMATION), true)
 	else:
 		_animate_idle(delta)
+
+
+func _moving_clip(gait_clip: StringName) -> StringName:
+	if _is_blocking():
+		return _hold_on_the_move(shield.hold_animation, gait_clip)
+	if _is_aiming():
+		return _hold_on_the_move(_aim_hold_animation(), gait_clip)
+	return _stanced(gait_clip)
 
 
 func _animate_airborne() -> void:
@@ -495,6 +535,7 @@ func _start_attack_step(step: AttackStep, from: float, blend: float) -> void:
 	_attacking = true
 	_attack_queued = false
 	_attack_step = step
+	_projectile_released = false
 
 
 func _update_attack() -> void:
@@ -508,6 +549,38 @@ func _update_attack() -> void:
 		_continue_combo()
 	elif playback_time >= _attack_step.window_end and not _action_cancellable:
 		_close_combo_window()
+
+
+func _release_projectile_when_due() -> void:
+	var release_time := _projectile_release_time()
+	if _projectile_released or release_time < 0.0:
+		return
+	var scene := _current_projectile()
+	if scene == null or animation_player.current_animation_position < release_time:
+		return
+	_projectile_released = true
+	_launch_projectile(scene, _held_weapon)
+
+
+func _projectile_release_time() -> float:
+	if _attack_step != null:
+		return _attack_step.projectile_time
+	if _shot_step == 0 and _held_weapon != null:
+		return _held_weapon.shot_release_time
+	return -1.0
+
+
+func _current_projectile() -> PackedScene:
+	if _held_weapon == null:
+		return null
+	var secondary := _attack_step != null and _attack_input == &"secondary"
+	return _held_weapon.secondary_projectile if secondary else _held_weapon.projectile
+
+
+func _launch_projectile(scene: PackedScene, weapon: Weapon) -> void:
+	var projectile: Node3D = scene.instantiate()
+	get_parent().add_child(projectile)
+	projectile.global_transform = Transform3D(Basis(Vector3.UP, _view_yaw()), weapon.global_transform * weapon.projectile_origin)
 
 
 func _has_next_attack_step() -> bool:
@@ -566,6 +639,7 @@ func _start_shot_step(step: int, from: float) -> void:
 	_start_action(_held_weapon.shot_animations[step], false, Vector3.ZERO, BLEND_TIME, from)
 	_attacking = true
 	_shot_step = step
+	_projectile_released = false
 
 
 func _continue_shot(finished_step: int) -> void:
@@ -726,7 +800,7 @@ func _end_action() -> void:
 
 
 func _on_animation_finished(animation: StringName) -> void:
-	if animation != _action:
+	if _action == &"" or animation != animation_player.assigned_animation:
 		return
 	var finished_combo_step := _attack_step != null
 	var finished_shot_step := _shot_step
@@ -755,7 +829,7 @@ func _stanced(animation: StringName) -> StringName:
 	var stance_name := StringName("%s_with_%s" % [animation.get_file(), upper_body.get_file()])
 	var path := StringName("%s/%s" % [STANCE_LIBRARY, stance_name])
 	if not animation_player.has_animation(path):
-		_stance_library().add_animation(stance_name, _with_upper_body(animation, upper_body))
+		_stance_library().add_animation(stance_name, _with_upper_body(animation_player.get_animation(animation), animation_player.get_animation(upper_body)))
 	return path
 
 
@@ -773,18 +847,56 @@ func _stance_library() -> AnimationLibrary:
 	return animation_player.get_animation_library(STANCE_LIBRARY)
 
 
-func _with_upper_body(base_name: StringName, upper_name: StringName) -> Animation:
-	var merged: Animation = animation_player.get_animation(base_name).duplicate(true)
+func _with_upper_body(base: Animation, upper: Animation) -> Animation:
+	var merged: Animation = base.duplicate(true)
 	for track in range(merged.get_track_count() - 1, -1, -1):
 		if _is_upper_body_track(merged, track):
 			merged.remove_track(track)
-	var upper := animation_player.get_animation(upper_name)
 	var time_scale := merged.length / upper.length
 	for track in upper.get_track_count():
 		if _is_upper_body_track(upper, track):
 			_copy_track(upper, track, merged, time_scale)
 	_face_spine_like_upper_body(merged, upper, time_scale)
 	return merged
+
+
+func _action_on_the_move(action: StringName, gait_clip: StringName) -> StringName:
+	return _derived_animation(MOVING_ACTION_LIBRARY, action, _with_legs_of.bind(animation_player.get_animation(gait_clip)), _moving_name(action, gait_clip))
+
+
+func _hold_on_the_move(hold: StringName, gait_clip: StringName) -> StringName:
+	return _derived_animation(MOVING_HOLD_LIBRARY, hold, _hold_over_legs.bind(animation_player.get_animation(gait_clip)), _moving_name(hold, gait_clip))
+
+
+func _moving_name(clip: StringName, gait_clip: StringName) -> StringName:
+	return StringName("%s_on_%s" % [String(clip).replace("/", "_"), gait_clip.get_file()])
+
+
+func _hold_over_legs(hold: Animation, gait: Animation) -> Animation:
+	return _with_upper_body(gait, hold)
+
+
+func _with_legs_of(action: Animation, gait: Animation) -> Animation:
+	var merged: Animation = action.duplicate(true)
+	for track in range(merged.get_track_count() - 1, -1, -1):
+		if not _is_upper_body_track(merged, track):
+			merged.remove_track(track)
+	for track in gait.get_track_count():
+		if not _is_upper_body_track(gait, track) and gait.track_get_path(track) != SPINE_TRACK:
+			_copy_track_looped(gait, track, merged)
+	_face_spine_like_upper_body(merged, action, 1.0)
+	return merged
+
+
+func _copy_track_looped(source: Animation, track: int, target: Animation) -> void:
+	var copy := target.add_track(source.track_get_type(track))
+	target.track_set_path(copy, source.track_get_path(track))
+	target.track_set_interpolation_type(copy, source.track_get_interpolation_type(track))
+	var cycle_start := 0.0
+	while cycle_start < target.length:
+		for key in source.track_get_key_count(track):
+			target.track_insert_key(copy, cycle_start + source.track_get_key_time(track, key), source.track_get_key_value(track, key))
+		cycle_start += source.length
 
 
 func _face_spine_like_upper_body(merged: Animation, upper: Animation, time_scale: float) -> void:
@@ -819,13 +931,14 @@ func _mirrored(animation: StringName) -> StringName:
 	return _derived_animation(MIRRORED_LIBRARY, animation, _mirror)
 
 
-func _derived_animation(library: StringName, animation: StringName, derive: Callable) -> StringName:
-	var path := StringName("%s/%s" % [library, animation.get_file()])
+func _derived_animation(library: StringName, animation: StringName, derive: Callable, clip_name: StringName = &"") -> StringName:
+	var derived_name := clip_name if clip_name != &"" else StringName(animation.get_file())
+	var path := StringName("%s/%s" % [library, derived_name])
 	if animation_player.has_animation(path):
 		return path
 	if not animation_player.has_animation_library(library):
 		animation_player.add_animation_library(library, AnimationLibrary.new())
-	animation_player.get_animation_library(library).add_animation(animation.get_file(), derive.call(animation_player.get_animation(animation)))
+	animation_player.get_animation_library(library).add_animation(derived_name, derive.call(animation_player.get_animation(animation)))
 	return path
 
 

@@ -2,6 +2,8 @@
 
 [ext_resource type="PackedScene" path="res://assets/equipment/weapons/staff_B.gltf" id="1_1k8ju"]
 [ext_resource type="Script" path="res://scripts/weapon.gd" id="2_weapon"]
+[ext_resource type="PackedScene" path="res://scenes/effects/frost_bolt.tscn" id="9_left_projectile"]
+[ext_resource type="PackedScene" path="res://scenes/effects/frost_burst.tscn" id="10_right_projectile"]
 [ext_resource type="Script" path="res://scripts/attack_step.gd" id="3_attack_step"]
 [ext_resource type="Resource" path="res://resources/attacks/magic/long_spellcast.tres" id="4_long_spellcast"]
 [ext_resource type="Resource" path="res://resources/attacks/magic/shoot.tres" id="5_shoot"]
@@ -12,6 +14,9 @@ points = PackedVector3Array(-0.31824955, 1.0583441, -0.030909253, -0.31824955, 1
 
 [node name="StaffB" type="Area3D" unique_id=16028543]
 script = ExtResource("2_weapon")
+projectile = ExtResource("9_left_projectile")
+secondary_projectile = ExtResource("10_right_projectile")
+projectile_origin = Vector3(0, 1.35, 0)
 combo = Array[ExtResource("3_attack_step")]([ExtResource("4_long_spellcast"), ExtResource("5_shoot")])
 secondary_combo = Array[ExtResource("3_attack_step")]([ExtResource("6_raise")])
 

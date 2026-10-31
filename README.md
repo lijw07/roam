@@ -103,6 +103,16 @@ most need no grip rotation:
 `fistweapon_b_stacked` is the drop display for the claws, so it isn't in the test scene;
 `fistweapon_a_stacked`, the unstrung `bow_a` and `bow_b` and the arrows are props with no setup.
 
+### Attacking on the move
+Attacks, casts, shots, aiming and blocking don't stop the player. While one plays and a move key is
+held, the controller keeps moving at the walk or run speed and plays the action on the upper body over
+the gait's legs (`moving_action/<clip>_on_<gait>`, built on first use by `_with_legs_of`: the action's
+chest, head and arms, the gait's hips and legs looped under it, and the spine counter-rotated so the
+upper body faces the camera). Held poses (`Melee_Blocking`, the aim holds) are layered over the walk
+the same way (`moving_hold/`). Starting or stopping mid-action swaps between the standing and moving
+copy at the same playback time, so the swing carries on. A step with `uses_legs` on (the kick) still
+plants the player, and sprinting into an attack still plays the weapon's lunge.
+
 ### Combos
 Every KayKit attack is a standalone move: it winds up from a neutral stance, swings for about a tenth
 of a second, then spends 0.5–1.2 s returning to neutral. Played back to back that reads as separate
@@ -113,6 +123,8 @@ attacks, so each `AttackStep` (in `resources/attacks/`) marks where in its clip 
 | `combo_time` | After the swing's follow-through: a buffered press cuts the recovery here and blends (0.2 s) into the next step |
 | `window_end` | Last moment a press continues the string; after it the player can move or dodge out of the recovery |
 | `chain_start` | How far into the wind-up the step starts when it follows another, skipping the slow neutral part |
+| `projectile_time` | When to launch the held weapon's `projectile` during this step (-1 for none) |
+| `uses_legs` | Plants the player for this step instead of letting the action play over the walk or run |
 | `mirrored` | Plays the clip mirrored left to right (built on first use, see Dual wielding), so a right-handed clip strikes with the left hand |
 | `continues_automatically` | Moves on to the next step at `combo_time` without waiting for a press (the wand and staff's build-up into the shot) |
 
@@ -195,7 +207,7 @@ There is no unarmed sprint attack.
 
 ### Ranged weapons
 The crossbows and the bow aim and shoot instead of swinging. Holding right mouse aims: the player
-plants like a shield block, turns with the camera, plays `aim_animation` from `aim_start` until
+can walk (not sprint or jump) like a shield block, turns with the camera, plays `aim_animation` from `aim_start` until
 `aim_ready_time`, then holds `aim_hold_animation` (or, when that is empty, the rest of the aim clip
 from `aim_ready_time`, looped, since the crossbow aim clips raise and then hold in one clip).
 Letting go before the aim is ready lowers it.
@@ -212,8 +224,21 @@ aim hold at `aim_return_time` (when set); otherwise the player raises again once
 | Two-handed crossbow | `Ranged_2H_Aiming` 0 → 0.4 | rest of the aim clip | `Ranged_2H_Shoot` from 0.3, `Ranged_2H_Reload` | 1.5 (the reload ends aimed) |
 | Bow | `Ranged_Bow_Draw` 0.3 → 1.0 | `Ranged_Bow_Aiming_Idle` | `Ranged_Bow_Release` | none (lowers, redraws) |
 
+Each shot launches the weapon's `projectile` once, `shot_release_time` into the first shot clip, at
+`projectile_origin` in the weapon's space and facing the camera's direction (the same launch as the
+wands). The arrow and bolt models point along +Z, the way `projectile.gd` flies them:
+
+| Weapon | Projectile (`scenes/effects/`) | Release | Origin |
+| --- | --- | --- | --- |
+| One-handed crossbow | `crossbow_bolt` (`arrow_crossbow`, 32 m/s) | 0.34 s, at the trigger recoil | (0, 0.12, 0.4), on the rail |
+| Two-handed crossbow | `crossbow_bolt` | 0.34 s, at the trigger recoil | (0, 0.15, 0.75), on the rail |
+| Bow | `arrow` (`arrow_bow`, 26 m/s) | 0.02 s, as the string hand opens | the grip |
+| Bow A, bow B | `arrow_a`, `arrow_b` (the Fantasy pack's arrows, 26 m/s) | 0.02 s | the grip |
+
+The projectiles fly straight for 3 s and don't collide yet; no arrow is shown nocked while aiming.
+
 The bow's draw starts at 0.3 s because its first 0.3 s rises from the plain idle, not the bow's.
-There are no projectiles yet. `Ranged_1H_Shooting` / `Ranged_2H_Shooting` (rapid-fire loops) and
+`Ranged_1H_Shooting` / `Ranged_2H_Shooting` (rapid-fire loops) and
 the bow's `_Up` variants (aiming upward) are unused, since the player doesn't know the camera's pitch.
 
 ### Magic
@@ -228,6 +253,24 @@ second at its `combo_time` without another press. The staff's right mouse is a s
 | Staff | Left mouse (`combo`) | `Ranged_Magic_Spellcasting_Long` (1.4 s), then `Ranged_Magic_Shoot` from 0.15 | about one cast every 2.2 s |
 | Staff | Right mouse (`secondary_combo`) | `Ranged_Magic_Raise` on its own: the staff lifted overhead, held, lowered | about once every 2.0 s |
 
+The wands and staffs fire projectiles. A step with `projectile_time` set spawns one projectile at that
+point in its clip: the Shoot step at 0.3 s, when the thrust has finished and the weapon points level,
+and the staff's Raise at 0.7 s, with the staff held overhead. The weapon's `projectile` is used for
+left mouse and `secondary_projectile` for right mouse; it spawns at `projectile_origin` in the weapon's
+space (the tip or head), facing the camera's direction, parented to the player's parent so it flies on
+its own. All are in `scenes/effects/` and use `projectile.gd` (they fly straight for 2.5 s and don't
+collide yet):
+
+| Weapon | Left mouse | Right mouse |
+| --- | --- | --- |
+| Wand | `magic_bolt` (blue, small, 15 m/s) | `magic_bolt_charged` (blue, large, 10 m/s) |
+| Wand A | `arcane_bolt` (violet, small, 18 m/s) | `arcane_bolt_charged` (violet, large, 11 m/s) |
+| Staff | `nature_bolt` (green, 14 m/s) | `nature_burst` (green, very large, 9 m/s, from the raised staff) |
+| Staff A | `ember_bolt` (amber, 14 m/s) | `ember_burst` (amber, very large, 9 m/s, from the raised staff) |
+| Staff B | `frost_bolt` (white-cyan, 14 m/s) | `frost_burst` (white-cyan, very large, 9 m/s, from the raised staff) |
+
+The variants are copies of `magic_bolt` with a different core size and colour, light and trail.
+
 Presses only queue the combo that the same button started, so clicking one button during the
 other's cast doesn't cut it short. `Ranged_Magic_Summon` is unused.
 
@@ -240,7 +283,7 @@ blocks:
 | Situation | Animation |
 | --- | --- |
 | Start blocking while standing still | `Melee_Block` raises the shield, then `Melee_Blocking` holds it |
-| Move or jump while blocking | nothing: blocking is a planted stance, so movement input waits until you let go (dodging still works) |
+| Move while blocking | walks (no sprint or jump) with `Melee_Blocking` on the upper body over the walk, the legs turned toward travel and the upper body twisted back to the camera; raising, bashing and block hits work on the move too (dodging still works) |
 | Right mouse in the air | nothing: the shield only comes up on the ground, so a jump keeps its arc, and holding it through the landing raises the shield once the landing finishes |
 | Hit while blocking (`take_hit()`) | `Melee_Block_Hit` instead of `Hit_A` / `Hit_B` |
 | Attack while blocking | `Melee_Block_Attack`, a shield bash |

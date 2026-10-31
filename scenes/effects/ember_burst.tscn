@@ -1,0 +1,59 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/projectile.gd" id="1_projectile"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_core"]
+radius = 0.42
+height = 0.84
+radial_segments = 12
+rings = 6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_core"]
+shading_mode = 0
+albedo_color = Color(1, 0.85, 0.55, 1)
+emission_enabled = true
+emission = Color(1, 0.5, 0.15, 1)
+emission_energy_multiplier = 2.5
+
+[sub_resource type="QuadMesh" id="QuadMesh_spark"]
+size = Vector2(0.13, 0.13)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_spark"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 0.5, 0.15, 1)
+emission_enabled = true
+emission = Color(1, 0.5, 0.15, 1)
+billboard_mode = 3
+billboard_keep_scale = true
+
+[node name="EmberBurst" type="Node3D"]
+script = ExtResource("1_projectile")
+speed = 9.0
+lifetime = 2.5
+
+[node name="Core" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_core")
+surface_material_override/0 = SubResource("StandardMaterial3D_core")
+
+[node name="Light" type="OmniLight3D" parent="."]
+light_color = Color(1, 0.5, 0.15, 1)
+light_energy = 2.6
+omni_range = 4.2
+
+[node name="Trail" type="CPUParticles3D" parent="."]
+material_override = SubResource("StandardMaterial3D_spark")
+amount = 56
+lifetime = 0.7
+local_coords = false
+mesh = SubResource("QuadMesh_spark")
+direction = Vector3(0, 0, -1)
+spread = 12.0
+initial_velocity_min = 0.4
+initial_velocity_max = 1.2
+gravity = Vector3(0, 0, 0)
+scale_amount_min = 0.9
+scale_amount_max = 1.8
+color = Color(1, 0.5, 0.15, 1)
