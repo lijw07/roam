@@ -25,15 +25,31 @@ func _on_thrown(scene_path: String, count: int) -> void:
 	body.throw()
 	if body.current_animation() == THROW_ANIMATION:
 		await get_tree().create_timer(RELEASE_TIME, false, true).timeout
-	_release(load(scene_path), count)
+	_release(scene_path, count)
 
 
-func _release(scene: PackedScene, count: int) -> void:
-	var pickup := scene.instantiate() as ItemPickup
-	pickup.count = count
+func _release(scene_path: String, count: int) -> void:
+	var pickup := _create_pickup(scene_path, count)
 	body.get_parent().add_child(pickup)
 	var target := body.global_position + _flat_forward() * throw_distance
 	pickup.launch(_hand_position(), _ground_below(target))
+
+
+func _create_pickup(scene_path: String, count: int) -> ItemPickup:
+	var item := _instantiate(scene_path)
+	item.count = count
+	if count < inventory.max_stack or item.full_stack_scene.is_empty():
+		return item
+	var pile := _instantiate(item.full_stack_scene)
+	pile.item_name = item.item_name
+	pile.single_item_scene = scene_path
+	pile.count = count
+	item.free()
+	return pile
+
+
+func _instantiate(scene_path: String) -> ItemPickup:
+	return (load(scene_path) as PackedScene).instantiate() as ItemPickup
 
 
 func _hand_position() -> Vector3:

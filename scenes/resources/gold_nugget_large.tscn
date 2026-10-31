@@ -10,6 +10,7 @@ points = PackedVector3Array(0.08888695, 0.20204447, 0.01249069, -0.20013347, -0.
 script = ExtResource("2_item_pickup")
 item_name = "Gold Nugget Large"
 auto_pick_up = true
+full_stack_scene = "res://scenes/resources/gold_nuggets.tscn"
 
 [node name="Model" parent="." unique_id=1546531607 instance=ExtResource("1_d5wwl")]
 

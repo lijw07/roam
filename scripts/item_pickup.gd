@@ -10,6 +10,8 @@ const ARC_HEIGHT := 0.6
 @export var item_name := ""
 @export var auto_pick_up := false
 @export var count := 1
+@export_file("*.tscn") var full_stack_scene := ""
+@export_file("*.tscn") var single_item_scene := ""
 
 
 func _ready() -> void:
@@ -25,6 +27,10 @@ func collect_into(inventory: Inventory) -> bool:
 	if count == 0:
 		queue_free()
 	return stored > 0
+
+
+func item_scene_path() -> String:
+	return scene_file_path if single_item_scene.is_empty() else single_item_scene
 
 
 func launch(from: Vector3, ground: Vector3) -> void:

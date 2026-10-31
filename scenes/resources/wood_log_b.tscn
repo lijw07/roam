@@ -9,6 +9,7 @@ points = PackedVector3Array(-0.26375005, 0.14193407, 0.6642354, 0.16468506, 0.24
 [node name="WoodLogB" type="Area3D" unique_id=1483503758]
 script = ExtResource("2_item_pickup")
 item_name = "Wood Log B"
+full_stack_scene = "res://scenes/resources/wood_log_stack.tscn"
 
 [node name="Model" parent="." unique_id=1154970958 instance=ExtResource("1_e7foc")]
 

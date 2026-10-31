@@ -25,8 +25,8 @@ func nearest_pickup() -> ItemPickup:
 
 func _collect_nearest() -> void:
 	var pickup := nearest_pickup()
-	if pickup != null:
-		pickup.collect_into(inventory)
+	if pickup != null and inventory.has_room_for(pickup.item_name):
+		body.collect(pickup, pickup.collect_into.bind(inventory))
 
 
 func _flat_distance_to(pickup: ItemPickup) -> float:

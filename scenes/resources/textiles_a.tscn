@@ -9,6 +9,7 @@ points = PackedVector3Array(-0.3385715, 0.34901005, -0.46377203, 0.3666488, 0.26
 [node name="TextilesA" type="Area3D" unique_id=2106475711]
 script = ExtResource("2_item_pickup")
 item_name = "Textiles A"
+full_stack_scene = "res://scenes/resources/textiles_stack_small.tscn"
 
 [node name="Model" parent="." unique_id=658158198 instance=ExtResource("1_7oe6i")]
 

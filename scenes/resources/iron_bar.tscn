@@ -9,6 +9,7 @@ points = PackedVector3Array(-0.15522934, 0.19150835, -0.30507582, 0.1977014, 0.0
 [node name="IronBar" type="Area3D" unique_id=1518607467]
 script = ExtResource("2_item_pickup")
 item_name = "Iron Bar"
+full_stack_scene = "res://scenes/resources/iron_bars.tscn"
 
 [node name="Model" parent="." unique_id=1656909878 instance=ExtResource("1_k0c2s")]
 

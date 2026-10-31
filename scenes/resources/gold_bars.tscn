@@ -8,7 +8,9 @@ points = PackedVector3Array(0.19805804, 0.68498254, 0.13862184, -0.38641468, 0.2
 
 [node name="GoldBars" type="Area3D" unique_id=641213321]
 script = ExtResource("2_item_pickup")
-item_name = "Gold Bars"
+item_name = "Gold Bar"
+count = 5
+single_item_scene = "res://scenes/resources/gold_bar.tscn"
 
 [node name="Model" parent="." unique_id=500842370 instance=ExtResource("1_nl64l")]
 

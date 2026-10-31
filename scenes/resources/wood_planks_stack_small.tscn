@@ -1,11 +1,16 @@
 [gd_scene format=3 uid="uid://ogyw28j2n42e"]
 
 [ext_resource type="PackedScene" path="res://assets/resources/Wood_Planks_Stack_Small.gltf" id="1_5ijs1"]
+[ext_resource type="Script" path="res://scripts/item_pickup.gd" id="2_item_pickup"]
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_toaha"]
 points = PackedVector3Array(0.39478534, 0.2992075, 0.75067043, 0.32754302, 0.30356935, 0.082743615, 0.4022422, -0.019298404, -0.7618854, -0.38144088, 0.29999998, -0.70780003, 0.4022422, -0.019298404, 0.7616854, -0.38144088, 0.29999998, 0.7076, 0.3949142, 0.299253, -0.75111306, -0.41028485, -0.019298404, -0.8127984, -0.36618352, -2.7755576e-17, 0.6337465, -0.0040213168, 0.31081557, -0.8127984, -0.0040213168, 0.31081557, 0.81259835, -0.0040213168, -0.019298404, 0.7616854, -0.37877434, 0.13507529, 0.7026, -0.0040213168, 0.1331074, 0.81259835, -0.0040213168, -0.019298404, -0.8127984, -0.39555788, 0.2966421, 0.09196336, 0.405, 0.014146765, 0.7216619, -0.33558565, 0.30356935, 0.082743615, 0.405, 0.014146765, -0.72186196, -0.38886103, 0, 0.09038871, -0.39555788, 0.2966421, -0.09201909, 0.32737133, 0.30349422, -0.082770966, -0.33541396, 0.30349422, -0.082770966)
 
-[node name="WoodPlanksStackSmall" type="StaticBody3D" unique_id=1808436172]
+[node name="WoodPlanksStackSmall" type="Area3D" unique_id=1808436172]
+script = ExtResource("2_item_pickup")
+item_name = "Wood Plank A"
+count = 5
+single_item_scene = "res://scenes/resources/wood_plank_a.tscn"
 
 [node name="Model" parent="." unique_id=763072864 instance=ExtResource("1_5ijs1")]
 

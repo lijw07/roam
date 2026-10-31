@@ -38,16 +38,20 @@
 [ext_resource type="PackedScene" uid="uid://cjxjwbwdrbfgd" path="res://scenes/resources/silver_nugget_small.tscn" id="36_silver_nugget_small"]
 [ext_resource type="PackedScene" uid="uid://dwusekbebwor0" path="res://scenes/resources/silver_nuggets.tscn" id="37_silver_nuggets"]
 [ext_resource type="PackedScene" uid="uid://c3yfhgb2n58ed" path="res://scenes/resources/stone_brick.tscn" id="38_stone_brick"]
-[ext_resource type="PackedScene" uid="uid://37ef8inedktw" path="res://scenes/resources/stone_chunks_large.tscn" id="39_stone_chunks_large"]
-[ext_resource type="PackedScene" uid="uid://dtj0coqot000i" path="res://scenes/resources/stone_chunks_small.tscn" id="40_stone_chunks_small"]
-[ext_resource type="PackedScene" uid="uid://dosicntroxsxo" path="res://scenes/resources/textiles_a.tscn" id="41_textiles_a"]
-[ext_resource type="PackedScene" uid="uid://devvndm2403bp" path="res://scenes/resources/textiles_b.tscn" id="42_textiles_b"]
-[ext_resource type="PackedScene" uid="uid://djuvr080bi5jr" path="res://scenes/resources/textiles_c.tscn" id="43_textiles_c"]
-[ext_resource type="PackedScene" uid="uid://bq3gbgg7himul" path="res://scenes/resources/wood_log_a.tscn" id="44_wood_log_a"]
-[ext_resource type="PackedScene" uid="uid://b3wfb1mkbtnpa" path="res://scenes/resources/wood_log_b.tscn" id="45_wood_log_b"]
-[ext_resource type="PackedScene" uid="uid://dyaq0rcs0rxar" path="res://scenes/resources/wood_plank_a.tscn" id="46_wood_plank_a"]
-[ext_resource type="PackedScene" uid="uid://c81y3eco5mkve" path="res://scenes/resources/wood_plank_b.tscn" id="47_wood_plank_b"]
-[ext_resource type="PackedScene" uid="uid://sofdxetg64j7" path="res://scenes/resources/wood_plank_c.tscn" id="48_wood_plank_c"]
+[ext_resource type="PackedScene" uid="uid://0n733epnhqnw" path="res://scenes/resources/stone_bricks_stack_small.tscn" id="39_stone_bricks_stack_small"]
+[ext_resource type="PackedScene" uid="uid://37ef8inedktw" path="res://scenes/resources/stone_chunks_large.tscn" id="40_stone_chunks_large"]
+[ext_resource type="PackedScene" uid="uid://dtj0coqot000i" path="res://scenes/resources/stone_chunks_small.tscn" id="41_stone_chunks_small"]
+[ext_resource type="PackedScene" uid="uid://dosicntroxsxo" path="res://scenes/resources/textiles_a.tscn" id="42_textiles_a"]
+[ext_resource type="PackedScene" uid="uid://devvndm2403bp" path="res://scenes/resources/textiles_b.tscn" id="43_textiles_b"]
+[ext_resource type="PackedScene" uid="uid://djuvr080bi5jr" path="res://scenes/resources/textiles_c.tscn" id="44_textiles_c"]
+[ext_resource type="PackedScene" uid="uid://70g64hboiotq" path="res://scenes/resources/textiles_stack_small.tscn" id="45_textiles_stack_small"]
+[ext_resource type="PackedScene" uid="uid://bq3gbgg7himul" path="res://scenes/resources/wood_log_a.tscn" id="46_wood_log_a"]
+[ext_resource type="PackedScene" uid="uid://b3wfb1mkbtnpa" path="res://scenes/resources/wood_log_b.tscn" id="47_wood_log_b"]
+[ext_resource type="PackedScene" uid="uid://dsscq5rnncrpo" path="res://scenes/resources/wood_log_stack.tscn" id="48_wood_log_stack"]
+[ext_resource type="PackedScene" uid="uid://dyaq0rcs0rxar" path="res://scenes/resources/wood_plank_a.tscn" id="49_wood_plank_a"]
+[ext_resource type="PackedScene" uid="uid://c81y3eco5mkve" path="res://scenes/resources/wood_plank_b.tscn" id="50_wood_plank_b"]
+[ext_resource type="PackedScene" uid="uid://sofdxetg64j7" path="res://scenes/resources/wood_plank_c.tscn" id="51_wood_plank_c"]
+[ext_resource type="PackedScene" uid="uid://ogyw28j2n42e" path="res://scenes/resources/wood_planks_stack_small.tscn" id="52_wood_planks_stack_small"]
 
 [sub_resource type="Environment" id="Environment_test"]
 background_mode = 1
@@ -367,39 +371,51 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.25, 0.039, -15)
 [node name="StoneAndTextiles" type="Node3D" parent="Items"]
 
 [node name="StoneBrick" parent="Items/StoneAndTextiles" instance=ExtResource("38_stone_brick")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.25, 0, -18)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.75, 0, -18)
 
-[node name="StoneChunksSmall" parent="Items/StoneAndTextiles" instance=ExtResource("40_stone_chunks_small")]
+[node name="StoneBricksStackSmall" parent="Items/StoneAndTextiles" instance=ExtResource("39_stone_bricks_stack_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.25, 0.001, -18)
+
+[node name="StoneChunksSmall" parent="Items/StoneAndTextiles" instance=ExtResource("41_stone_chunks_small")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, 0.005, -18)
 
-[node name="StoneChunksLarge" parent="Items/StoneAndTextiles" instance=ExtResource("39_stone_chunks_large")]
+[node name="StoneChunksLarge" parent="Items/StoneAndTextiles" instance=ExtResource("40_stone_chunks_large")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, 0.026, -18)
 
-[node name="TextilesA" parent="Items/StoneAndTextiles" instance=ExtResource("41_textiles_a")]
+[node name="TextilesA" parent="Items/StoneAndTextiles" instance=ExtResource("42_textiles_a")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 0, -18)
 
-[node name="TextilesB" parent="Items/StoneAndTextiles" instance=ExtResource("42_textiles_b")]
+[node name="TextilesB" parent="Items/StoneAndTextiles" instance=ExtResource("43_textiles_b")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 0.032, -18)
 
-[node name="TextilesC" parent="Items/StoneAndTextiles" instance=ExtResource("43_textiles_c")]
+[node name="TextilesC" parent="Items/StoneAndTextiles" instance=ExtResource("44_textiles_c")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.25, 0.031, -18)
+
+[node name="TextilesStackSmall" parent="Items/StoneAndTextiles" instance=ExtResource("45_textiles_stack_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.75, 0.034, -18)
 
 [node name="Wood" type="Node3D" parent="Items"]
 
-[node name="WoodLogA" parent="Items/Wood" instance=ExtResource("44_wood_log_a")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.259, -21)
+[node name="WoodLogA" parent="Items/Wood" instance=ExtResource("46_wood_log_a")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0.259, -21)
 
-[node name="WoodLogB" parent="Items/Wood" instance=ExtResource("45_wood_log_b")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0.287, -21)
+[node name="WoodLogB" parent="Items/Wood" instance=ExtResource("47_wood_log_b")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.287, -21)
 
-[node name="WoodPlankA" parent="Items/Wood" instance=ExtResource("46_wood_plank_a")]
+[node name="WoodLogStack" parent="Items/Wood" instance=ExtResource("48_wood_log_stack")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0.002, -21)
+
+[node name="WoodPlankA" parent="Items/Wood" instance=ExtResource("49_wood_plank_a")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.012, -21)
 
-[node name="WoodPlankB" parent="Items/Wood" instance=ExtResource("47_wood_plank_b")]
+[node name="WoodPlankB" parent="Items/Wood" instance=ExtResource("50_wood_plank_b")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0.012, -21)
 
-[node name="WoodPlankC" parent="Items/Wood" instance=ExtResource("48_wood_plank_c")]
+[node name="WoodPlankC" parent="Items/Wood" instance=ExtResource("51_wood_plank_c")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.012, -21)
+
+[node name="WoodPlanksStackSmall" parent="Items/Wood" instance=ExtResource("52_wood_planks_stack_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0.019, -21)
 
 [node name="FuelAndParts" type="Node3D" parent="Items"]
 
@@ -414,7 +430,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 0, -24)
 
 [node name="PartsCog" parent="Items/FuelAndParts" instance=ExtResource("31_parts_cog")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 0.192, -24)
-
 [node name="CameraRig" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
 

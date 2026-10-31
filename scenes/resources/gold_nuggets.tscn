@@ -8,8 +8,10 @@ points = PackedVector3Array(0.23909064, 0.16717331, 0.35565254, 0.0492062, 0.099
 
 [node name="GoldNuggets" type="Area3D" unique_id=1430868421]
 script = ExtResource("2_item_pickup")
-item_name = "Gold Nuggets"
+item_name = "Gold Nugget Medium"
 auto_pick_up = true
+count = 5
+single_item_scene = "res://scenes/resources/gold_nugget_medium.tscn"
 
 [node name="Model" parent="." unique_id=1638330797 instance=ExtResource("1_sujps")]
 

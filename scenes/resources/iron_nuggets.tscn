@@ -8,8 +8,10 @@ points = PackedVector3Array(0.23909064, 0.16717331, 0.35565254, 0.049206864, 0.0
 
 [node name="IronNuggets" type="Area3D" unique_id=2121589387]
 script = ExtResource("2_item_pickup")
-item_name = "Iron Nuggets"
+item_name = "Iron Nugget Medium"
 auto_pick_up = true
+count = 5
+single_item_scene = "res://scenes/resources/iron_nugget_medium.tscn"
 
 [node name="Model" parent="." unique_id=1854976933 instance=ExtResource("1_2b0n6")]
 

@@ -40,6 +40,10 @@ func add(pickup: ItemPickup) -> int:
 	return stored
 
 
+func has_room_for(item_name: String) -> bool:
+	return _slot_for(item_name) != null
+
+
 func swap(from_index: int, to_index: int) -> void:
 	if from_index == to_index:
 		return
@@ -60,7 +64,7 @@ func throw_out(index: int) -> void:
 
 func _fill(slot: Slot, pickup: ItemPickup, amount: int) -> void:
 	slot.item_name = pickup.item_name
-	slot.scene_path = pickup.scene_file_path
+	slot.scene_path = pickup.item_scene_path()
 	slot.count += amount
 
 

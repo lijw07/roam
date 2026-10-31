@@ -117,6 +117,7 @@ var _air_time := 0.0
 var _idle_time := 0.0
 var _hand_slots: Dictionary[StringName, BoneAttachment3D] = {}
 var _pick_up_item: Node3D = null
+var _on_grab := Callable()
 var _pick_up_animation := PICK_UP_ANIMATION
 var _left_hand_pair: Node3D = null
 var _held_weapon: Weapon = null
@@ -179,6 +180,14 @@ func interact() -> void:
 
 
 func pick_up(item: Node3D = null) -> void:
+	_reach_for(item, _hold.bind(item))
+
+
+func collect(item: Node3D, on_grab: Callable) -> void:
+	_reach_for(item, on_grab)
+
+
+func _reach_for(item: Node3D, on_grab: Callable) -> void:
 	var with_left_hand := _pick_up_hand(item) == LEFT_HAND
 	var animation := _mirrored(PICK_UP_ANIMATION) if with_left_hand else PICK_UP_ANIMATION
 	if not _perform(animation):
@@ -187,6 +196,7 @@ func pick_up(item: Node3D = null) -> void:
 	if item == null:
 		return
 	_pick_up_item = item
+	_on_grab = on_grab
 	_align_hand_with(item.global_position, MIRROR_ACROSS_X * PICK_UP_HAND_OFFSET if with_left_hand else PICK_UP_HAND_OFFSET)
 
 
@@ -707,8 +717,11 @@ func _update_pick_up() -> void:
 		return
 	if animation_player.current_animation_position < PICK_UP_GRAB_TIME:
 		return
-	var item := _pick_up_item
 	_pick_up_item = null
+	_on_grab.call()
+
+
+func _hold(item: Node3D) -> void:
 	if item is Shield:
 		_take_shield(item)
 	elif _fits_off_hand(item):
@@ -1051,15 +1064,15 @@ func _local_pose(poses: Array[Transform3D], bone: int) -> Transform3D:
 func _animated_bone_pose(bone: int, animation: Animation, time: float) -> Transform3D:
 	var path := _bone_track_path(bone)
 	var rest := skeleton.get_bone_rest(bone)
-	var position := rest.origin
-	var scale := rest.basis.get_scale()
+	var bone_position := rest.origin
+	var bone_scale := rest.basis.get_scale()
 	var position_track := animation.find_track(path, Animation.TYPE_POSITION_3D)
 	if position_track >= 0:
-		position = animation.position_track_interpolate(position_track, time)
+		bone_position = animation.position_track_interpolate(position_track, time)
 	var scale_track := animation.find_track(path, Animation.TYPE_SCALE_3D)
 	if scale_track >= 0:
-		scale = animation.scale_track_interpolate(scale_track, time)
-	return Transform3D(Basis(_rotation_at(animation, path, time)) * Basis.from_scale(scale), position)
+		bone_scale = animation.scale_track_interpolate(scale_track, time)
+	return Transform3D(Basis(_rotation_at(animation, path, time)) * Basis.from_scale(bone_scale), bone_position)
 
 
 func _insert_bone_keys(animation: Animation, tracks: Dictionary, time: float, pose: Transform3D) -> void:
@@ -1072,11 +1085,11 @@ func _insert_bone_keys(animation: Animation, tracks: Dictionary, time: float, po
 
 
 func _mirror_bone(bone: int) -> int:
-	var name := skeleton.get_bone_name(bone)
-	if name.ends_with(".l"):
-		return skeleton.find_bone(name.trim_suffix(".l") + ".r")
-	if name.ends_with(".r"):
-		return skeleton.find_bone(name.trim_suffix(".r") + ".l")
+	var bone_name := skeleton.get_bone_name(bone)
+	if bone_name.ends_with(".l"):
+		return skeleton.find_bone(bone_name.trim_suffix(".l") + ".r")
+	if bone_name.ends_with(".r"):
+		return skeleton.find_bone(bone_name.trim_suffix(".r") + ".l")
 	return bone
 
 
