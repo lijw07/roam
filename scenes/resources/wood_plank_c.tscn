@@ -1,11 +1,14 @@
 [gd_scene format=3 uid="uid://sofdxetg64j7"]
 
 [ext_resource type="PackedScene" path="res://assets/resources/Wood_Plank_C.gltf" id="1_ejssm"]
+[ext_resource type="Script" path="res://scripts/item_pickup.gd" id="2_item_pickup"]
 
 [sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_6oqgt"]
 points = PackedVector3Array(-0.21190476, -0.011904776, -0.76175565, 0.2166667, 0.15476191, 0.76175565, 0.2166667, -0.011904776, 0.76175565, 0.2166667, 0.15476191, -0.76175565, -0.19166297, 0.1468901, 0.6897989, 0.2166667, -0.011904776, -0.76175565, -0.21190476, -0.011904776, 0.76175565, -0.19161886, 0.14687295, -0.68964213)
 
 [node name="WoodPlankC" type="Area3D" unique_id=763826991]
+script = ExtResource("2_item_pickup")
+item_name = "Wood Plank C"
 
 [node name="Model" parent="." unique_id=2050701516 instance=ExtResource("1_ejssm")]
 

@@ -1,0 +1,451 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/inventory_test.gd" id="1_test"]
+[ext_resource type="PackedScene" uid="uid://r4kxi28gpfit" path="res://scenes/dungeon/floors/floor_tile_large.tscn" id="2_floor"]
+[ext_resource type="PackedScene" uid="uid://dfofpcqw5hsoy" path="res://scenes/characters/adventurers/knight.tscn" id="3_knight"]
+[ext_resource type="Script" uid="uid://b4x3gwfy0ernd" path="res://scripts/dungeon_explorer.gd" id="4_explorer"]
+[ext_resource type="Script" path="res://scripts/inventory.gd" id="5_inventory"]
+[ext_resource type="Script" path="res://scripts/item_collector.gd" id="6_item_collector"]
+[ext_resource type="Script" path="res://scripts/inventory_ui.gd" id="7_inventory_ui"]
+[ext_resource type="Script" path="res://scripts/item_thrower.gd" id="8_item_thrower"]
+[ext_resource type="Script" path="res://scripts/item_icon_renderer.gd" id="9_item_icon_renderer"]
+[ext_resource type="PackedScene" uid="uid://cfdyr5rkc2ffm" path="res://scenes/resources/copper_bar.tscn" id="10_copper_bar"]
+[ext_resource type="PackedScene" uid="uid://ymsv0pxt31y4" path="res://scenes/resources/copper_bars.tscn" id="11_copper_bars"]
+[ext_resource type="PackedScene" uid="uid://vu55wmim8c1l" path="res://scenes/resources/copper_nugget_large.tscn" id="12_copper_nugget_large"]
+[ext_resource type="PackedScene" uid="uid://dnlk7kxvdag4w" path="res://scenes/resources/copper_nugget_medium.tscn" id="13_copper_nugget_medium"]
+[ext_resource type="PackedScene" uid="uid://bh8bj4j0el8el" path="res://scenes/resources/copper_nugget_small.tscn" id="14_copper_nugget_small"]
+[ext_resource type="PackedScene" uid="uid://b6bsle60nwnnb" path="res://scenes/resources/copper_nuggets.tscn" id="15_copper_nuggets"]
+[ext_resource type="PackedScene" uid="uid://dtweei6kohlrh" path="res://scenes/resources/fuel_a_jerrycan.tscn" id="16_fuel_a_jerrycan"]
+[ext_resource type="PackedScene" uid="uid://2rln7nc02gr8" path="res://scenes/resources/fuel_b_jerrycan.tscn" id="17_fuel_b_jerrycan"]
+[ext_resource type="PackedScene" uid="uid://dar0i4j7mqq8d" path="res://scenes/resources/fuel_c_jerrycan.tscn" id="18_fuel_c_jerrycan"]
+[ext_resource type="PackedScene" uid="uid://feoh3v7whcrg" path="res://scenes/resources/gold_bar.tscn" id="19_gold_bar"]
+[ext_resource type="PackedScene" uid="uid://bck5gyrsihj6o" path="res://scenes/resources/gold_bars.tscn" id="20_gold_bars"]
+[ext_resource type="PackedScene" uid="uid://b7160lnclvc4x" path="res://scenes/resources/gold_nugget_large.tscn" id="21_gold_nugget_large"]
+[ext_resource type="PackedScene" uid="uid://la30yif81k6q" path="res://scenes/resources/gold_nugget_medium.tscn" id="22_gold_nugget_medium"]
+[ext_resource type="PackedScene" uid="uid://dar4tgg73wo" path="res://scenes/resources/gold_nugget_small.tscn" id="23_gold_nugget_small"]
+[ext_resource type="PackedScene" uid="uid://bpg47v5e73gdx" path="res://scenes/resources/gold_nuggets.tscn" id="24_gold_nuggets"]
+[ext_resource type="PackedScene" uid="uid://debtr0030okfn" path="res://scenes/resources/iron_bar.tscn" id="25_iron_bar"]
+[ext_resource type="PackedScene" uid="uid://2pp8tdghb1y5" path="res://scenes/resources/iron_bars.tscn" id="26_iron_bars"]
+[ext_resource type="PackedScene" uid="uid://dx5733kw1l2vj" path="res://scenes/resources/iron_nugget_large.tscn" id="27_iron_nugget_large"]
+[ext_resource type="PackedScene" uid="uid://d1h43awpr4hh" path="res://scenes/resources/iron_nugget_medium.tscn" id="28_iron_nugget_medium"]
+[ext_resource type="PackedScene" uid="uid://bowxbptn44eeq" path="res://scenes/resources/iron_nugget_small.tscn" id="29_iron_nugget_small"]
+[ext_resource type="PackedScene" uid="uid://ds5bo143136cb" path="res://scenes/resources/iron_nuggets.tscn" id="30_iron_nuggets"]
+[ext_resource type="PackedScene" uid="uid://cney635wbc6ho" path="res://scenes/resources/parts_cog.tscn" id="31_parts_cog"]
+[ext_resource type="PackedScene" uid="uid://bylcr6a15jayh" path="res://scenes/resources/silver_bar.tscn" id="32_silver_bar"]
+[ext_resource type="PackedScene" uid="uid://c8qx65smtmwjo" path="res://scenes/resources/silver_bars.tscn" id="33_silver_bars"]
+[ext_resource type="PackedScene" uid="uid://b4w3wl56rk4nd" path="res://scenes/resources/silver_nugget_large.tscn" id="34_silver_nugget_large"]
+[ext_resource type="PackedScene" uid="uid://besg2d43pt4uc" path="res://scenes/resources/silver_nugget_medium.tscn" id="35_silver_nugget_medium"]
+[ext_resource type="PackedScene" uid="uid://cjxjwbwdrbfgd" path="res://scenes/resources/silver_nugget_small.tscn" id="36_silver_nugget_small"]
+[ext_resource type="PackedScene" uid="uid://dwusekbebwor0" path="res://scenes/resources/silver_nuggets.tscn" id="37_silver_nuggets"]
+[ext_resource type="PackedScene" uid="uid://c3yfhgb2n58ed" path="res://scenes/resources/stone_brick.tscn" id="38_stone_brick"]
+[ext_resource type="PackedScene" uid="uid://37ef8inedktw" path="res://scenes/resources/stone_chunks_large.tscn" id="39_stone_chunks_large"]
+[ext_resource type="PackedScene" uid="uid://dtj0coqot000i" path="res://scenes/resources/stone_chunks_small.tscn" id="40_stone_chunks_small"]
+[ext_resource type="PackedScene" uid="uid://dosicntroxsxo" path="res://scenes/resources/textiles_a.tscn" id="41_textiles_a"]
+[ext_resource type="PackedScene" uid="uid://devvndm2403bp" path="res://scenes/resources/textiles_b.tscn" id="42_textiles_b"]
+[ext_resource type="PackedScene" uid="uid://djuvr080bi5jr" path="res://scenes/resources/textiles_c.tscn" id="43_textiles_c"]
+[ext_resource type="PackedScene" uid="uid://bq3gbgg7himul" path="res://scenes/resources/wood_log_a.tscn" id="44_wood_log_a"]
+[ext_resource type="PackedScene" uid="uid://b3wfb1mkbtnpa" path="res://scenes/resources/wood_log_b.tscn" id="45_wood_log_b"]
+[ext_resource type="PackedScene" uid="uid://dyaq0rcs0rxar" path="res://scenes/resources/wood_plank_a.tscn" id="46_wood_plank_a"]
+[ext_resource type="PackedScene" uid="uid://c81y3eco5mkve" path="res://scenes/resources/wood_plank_b.tscn" id="47_wood_plank_b"]
+[ext_resource type="PackedScene" uid="uid://sofdxetg64j7" path="res://scenes/resources/wood_plank_c.tscn" id="48_wood_plank_c"]
+
+[sub_resource type="Environment" id="Environment_test"]
+background_mode = 1
+background_color = Color(0.05, 0.05, 0.07, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.5, 0.5, 0.6, 1)
+ambient_light_energy = 0.6
+
+[node name="InventoryTest" type="Node3D"]
+script = ExtResource("1_test")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_test")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.81915206, -0.46984634, 0.32898995, 0, 0.57357645, 0.81915206, -0.57357645, -0.6710101, 0.46984634, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Floor" type="Node3D" parent="."]
+
+[node name="FloorTileLarge1" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -26)
+
+[node name="FloorTileLarge2" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -22)
+
+[node name="FloorTileLarge3" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -18)
+
+[node name="FloorTileLarge4" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -14)
+
+[node name="FloorTileLarge5" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -10)
+
+[node name="FloorTileLarge6" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -6)
+
+[node name="FloorTileLarge7" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, -2)
+
+[node name="FloorTileLarge8" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 2)
+
+[node name="FloorTileLarge9" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 6)
+
+[node name="FloorTileLarge10" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -26)
+
+[node name="FloorTileLarge11" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -22)
+
+[node name="FloorTileLarge12" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -18)
+
+[node name="FloorTileLarge13" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -14)
+
+[node name="FloorTileLarge14" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -10)
+
+[node name="FloorTileLarge15" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -6)
+
+[node name="FloorTileLarge16" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -2)
+
+[node name="FloorTileLarge17" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 2)
+
+[node name="FloorTileLarge18" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 6)
+
+[node name="FloorTileLarge19" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -26)
+
+[node name="FloorTileLarge20" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -22)
+
+[node name="FloorTileLarge21" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -18)
+
+[node name="FloorTileLarge22" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -14)
+
+[node name="FloorTileLarge23" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -10)
+
+[node name="FloorTileLarge24" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -6)
+
+[node name="FloorTileLarge25" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -2)
+
+[node name="FloorTileLarge26" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 2)
+
+[node name="FloorTileLarge27" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 6)
+
+[node name="FloorTileLarge28" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -26)
+
+[node name="FloorTileLarge29" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -22)
+
+[node name="FloorTileLarge30" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -18)
+
+[node name="FloorTileLarge31" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -14)
+
+[node name="FloorTileLarge32" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -10)
+
+[node name="FloorTileLarge33" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -6)
+
+[node name="FloorTileLarge34" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -2)
+
+[node name="FloorTileLarge35" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 2)
+
+[node name="FloorTileLarge36" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 6)
+
+[node name="FloorTileLarge37" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -26)
+
+[node name="FloorTileLarge38" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -22)
+
+[node name="FloorTileLarge39" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -18)
+
+[node name="FloorTileLarge40" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -14)
+
+[node name="FloorTileLarge41" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -10)
+
+[node name="FloorTileLarge42" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -6)
+
+[node name="FloorTileLarge43" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -2)
+
+[node name="FloorTileLarge44" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 2)
+
+[node name="FloorTileLarge45" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 6)
+
+[node name="FloorTileLarge46" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -26)
+
+[node name="FloorTileLarge47" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -22)
+
+[node name="FloorTileLarge48" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -18)
+
+[node name="FloorTileLarge49" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -14)
+
+[node name="FloorTileLarge50" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -10)
+
+[node name="FloorTileLarge51" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -6)
+
+[node name="FloorTileLarge52" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -2)
+
+[node name="FloorTileLarge53" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 2)
+
+[node name="FloorTileLarge54" parent="Floor" instance=ExtResource("2_floor")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 6)
+
+[node name="Player" parent="." instance=ExtResource("3_knight")]
+script = ExtResource("4_explorer")
+
+[node name="Inventory" type="Node" parent="Player"]
+script = ExtResource("5_inventory")
+
+[node name="ItemCollector" type="Node" parent="Player" node_paths=PackedStringArray("inventory")]
+script = ExtResource("6_item_collector")
+inventory = NodePath("../Inventory")
+
+[node name="ItemThrower" type="Node" parent="Player" node_paths=PackedStringArray("inventory")]
+script = ExtResource("8_item_thrower")
+inventory = NodePath("../Inventory")
+
+[node name="Items" type="Node3D" parent="."]
+
+[node name="StackTest" type="Node3D" parent="Items"]
+
+[node name="CopperBar1" parent="Items/StackTest" instance=ExtResource("10_copper_bar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -3)
+
+[node name="CopperBar2" parent="Items/StackTest" instance=ExtResource("10_copper_bar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -3)
+
+[node name="CopperBar3" parent="Items/StackTest" instance=ExtResource("10_copper_bar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -3)
+
+[node name="CopperBar4" parent="Items/StackTest" instance=ExtResource("10_copper_bar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -3)
+
+[node name="CopperBar5" parent="Items/StackTest" instance=ExtResource("10_copper_bar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -3)
+
+[node name="CopperBar6" parent="Items/StackTest" instance=ExtResource("10_copper_bar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -3)
+
+[node name="CopperNuggetSmall1" parent="Items/StackTest" instance=ExtResource("14_copper_nugget_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.057, -3)
+
+[node name="CopperNuggetSmall2" parent="Items/StackTest" instance=ExtResource("14_copper_nugget_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.25, 0.057, -3)
+
+[node name="CopperNuggetSmall3" parent="Items/StackTest" instance=ExtResource("14_copper_nugget_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.057, -3)
+
+[node name="CopperNuggetSmall4" parent="Items/StackTest" instance=ExtResource("14_copper_nugget_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 0.057, -3)
+
+[node name="CopperNuggetSmall5" parent="Items/StackTest" instance=ExtResource("14_copper_nugget_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0.057, -3)
+
+[node name="CopperNuggetSmall6" parent="Items/StackTest" instance=ExtResource("14_copper_nugget_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.25, 0.057, -3)
+
+[node name="Copper" type="Node3D" parent="Items"]
+
+[node name="CopperBar" parent="Items/Copper" instance=ExtResource("10_copper_bar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.25, 0, -6)
+
+[node name="CopperBars" parent="Items/Copper" instance=ExtResource("11_copper_bars")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, 0.005, -6)
+
+[node name="CopperNuggetLarge" parent="Items/Copper" instance=ExtResource("12_copper_nugget_large")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, 0.225, -6)
+
+[node name="CopperNuggetMedium" parent="Items/Copper" instance=ExtResource("13_copper_nugget_medium")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 0.136, -6)
+
+[node name="CopperNuggetSmall" parent="Items/Copper" instance=ExtResource("14_copper_nugget_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 0.057, -6)
+
+[node name="CopperNuggets" parent="Items/Copper" instance=ExtResource("15_copper_nuggets")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.25, 0.039, -6)
+
+[node name="Iron" type="Node3D" parent="Items"]
+
+[node name="IronBar" parent="Items/Iron" instance=ExtResource("25_iron_bar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.25, 0, -9)
+
+[node name="IronBars" parent="Items/Iron" instance=ExtResource("26_iron_bars")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, 0.005, -9)
+
+[node name="IronNuggetLarge" parent="Items/Iron" instance=ExtResource("27_iron_nugget_large")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, 0.225, -9)
+
+[node name="IronNuggetMedium" parent="Items/Iron" instance=ExtResource("28_iron_nugget_medium")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 0.136, -9)
+
+[node name="IronNuggetSmall" parent="Items/Iron" instance=ExtResource("29_iron_nugget_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 0.057, -9)
+
+[node name="IronNuggets" parent="Items/Iron" instance=ExtResource("30_iron_nuggets")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.25, 0.039, -9)
+
+[node name="Silver" type="Node3D" parent="Items"]
+
+[node name="SilverBar" parent="Items/Silver" instance=ExtResource("32_silver_bar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.25, 0, -12)
+
+[node name="SilverBars" parent="Items/Silver" instance=ExtResource("33_silver_bars")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, 0.005, -12)
+
+[node name="SilverNuggetLarge" parent="Items/Silver" instance=ExtResource("34_silver_nugget_large")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, 0.225, -12)
+
+[node name="SilverNuggetMedium" parent="Items/Silver" instance=ExtResource("35_silver_nugget_medium")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 0.136, -12)
+
+[node name="SilverNuggetSmall" parent="Items/Silver" instance=ExtResource("36_silver_nugget_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 0.057, -12)
+
+[node name="SilverNuggets" parent="Items/Silver" instance=ExtResource("37_silver_nuggets")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.25, 0.039, -12)
+
+[node name="Gold" type="Node3D" parent="Items"]
+
+[node name="GoldBar" parent="Items/Gold" instance=ExtResource("19_gold_bar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.25, 0, -15)
+
+[node name="GoldBars" parent="Items/Gold" instance=ExtResource("20_gold_bars")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, 0.005, -15)
+
+[node name="GoldNuggetLarge" parent="Items/Gold" instance=ExtResource("21_gold_nugget_large")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, 0.225, -15)
+
+[node name="GoldNuggetMedium" parent="Items/Gold" instance=ExtResource("22_gold_nugget_medium")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 0.136, -15)
+
+[node name="GoldNuggetSmall" parent="Items/Gold" instance=ExtResource("23_gold_nugget_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 0.057, -15)
+
+[node name="GoldNuggets" parent="Items/Gold" instance=ExtResource("24_gold_nuggets")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.25, 0.039, -15)
+
+[node name="StoneAndTextiles" type="Node3D" parent="Items"]
+
+[node name="StoneBrick" parent="Items/StoneAndTextiles" instance=ExtResource("38_stone_brick")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.25, 0, -18)
+
+[node name="StoneChunksSmall" parent="Items/StoneAndTextiles" instance=ExtResource("40_stone_chunks_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, 0.005, -18)
+
+[node name="StoneChunksLarge" parent="Items/StoneAndTextiles" instance=ExtResource("39_stone_chunks_large")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, 0.026, -18)
+
+[node name="TextilesA" parent="Items/StoneAndTextiles" instance=ExtResource("41_textiles_a")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 0, -18)
+
+[node name="TextilesB" parent="Items/StoneAndTextiles" instance=ExtResource("42_textiles_b")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 0.032, -18)
+
+[node name="TextilesC" parent="Items/StoneAndTextiles" instance=ExtResource("43_textiles_c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.25, 0.031, -18)
+
+[node name="Wood" type="Node3D" parent="Items"]
+
+[node name="WoodLogA" parent="Items/Wood" instance=ExtResource("44_wood_log_a")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.259, -21)
+
+[node name="WoodLogB" parent="Items/Wood" instance=ExtResource("45_wood_log_b")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0.287, -21)
+
+[node name="WoodPlankA" parent="Items/Wood" instance=ExtResource("46_wood_plank_a")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.012, -21)
+
+[node name="WoodPlankB" parent="Items/Wood" instance=ExtResource("47_wood_plank_b")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0.012, -21)
+
+[node name="WoodPlankC" parent="Items/Wood" instance=ExtResource("48_wood_plank_c")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.012, -21)
+
+[node name="FuelAndParts" type="Node3D" parent="Items"]
+
+[node name="FuelAJerrycan" parent="Items/FuelAndParts" instance=ExtResource("16_fuel_a_jerrycan")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, 0, -24)
+
+[node name="FuelBJerrycan" parent="Items/FuelAndParts" instance=ExtResource("17_fuel_b_jerrycan")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, 0, -24)
+
+[node name="FuelCJerrycan" parent="Items/FuelAndParts" instance=ExtResource("18_fuel_c_jerrycan")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 0, -24)
+
+[node name="PartsCog" parent="Items/FuelAndParts" instance=ExtResource("31_parts_cog")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 0.192, -24)
+
+[node name="CameraRig" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+
+[node name="Pitch" type="Node3D" parent="CameraRig"]
+transform = Transform3D(1, 0, 0, 0, 0.9393727, 0.3428978, 0, -0.3428978, 0.9393727, 0, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/Pitch"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+fov = 60.0
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Info" type="Label" parent="HUD"]
+offset_left = 16.0
+offset_top = 16.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+
+[node name="ItemIcons" type="Node" parent="HUD"]
+script = ExtResource("9_item_icon_renderer")
+
+[node name="Inventory" type="GridContainer" parent="HUD" node_paths=PackedStringArray("inventory", "icon_renderer")]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+script = ExtResource("7_inventory_ui")
+inventory = NodePath("../../Player/Inventory")
+icon_renderer = NodePath("../ItemIcons")
