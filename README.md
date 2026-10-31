@@ -103,6 +103,16 @@ most need no grip rotation:
 `fistweapon_b_stacked` is the drop display for the claws, so it isn't in the test scene;
 `fistweapon_a_stacked`, the unstrung `bow_a` and `bow_b` and the arrows are props with no setup.
 
+### Attacking on the move
+Attacks, casts, shots, aiming and blocking don't stop the player. While one plays and a move key is
+held, the controller keeps moving at the walk or run speed and plays the action on the upper body over
+the gait's legs (`moving_action/<clip>_on_<gait>`, built on first use by `_with_legs_of`: the action's
+chest, head and arms, the gait's hips and legs looped under it, and the spine counter-rotated so the
+upper body faces the camera). Held poses (`Melee_Blocking`, the aim holds) are layered over the walk
+the same way (`moving_hold/`). Starting or stopping mid-action swaps between the standing and moving
+copy at the same playback time, so the swing carries on. A step with `uses_legs` on (the kick) still
+plants the player, and sprinting into an attack still plays the weapon's lunge.
+
 ### Combos
 Every KayKit attack is a standalone move: it winds up from a neutral stance, swings for about a tenth
 of a second, then spends 0.5–1.2 s returning to neutral. Played back to back that reads as separate
@@ -195,7 +205,7 @@ There is no unarmed sprint attack.
 
 ### Ranged weapons
 The crossbows and the bow aim and shoot instead of swinging. Holding right mouse aims: the player
-plants like a shield block, turns with the camera, plays `aim_animation` from `aim_start` until
+can walk (not sprint or jump) like a shield block, turns with the camera, plays `aim_animation` from `aim_start` until
 `aim_ready_time`, then holds `aim_hold_animation` (or, when that is empty, the rest of the aim clip
 from `aim_ready_time`, looped, since the crossbow aim clips raise and then hold in one clip).
 Letting go before the aim is ready lowers it.
@@ -240,7 +250,7 @@ blocks:
 | Situation | Animation |
 | --- | --- |
 | Start blocking while standing still | `Melee_Block` raises the shield, then `Melee_Blocking` holds it |
-| Move or jump while blocking | nothing: blocking is a planted stance, so movement input waits until you let go (dodging still works) |
+| Move while blocking | walks (no sprint or jump) with `Melee_Blocking` on the upper body over the walk, the legs turned toward travel and the upper body twisted back to the camera; raising, bashing and block hits work on the move too (dodging still works) |
 | Right mouse in the air | nothing: the shield only comes up on the ground, so a jump keeps its arc, and holding it through the landing raises the shield once the landing finishes |
 | Hit while blocking (`take_hit()`) | `Melee_Block_Hit` instead of `Hit_A` / `Hit_B` |
 | Attack while blocking | `Melee_Block_Attack`, a shield bash |

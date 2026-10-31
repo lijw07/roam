@@ -7,3 +7,4 @@ class_name AttackStep
 @export var chain_start := 0.0
 @export var continues_automatically := false
 @export var mirrored := false
+@export var uses_legs := false

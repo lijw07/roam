@@ -8,3 +8,4 @@ animation = &"combat_melee/Melee_Unarmed_Attack_Kick"
 combo_time = 0.6
 window_end = 0.85
 chain_start = 0.05
+uses_legs = true
