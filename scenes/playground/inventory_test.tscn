@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scripts/inventory_ui.gd" id="7_inventory_ui"]
 [ext_resource type="Script" path="res://scripts/item_thrower.gd" id="8_item_thrower"]
 [ext_resource type="Script" path="res://scripts/item_icon_renderer.gd" id="9_item_icon_renderer"]
+[ext_resource type="Script" path="res://scripts/amount_popup.gd" id="9_amount_popup"]
 [ext_resource type="PackedScene" uid="uid://cfdyr5rkc2ffm" path="res://scenes/resources/copper_bar.tscn" id="10_copper_bar"]
 [ext_resource type="PackedScene" uid="uid://ymsv0pxt31y4" path="res://scenes/resources/copper_bars.tscn" id="11_copper_bars"]
 [ext_resource type="PackedScene" uid="uid://vu55wmim8c1l" path="res://scenes/resources/copper_nugget_large.tscn" id="12_copper_nugget_large"]
@@ -270,6 +271,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -3)
 [node name="CopperBar6" parent="Items/StackTest" instance=ExtResource("10_copper_bar")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -3)
 
+[node name="CopperBar7" parent="Items/StackTest" instance=ExtResource("10_copper_bar")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -3)
+
 [node name="CopperNuggetSmall1" parent="Items/StackTest" instance=ExtResource("14_copper_nugget_small")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.057, -3)
 
@@ -287,6 +291,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0.057, -3)
 
 [node name="CopperNuggetSmall6" parent="Items/StackTest" instance=ExtResource("14_copper_nugget_small")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.25, 0.057, -3)
+
+[node name="CopperNuggetSmall7" parent="Items/StackTest" instance=ExtResource("14_copper_nugget_small")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.057, -3)
 
 [node name="Copper" type="Node3D" parent="Items"]
 
@@ -451,7 +458,7 @@ theme_override_constants/outline_size = 6
 [node name="ItemIcons" type="Node" parent="HUD"]
 script = ExtResource("9_item_icon_renderer")
 
-[node name="Inventory" type="GridContainer" parent="HUD" node_paths=PackedStringArray("inventory", "icon_renderer")]
+[node name="Inventory" type="GridContainer" parent="HUD" node_paths=PackedStringArray("inventory", "icon_renderer", "amount_popup")]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -464,3 +471,7 @@ theme_override_constants/v_separation = 4
 script = ExtResource("7_inventory_ui")
 inventory = NodePath("../../Player/Inventory")
 icon_renderer = NodePath("../ItemIcons")
+amount_popup = NodePath("../AmountPopup")
+
+[node name="AmountPopup" type="PanelContainer" parent="HUD"]
+script = ExtResource("9_amount_popup")

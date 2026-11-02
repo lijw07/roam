@@ -4,7 +4,7 @@ const RIG_HEIGHT := 1.4
 const MOUSE_SENSITIVITY := 0.003
 const MIN_PITCH := -1.2
 const MAX_PITCH := 0.3
-const CONTROLS := "WASD move   Tab inventory   F pick up   drag out of the inventory to throw   Esc free mouse"
+const CONTROLS := "WASD move   Tab inventory   F pick up   drag out of the inventory to throw   hold Shift while dropping to choose an amount   Esc free mouse"
 
 @onready var player: CharacterBody3D = $Player
 @onready var item_collector: ItemCollector = $Player/ItemCollector

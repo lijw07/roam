@@ -2,7 +2,7 @@ class_name InventorySlot
 extends ColorRect
 
 signal drag_started(index: int)
-signal swap_requested(from_index: int, to_index: int)
+signal dropped_on(from_index: int, to_index: int)
 
 const SIZE := Vector2(64, 64)
 const BACKGROUND := Color(0, 0, 0, 0.45)
@@ -48,7 +48,7 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 
 
 func _drop_data(_at_position: Vector2, data: Variant) -> void:
-	swap_requested.emit((data as InventorySlot).index, index)
+	dropped_on.emit((data as InventorySlot).index, index)
 
 
 func _count_text() -> String:

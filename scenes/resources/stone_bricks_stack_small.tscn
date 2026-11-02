@@ -9,7 +9,7 @@ points = PackedVector3Array(0.444899, -5.551115e-17, 0.34957466, -0.465813, 0.32
 [node name="StoneBricksStackSmall" type="Area3D" unique_id=274720284]
 script = ExtResource("2_item_pickup")
 item_name = "Stone Brick"
-count = 5
+count = 6
 single_item_scene = "res://scenes/resources/stone_brick.tscn"
 
 [node name="Model" parent="." unique_id=1078061663 instance=ExtResource("1_ddb1f")]

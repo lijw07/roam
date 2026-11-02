@@ -6,7 +6,7 @@ signal thrown(scene_path: String, count: int)
 
 @export var columns := 3
 @export var rows := 3
-@export var max_stack := 5
+@export var max_stack := 6
 
 var slots: Array[Slot] = []
 
@@ -53,13 +53,49 @@ func swap(from_index: int, to_index: int) -> void:
 	changed.emit()
 
 
-func throw_out(index: int) -> void:
-	var slot := slots[index]
-	if slot.count == 0:
+func count_at(index: int) -> int:
+	return slots[index].count
+
+
+func movable_amount(from_index: int, to_index: int) -> int:
+	var source := slots[from_index]
+	var target := slots[to_index]
+	if from_index == to_index:
+		return 0
+	if target.count == 0:
+		return source.count
+	if target.item_name == source.item_name:
+		return mini(source.count, max_stack - target.count)
+	return 0
+
+
+func move(from_index: int, to_index: int, amount: int) -> void:
+	var moved := mini(amount, movable_amount(from_index, to_index))
+	if moved <= 0:
 		return
-	slots[index] = Slot.new()
+	var source := slots[from_index]
+	var target := slots[to_index]
+	target.item_name = source.item_name
+	target.scene_path = source.scene_path
+	target.count += moved
+	_take(from_index, moved)
 	changed.emit()
-	thrown.emit(slot.scene_path, slot.count)
+
+
+func throw_out(index: int, amount: int) -> void:
+	var thrown_amount := mini(amount, count_at(index))
+	if thrown_amount <= 0:
+		return
+	var scene_path := slots[index].scene_path
+	_take(index, thrown_amount)
+	changed.emit()
+	thrown.emit(scene_path, thrown_amount)
+
+
+func _take(index: int, amount: int) -> void:
+	slots[index].count -= amount
+	if slots[index].count == 0:
+		slots[index] = Slot.new()
 
 
 func _fill(slot: Slot, pickup: ItemPickup, amount: int) -> void:
