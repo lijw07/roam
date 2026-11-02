@@ -55,6 +55,7 @@ const BONE_TRACK_TYPES: Array[Animation.TrackType] = [Animation.TYPE_POSITION_3D
 const SPINE_TRACK := ^"Rig_Medium/Skeleton3D:spine"
 const LAYER_SAMPLE_STEP := 1.0 / 30.0
 const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"attack"]
+const COMBAT_ACTIONS: Array[StringName] = [&"attack", &"secondary"]
 
 @export var walk_speed := 3.0
 @export var run_speed := 6.5
@@ -91,6 +92,7 @@ const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"attack"]
 @onready var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity") * gravity_multiplier
 
 var dead := false
+var combat_input_enabled := true
 var held_item: Node3D = null
 var shield: Shield = null
 var off_hand_weapon: Weapon = null
@@ -115,6 +117,7 @@ var _air_time := 0.0
 var _idle_time := 0.0
 var _hand_slots: Dictionary[StringName, BoneAttachment3D] = {}
 var _pick_up_item: Node3D = null
+var _on_grab := Callable()
 var _pick_up_animation := PICK_UP_ANIMATION
 var _left_hand_pair: Node3D = null
 var _held_weapon: Weapon = null
@@ -177,6 +180,14 @@ func interact() -> void:
 
 
 func pick_up(item: Node3D = null) -> void:
+	_reach_for(item, _hold.bind(item))
+
+
+func collect(item: Node3D, on_grab: Callable) -> void:
+	_reach_for(item, on_grab)
+
+
+func _reach_for(item: Node3D, on_grab: Callable) -> void:
 	var with_left_hand := _pick_up_hand(item) == LEFT_HAND
 	var animation := _mirrored(PICK_UP_ANIMATION) if with_left_hand else PICK_UP_ANIMATION
 	if not _perform(animation):
@@ -185,6 +196,7 @@ func pick_up(item: Node3D = null) -> void:
 	if item == null:
 		return
 	_pick_up_item = item
+	_on_grab = on_grab
 	_align_hand_with(item.global_position, MIRROR_ACROSS_X * PICK_UP_HAND_OFFSET if with_left_hand else PICK_UP_HAND_OFFSET)
 
 
@@ -257,7 +269,19 @@ func preview(animation: StringName) -> void:
 func _has_new_input(direction: Vector3) -> bool:
 	if not direction.is_zero_approx() and not _is_guarding():
 		return true
-	return CANCEL_ACTIONS.any(func(action: StringName) -> bool: return Input.is_action_just_pressed(action))
+	return CANCEL_ACTIONS.any(func(action: StringName) -> bool: return _just_pressed(action))
+
+
+func _just_pressed(action: StringName) -> bool:
+	return _accepts_input(action) and Input.is_action_just_pressed(action)
+
+
+func _held(action: StringName) -> bool:
+	return _accepts_input(action) and Input.is_action_pressed(action)
+
+
+func _accepts_input(action: StringName) -> bool:
+	return combat_input_enabled or action not in COMBAT_ACTIONS
 
 
 func _camera_yaw() -> float:
@@ -271,26 +295,26 @@ func _input_direction() -> Vector3:
 
 func _move_with_input(direction: Vector3, delta: float) -> void:
 	if is_on_floor():
-		if Input.is_action_just_pressed("dodge"):
+		if _just_pressed("dodge"):
 			_dodge(direction)
 			return
 		if _is_blocking() and not _shield_raised:
 			_shield_raised = true
 			_start_action(shield.raise_animation, true)
 			return
-		if Input.is_action_just_pressed("attack") and _is_blocking():
+		if _just_pressed("attack") and _is_blocking():
 			_start_action(shield.bash_animation)
 			return
 		if _is_aiming() and not _aim_raised:
 			_raise_aim(false)
 			return
-		if Input.is_action_just_pressed("attack") and _ranged_weapon() != null:
+		if _just_pressed("attack") and _ranged_weapon() != null:
 			_shoot()
 			return
-		if Input.is_action_just_pressed("secondary") and not _secondary_combo().is_empty():
+		if _just_pressed("secondary") and not _secondary_combo().is_empty():
 			_attack_with(_secondary_combo(), &"secondary")
 			return
-		if Input.is_action_just_pressed("attack") and _can_attack():
+		if _just_pressed("attack") and _can_attack():
 			_attack(direction)
 			return
 	var gait := _gait(direction)
@@ -342,11 +366,11 @@ func _move_with_action(delta: float) -> void:
 
 
 func _is_blocking() -> bool:
-	return shield != null and is_on_floor() and Input.is_action_pressed("secondary")
+	return shield != null and is_on_floor() and _held("secondary")
 
 
 func _is_aiming() -> bool:
-	return _ranged_weapon() != null and is_on_floor() and Input.is_action_pressed("secondary")
+	return _ranged_weapon() != null and is_on_floor() and _held("secondary")
 
 
 func _is_guarding() -> bool:
@@ -398,7 +422,7 @@ func _gait(direction: Vector3) -> Gait:
 	var travel_from_view := wrapf(atan2(direction.x, direction.z) - _view_yaw(), -PI, PI)
 	if absf(travel_from_view) > BACKWARD_ARC:
 		return Gait.new(WALK_BACKWARDS_ANIMATION, backwards_speed, PI)
-	if Input.is_action_pressed("sprint") and not _is_guarding():
+	if _held("sprint") and not _is_guarding():
 		return Gait.new(_weapon_run_animation(), run_speed)
 	return Gait.new(walk_animation, walk_speed)
 
@@ -417,7 +441,7 @@ func _apply_vertical_motion(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 		_air_time += delta
-	elif not _is_guarding() and Input.is_action_just_pressed("jump"):
+	elif not _is_guarding() and _just_pressed("jump"):
 		velocity.y = jump_velocity
 		_air_time = AIRBORNE_DELAY
 		_play(_stanced(JUMP_START_ANIMATION), BLEND_TIME, JUMP_TAKEOFF_TIME)
@@ -506,7 +530,7 @@ func _running_attack_animation() -> StringName:
 
 
 func _attack(direction: Vector3) -> void:
-	if Input.is_action_pressed("sprint") and not direction.is_zero_approx() and _running_attack_animation() != &"":
+	if _held("sprint") and not direction.is_zero_approx() and _running_attack_animation() != &"":
 		_start_running_attack(direction)
 		return
 	_attack_with(_combo(), &"attack")
@@ -541,7 +565,7 @@ func _start_attack_step(step: AttackStep, from: float, blend: float) -> void:
 func _update_attack() -> void:
 	if not _attacking or _attack_step == null:
 		return
-	if Input.is_action_just_pressed(_attack_input) and not _action_cancellable:
+	if _just_pressed(_attack_input) and not _action_cancellable:
 		_attack_queued = true
 	var playback_time := animation_player.current_animation_position
 	var wants_next := _attack_queued or _attack_step.continues_automatically
@@ -613,7 +637,7 @@ func _update_aim_raise() -> void:
 	var weapon := _ranged_weapon()
 	if weapon == null or _action != weapon.aim_animation:
 		return
-	if Input.is_action_just_pressed("attack"):
+	if _just_pressed("attack"):
 		_shot_queued = true
 	if animation_player.current_animation_position >= weapon.aim_ready_time:
 		_finish_aim_raise()
@@ -693,8 +717,11 @@ func _update_pick_up() -> void:
 		return
 	if animation_player.current_animation_position < PICK_UP_GRAB_TIME:
 		return
-	var item := _pick_up_item
 	_pick_up_item = null
+	_on_grab.call()
+
+
+func _hold(item: Node3D) -> void:
 	if item is Shield:
 		_take_shield(item)
 	elif _fits_off_hand(item):
@@ -1037,15 +1064,15 @@ func _local_pose(poses: Array[Transform3D], bone: int) -> Transform3D:
 func _animated_bone_pose(bone: int, animation: Animation, time: float) -> Transform3D:
 	var path := _bone_track_path(bone)
 	var rest := skeleton.get_bone_rest(bone)
-	var position := rest.origin
-	var scale := rest.basis.get_scale()
+	var bone_position := rest.origin
+	var bone_scale := rest.basis.get_scale()
 	var position_track := animation.find_track(path, Animation.TYPE_POSITION_3D)
 	if position_track >= 0:
-		position = animation.position_track_interpolate(position_track, time)
+		bone_position = animation.position_track_interpolate(position_track, time)
 	var scale_track := animation.find_track(path, Animation.TYPE_SCALE_3D)
 	if scale_track >= 0:
-		scale = animation.scale_track_interpolate(scale_track, time)
-	return Transform3D(Basis(_rotation_at(animation, path, time)) * Basis.from_scale(scale), position)
+		bone_scale = animation.scale_track_interpolate(scale_track, time)
+	return Transform3D(Basis(_rotation_at(animation, path, time)) * Basis.from_scale(bone_scale), bone_position)
 
 
 func _insert_bone_keys(animation: Animation, tracks: Dictionary, time: float, pose: Transform3D) -> void:
@@ -1058,11 +1085,11 @@ func _insert_bone_keys(animation: Animation, tracks: Dictionary, time: float, po
 
 
 func _mirror_bone(bone: int) -> int:
-	var name := skeleton.get_bone_name(bone)
-	if name.ends_with(".l"):
-		return skeleton.find_bone(name.trim_suffix(".l") + ".r")
-	if name.ends_with(".r"):
-		return skeleton.find_bone(name.trim_suffix(".r") + ".l")
+	var bone_name := skeleton.get_bone_name(bone)
+	if bone_name.ends_with(".l"):
+		return skeleton.find_bone(bone_name.trim_suffix(".l") + ".r")
+	if bone_name.ends_with(".r"):
+		return skeleton.find_bone(bone_name.trim_suffix(".r") + ".l")
 	return bone
 
 
