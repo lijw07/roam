@@ -8,3 +8,5 @@ animation = &"combat_melee/Melee_2H_Attack_Spin"
 combo_time = 1.6
 window_end = 2.2
 chain_start = 0.15
+hit_start = 0.62
+hit_end = 1.33

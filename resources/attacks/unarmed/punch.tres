@@ -8,3 +8,5 @@ animation = &"combat_melee/Melee_Unarmed_Attack_Punch_A"
 combo_time = 0.62
 window_end = 1.0
 chain_start = 0.05
+hit_start = 0.37
+hit_end = 0.49

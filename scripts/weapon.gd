@@ -5,10 +5,14 @@ const FLIP_FOREARM_AXIS := Basis(Vector3(-1, 0, 0), Vector3(0, 1, 0), Vector3(0,
 const FLIP_THICKNESS_AXIS := Basis(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, -1))
 
 @export var hand: StringName = &"handslot.r"
+@export var damage := 10.0
+@export var stamina_cost := 10.0
 @export var grip_rotation_degrees := Vector3.ZERO
 @export var combo: Array[AttackStep] = []
 @export var secondary_combo: Array[AttackStep] = []
 @export var running_attack_animation: StringName = &""
+@export var running_attack_hit_start := -1.0
+@export var running_attack_hit_end := -1.0
 @export var allows_shield := false
 @export var dual_wieldable := false
 @export var worn_on_both_hands := false
@@ -31,9 +35,20 @@ const FLIP_THICKNESS_AXIS := Basis(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0
 @export var aim_return_time := 0.0
 @export var shot_release_time := -1.0
 
+@export_group("Magic")
+@export var cast_color := Color.WHITE
+
+
+func _ready() -> void:
+	set_collision_mask_value(Hurtbox.LAYER, true)
+
 
 func is_ranged() -> bool:
 	return aim_animation != &""
+
+
+func running_attack_strikes_at(time: float) -> bool:
+	return running_attack_hit_start >= 0.0 and time >= running_attack_hit_start and time <= running_attack_hit_end
 
 
 func grip() -> Transform3D:

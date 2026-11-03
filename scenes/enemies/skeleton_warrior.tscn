@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/enemy.gd" id="2_enemy"]
 [ext_resource type="PackedScene" path="res://scenes/equipment/skeletons/skeleton_blade.tscn" id="3_skeleton_blade"]
 [ext_resource type="PackedScene" path="res://scenes/equipment/skeletons/skeleton_shield_small_a.tscn" id="4_skeleton_shield_small_a"]
+[ext_resource type="PackedScene" path="res://scenes/ui/enemy_health_bar.tscn" id="93_health_bar"]
 
 [node name="SkeletonWarrior" instance=ExtResource("1_base")]
 script = ExtResource("2_enemy")
@@ -20,5 +21,12 @@ bone_name = "handslot.l"
 
 [node name="SkeletonShieldSmallA" parent="Model/Rig_Medium/Skeleton3D/HandslotLSkeletonShieldSmallA" instance=ExtResource("4_skeleton_shield_small_a")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.16)
+
+[node name="Health" parent="."]
+max_value = 200.0
+
+[node name="HealthBar" parent="." node_paths=PackedStringArray("health", "hurtbox") instance=ExtResource("93_health_bar")]
+health = NodePath("../Health")
+hurtbox = NodePath("../Hurtbox")
 
 [editable path="Model"]

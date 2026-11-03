@@ -33,6 +33,9 @@ billboard_keep_scale = true
 script = ExtResource("1_projectile")
 speed = 11.0
 lifetime = 2.5
+damage = 30.0
+max_range = 18.0
+shrink_from = 0.5
 
 [node name="Core" type="MeshInstance3D" parent="."]
 mesh = SubResource("SphereMesh_core")

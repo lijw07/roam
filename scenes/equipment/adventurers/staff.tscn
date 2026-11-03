@@ -15,10 +15,12 @@ points = PackedVector3Array(0.14092834, 1.1650827, 0.07143792, -0.26250082, 0.92
 [node name="Staff" type="Area3D" unique_id=1175034526]
 script = ExtResource("2_weapon")
 projectile = ExtResource("9_left_projectile")
+cast_color = Color(0.35, 0.95, 0.3, 1)
 secondary_projectile = ExtResource("10_right_projectile")
 projectile_origin = Vector3(0, 1.15, 0)
 combo = Array[ExtResource("3_attack_step")]([ExtResource("5_long_spellcast"), ExtResource("6_shoot")])
 secondary_combo = Array[ExtResource("3_attack_step")]([ExtResource("4_raise")])
+stamina_cost = 0.0
 
 [node name="Model" parent="." unique_id=280043721 instance=ExtResource("1_7jj04")]
 

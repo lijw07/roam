@@ -17,6 +17,7 @@ aim_animation = &"combat_ranged/Ranged_1H_Aiming"
 aim_ready_time = 0.4
 shot_animations = Array[StringName]([&"combat_ranged/Ranged_1H_Shoot", &"combat_ranged/Ranged_1H_Reload"])
 aimed_shot_start = 0.3
+stamina_cost = 8.0
 
 [node name="Model" parent="." unique_id=720259807 instance=ExtResource("1_2maoa")]
 

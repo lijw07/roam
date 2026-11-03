@@ -8,3 +8,5 @@ animation = &"combat_melee/Melee_1H_Attack_Slice_Horizontal"
 combo_time = 0.7
 window_end = 1.0
 chain_start = 0.0
+hit_start = 0.22
+hit_end = 0.35

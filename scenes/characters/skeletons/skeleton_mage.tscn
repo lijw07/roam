@@ -9,6 +9,9 @@
 [ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_Simulation.glb" id="7_pvf3d"]
 [ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_Special.glb" id="8_6ykbt"]
 [ext_resource type="AnimationLibrary" path="res://assets/animations/rig_medium/Rig_Medium_Tools.glb" id="9_qyr5w"]
+[ext_resource type="Script" path="res://scripts/stat_pool.gd" id="90_stat_pool"]
+[ext_resource type="Script" path="res://scripts/health.gd" id="91_health"]
+[ext_resource type="Script" path="res://scripts/hurtbox.gd" id="92_hurtbox"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hgw63"]
 radius = 0.47
@@ -32,3 +35,22 @@ libraries/movement_basic = ExtResource("6_xj0fm")
 libraries/simulation = ExtResource("7_pvf3d")
 libraries/special = ExtResource("8_6ykbt")
 libraries/tools = ExtResource("9_qyr5w")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("91_health")
+regen_rate = 0.0
+regen_delay = 0.0
+
+[node name="Mana" type="Node" parent="."]
+script = ExtResource("90_stat_pool")
+regen_rate = 5.0
+regen_delay = 1.5
+
+[node name="Stamina" type="Node" parent="."]
+script = ExtResource("90_stat_pool")
+regen_rate = 35.0
+regen_delay = 0.5
+
+[node name="Hurtbox" type="Area3D" parent="." node_paths=PackedStringArray("health")]
+script = ExtResource("92_hurtbox")
+health = NodePath("../Health")

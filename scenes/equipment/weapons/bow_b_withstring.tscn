@@ -21,6 +21,7 @@ aim_start = 0.3
 aim_ready_time = 1.0
 aim_hold_animation = &"combat_ranged/Ranged_Bow_Aiming_Idle"
 shot_animations = Array[StringName]([&"combat_ranged/Ranged_Bow_Release"])
+stamina_cost = 12.0
 
 [node name="Model" parent="." unique_id=1765061292 instance=ExtResource("1_v7pga")]
 
