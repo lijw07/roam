@@ -282,8 +282,8 @@ point in its clip: the Shoot step at 0.3 s, when the thrust has finished and the
 and the staff's Raise at 0.7 s, with the staff held overhead. The weapon's `projectile` is used for
 left mouse and `secondary_projectile` for right mouse; it spawns at `projectile_origin` in the weapon's
 space (the tip or head), facing the camera's direction, parented to the player's parent so it flies on
-its own. All are in `scenes/effects/` and use `projectile.gd` (they fly straight for 2.5 s, damage the
-first hurtbox they reach and stop at walls):
+its own. All are in `scenes/effects/` and use `projectile.gd` (they fly straight up to their
+`max_range`, damage the first hurtbox they reach and stop at walls; see Damage):
 
 | Weapon | Left mouse | Right mouse |
 | --- | --- | --- |
@@ -422,6 +422,27 @@ Damage lives on the weapon (`Weapon.damage`), shield (`Shield.bash_damage`, 8), 
 
 Projectiles ray-cast each physics step from where they were to where they move, against hurtboxes and
 `world` bodies, skipping the shooter, so fast arrows can't pass through a target between frames.
+
+Every projectile has a `max_range` in metres, set on its scene next to its `damage`. It counts the
+distance it has flown, and its last step is clipped to what's left of the range, so it can still hit
+something right at the limit. It vanishes there. Heavier shots carry less far:
+
+| Projectiles | `max_range` | Speed |
+| --- | --- | --- |
+| Wand bolts (`magic_bolt`, `arcane_bolt`) / charged | 20 m / 18 m | 15, 18 / 10, 11 m/s |
+| Staff bolts / bursts | 22 m / 16 m | 14 / 9 m/s |
+| Arrows (`arrow`, `arrow_a`, `arrow_b`) | 30 m | 26 m/s |
+| Crossbow bolts | 35 m | 32 m/s |
+
+`lifetime` still frees a projectile that has stopped moving (the unused `melee_sparks` relies on it);
+for every shot above the range runs out first.
+
+Wand and staff projectiles fade out instead of popping. Past `shrink_from` (0.5, half their range) they
+shrink in step with the distance left, reaching nothing at `max_range`. That covers their core, the
+energy of their light, and the size of their trail sparks: the sparks live in world space, so the
+node's scale doesn't reach them. Arrows and crossbow bolts keep the default `shrink_from` of 1 and fly
+at full size to the end. Size changes nothing else: a shrinking bolt still flies at full speed and hits
+for full damage.
 
 Blocking with a shield stops any hit that comes from within `block_arc_degrees` (120°) of where the
 player faces and plays `Melee_Block_Hit`; hits from behind still land. An unblocked hit plays `Hit_A`

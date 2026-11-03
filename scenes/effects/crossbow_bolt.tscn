@@ -8,6 +8,7 @@ script = ExtResource("1_projectile")
 speed = 32.0
 lifetime = 3.0
 damage = 30.0
+max_range = 35.0
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
 monitoring = false

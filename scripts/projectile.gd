@@ -3,23 +3,56 @@ extends Node3D
 
 const WORLD_LAYER := 1
 const PREFER_HURTBOX_MARGIN := 0.05
+const SMALLEST_SCALE := 0.01
 
 @export var speed := 0.0
 @export var lifetime := 2.0
 @export var damage := 10.0
+@export var max_range := 30.0
+@export_range(0.0, 1.0) var shrink_from := 1.0
 
 var shooter: Node3D = null
 
 var _age := 0.0
+var _travelled := 0.0
+var _light_energies: Dictionary[Light3D, float] = {}
+var _particle_scales: Dictionary[CPUParticles3D, Vector2] = {}
+
+
+func _ready() -> void:
+	for light: Light3D in find_children("*", "Light3D", true, false):
+		_light_energies[light] = light.light_energy
+	for particles: CPUParticles3D in find_children("*", "CPUParticles3D", true, false):
+		_particle_scales[particles] = Vector2(particles.scale_amount_min, particles.scale_amount_max)
 
 
 func _physics_process(delta: float) -> void:
 	_age += delta
-	if speed > 0.0 and _fly(global_transform.basis.z * speed * delta):
+	if speed > 0.0 and _fly(_next_motion(delta)):
 		queue_free()
 		return
-	if _age >= lifetime:
+	if _age >= lifetime or _travelled >= max_range:
 		queue_free()
+		return
+	if _travelled > max_range * shrink_from:
+		_shrink_to(_size_left())
+
+
+func _next_motion(delta: float) -> Vector3:
+	return (global_transform.basis.z.normalized() * speed * delta).limit_length(max_range - _travelled)
+
+
+func _size_left() -> float:
+	return 1.0 - (_travelled / max_range - shrink_from) / (1.0 - shrink_from)
+
+
+func _shrink_to(size: float) -> void:
+	scale = Vector3.ONE * maxf(size, SMALLEST_SCALE)
+	for light in _light_energies:
+		light.light_energy = _light_energies[light] * size
+	for particles in _particle_scales:
+		particles.scale_amount_min = _particle_scales[particles].x * size
+		particles.scale_amount_max = _particle_scales[particles].y * size
 
 
 func _fly(motion: Vector3) -> bool:
@@ -33,6 +66,7 @@ func _fly(motion: Vector3) -> bool:
 	if not world_hit.is_empty():
 		return true
 	global_position = to
+	_travelled += motion.length()
 	return false
 
 
