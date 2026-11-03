@@ -15,6 +15,7 @@ script = ExtResource("2_weapon")
 combo = Array[ExtResource("3_attack_step")]([ExtResource("4_slice"), ExtResource("5_chop"), ExtResource("6_spin")])
 idle_animation = &"combat_melee/Melee_2H_Idle"
 upper_body_animation = &"combat_melee/Melee_2H_Idle"
+damage = 35.0
 
 [node name="Model" parent="." unique_id=2094853263 instance=ExtResource("1_31lsu")]
 

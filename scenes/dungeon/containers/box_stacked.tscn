@@ -1,5 +1,17 @@
 [gd_scene format=3 uid="uid://bj8awpwt6wwcs"]
 
 [ext_resource type="PackedScene" uid="uid://te5q4syc1i3h" path="res://assets/dungeon/containers/box_stacked.gltf" id="1_model"]
+[ext_resource type="Script" path="res://scripts/breakable.gd" id="90_breakable"]
+[ext_resource type="Script" path="res://scripts/health.gd" id="91_health"]
+[ext_resource type="Script" path="res://scripts/hurtbox.gd" id="92_hurtbox"]
 
 [node name="BoxStacked" instance=ExtResource("1_model")]
+script = ExtResource("90_breakable")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("91_health")
+max_value = 45.0
+
+[node name="Hurtbox" type="Area3D" parent="." node_paths=PackedStringArray("health")]
+script = ExtResource("92_hurtbox")
+health = NodePath("../Health")

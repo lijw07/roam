@@ -1,5 +1,17 @@
 [gd_scene format=3 uid="uid://m4jqsu5bih0o"]
 
 [ext_resource type="PackedScene" uid="uid://dphuobd2o4k45" path="res://assets/dungeon/containers/box_small_decorated.gltf" id="1_model"]
+[ext_resource type="Script" path="res://scripts/breakable.gd" id="90_breakable"]
+[ext_resource type="Script" path="res://scripts/health.gd" id="91_health"]
+[ext_resource type="Script" path="res://scripts/hurtbox.gd" id="92_hurtbox"]
 
 [node name="BoxSmallDecorated" instance=ExtResource("1_model")]
+script = ExtResource("90_breakable")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("91_health")
+max_value = 20.0
+
+[node name="Hurtbox" type="Area3D" parent="." node_paths=PackedStringArray("health")]
+script = ExtResource("92_hurtbox")
+health = NodePath("../Health")

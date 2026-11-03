@@ -8,3 +8,5 @@ animation = &"combat_melee/Melee_1H_Attack_Chop"
 combo_time = 0.88
 window_end = 1.05
 chain_start = 0.15
+hit_start = 0.54
+hit_end = 0.64

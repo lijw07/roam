@@ -21,4 +21,7 @@ bone_name = "handslot.l"
 [node name="SkeletonShieldSmallA" parent="Model/Rig_Medium/Skeleton3D/HandslotLSkeletonShieldSmallA" instance=ExtResource("4_skeleton_shield_small_a")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.16)
 
+[node name="Health" parent="."]
+max_value = 80.0
+
 [editable path="Model"]

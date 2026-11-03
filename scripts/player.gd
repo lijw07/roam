@@ -56,6 +56,8 @@ const SPINE_TRACK := ^"Rig_Medium/Skeleton3D:spine"
 const LAYER_SAMPLE_STEP := 1.0 / 30.0
 const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"attack"]
 const COMBAT_ACTIONS: Array[StringName] = [&"attack", &"secondary"]
+const LIMB_BONES: Array[StringName] = [&"hand.l", &"hand.r", &"foot.l", &"foot.r"]
+const LIMB_STRIKE_RADIUS := 0.16
 
 @export var walk_speed := 3.0
 @export var run_speed := 6.5
@@ -66,6 +68,7 @@ const COMBAT_ACTIONS: Array[StringName] = [&"attack", &"secondary"]
 @export var turn_speed := 12.0
 @export var gravity_multiplier := 2.0
 @export var fidget_delay := 6.0
+@export var unarmed_damage := 6.0
 
 @export var unarmed_combo: Array[AttackStep] = [
 	preload("res://resources/attacks/fists/left_punch.tres"),
@@ -90,6 +93,8 @@ const COMBAT_ACTIONS: Array[StringName] = [&"attack", &"secondary"]
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
 @onready var skeleton: Skeleton3D = get_node(SKELETON_PATH)
 @onready var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity") * gravity_multiplier
+@onready var health := get_node_or_null(^"Health") as Health
+@onready var hurtbox := get_node_or_null(^"Hurtbox") as Hurtbox
 
 var dead := false
 var combat_input_enabled := true
@@ -123,6 +128,9 @@ var _left_hand_pair: Node3D = null
 var _held_weapon: Weapon = null
 var _upper_body_twist := UpperBodyTwist.new()
 var _facing_yaw := 0.0
+var _limb_bones: Array[int] = []
+var _limb_query := PhysicsShapeQueryParameters3D.new()
+var _struck: Array[Hurtbox] = []
 
 
 class Gait:
@@ -140,6 +148,8 @@ func _ready() -> void:
 	animation_player.animation_finished.connect(_on_animation_finished)
 	skeleton.add_child(_upper_body_twist)
 	_facing_yaw = model.rotation.y
+	_prepare_limb_strikes()
+	_connect_health()
 
 
 func _physics_process(delta: float) -> void:
@@ -148,6 +158,7 @@ func _physics_process(delta: float) -> void:
 	var direction := _input_direction()
 	_update_attack()
 	_release_projectile_when_due()
+	_strike_targets()
 	_update_aim_raise()
 	_update_aim_return()
 	_lower_shield_if_released()
@@ -248,22 +259,137 @@ func take_hit() -> void:
 
 
 func die() -> void:
-	if dead:
-		return
-	dead = true
-	_start_action(DEATH_POSES.keys().pick_random())
+	if health != null:
+		health.kill()
+	else:
+		_play_death()
 
 
 func spawn(from_air := false) -> void:
 	dead = false
+	if health != null:
+		health.revive()
 	velocity = Vector3.ZERO
 	_start_action(SPAWN_AIR_ANIMATION if from_air else SPAWN_GROUND_ANIMATION, false, Vector3.ZERO, 0.0)
+
+
+func drink(potion: Potion) -> bool:
+	if not _perform(USE_ITEM_ANIMATION):
+		return false
+	potion.apply_to(self)
+	return true
 
 
 func preview(animation: StringName) -> void:
 	if dead or not animation_player.has_animation(animation):
 		return
 	_start_action(animation, true)
+
+
+func _play_death() -> void:
+	if dead:
+		return
+	dead = true
+	_start_action(DEATH_POSES.keys().pick_random())
+
+
+func _connect_health() -> void:
+	if health != null:
+		health.died.connect(_play_death)
+	if hurtbox != null:
+		hurtbox.hit_taken.connect(_on_hit_taken)
+		hurtbox.blocked.connect(_on_blocked)
+		hurtbox.block_check = _blocks
+
+
+func _on_hit_taken(_hit: Hit, damage: float) -> void:
+	if damage > 0.0 and not dead:
+		_start_action(HIT_ANIMATIONS.pick_random())
+
+
+func _on_blocked(_hit: Hit) -> void:
+	_start_action(shield.hit_animation)
+
+
+func _blocks(hit: Hit) -> bool:
+	if not _is_blocking() or not _can_react_with_shield():
+		return false
+	var to_attacker := hit.origin - global_position
+	to_attacker.y = 0.0
+	if to_attacker.is_zero_approx():
+		return true
+	return model.global_basis.z.angle_to(to_attacker) <= deg_to_rad(shield.block_arc_degrees) * 0.5
+
+
+func _prepare_limb_strikes() -> void:
+	for bone in LIMB_BONES:
+		_limb_bones.append(skeleton.find_bone(bone))
+	var sphere := SphereShape3D.new()
+	sphere.radius = LIMB_STRIKE_RADIUS
+	_limb_query.shape = sphere
+	_limb_query.collide_with_areas = true
+	_limb_query.collide_with_bodies = false
+	_limb_query.collision_mask = 1 << (Hurtbox.LAYER - 1)
+
+
+func _strike_targets() -> void:
+	if not _is_striking():
+		return
+	if _is_bashing():
+		_strike_all(shield.get_overlapping_areas(), shield.bash_damage, shield.global_position)
+		return
+	for weapon: Weapon in [_held_weapon, off_hand_weapon]:
+		if weapon != null:
+			_strike_all(weapon.get_overlapping_areas(), weapon.damage, weapon.global_position)
+	if _strikes_with_limbs():
+		_strike_all(_areas_touching_limbs(), _limb_damage(), global_position)
+
+
+func _strike_all(areas: Array, damage: float, origin: Vector3) -> void:
+	for area in areas:
+		if area is Hurtbox and area not in _struck:
+			_struck.append(area)
+			area.receive(Hit.new(damage, self, origin))
+
+
+func _areas_touching_limbs() -> Array[Area3D]:
+	var areas: Array[Area3D] = []
+	var space := get_world_3d().direct_space_state
+	for bone in _limb_bones:
+		_limb_query.transform = Transform3D(Basis.IDENTITY, skeleton.global_transform * skeleton.get_bone_global_pose(bone).origin)
+		for contact in space.intersect_shape(_limb_query):
+			if contact.collider not in areas:
+				areas.append(contact.collider)
+	return areas
+
+
+func _is_striking() -> bool:
+	if _action == &"":
+		return false
+	var time := animation_player.current_animation_position
+	if _attack_step != null:
+		return _attack_step.is_striking_at(time)
+	if _is_bashing():
+		return shield.bash_strikes_at(time)
+	return _is_running_attack() and _held_weapon.running_attack_strikes_at(time)
+
+
+func _is_bashing() -> bool:
+	return shield != null and _action == shield.bash_animation
+
+
+func _is_running_attack() -> bool:
+	return _attacking and _held_weapon != null and _action == _held_weapon.running_attack_animation
+
+
+func _strikes_with_limbs() -> bool:
+	return _held_weapon == null or _held_weapon.worn_on_both_hands or (_attack_step != null and _attack_step.uses_legs)
+
+
+func _limb_damage() -> float:
+	if _held_weapon != null and _held_weapon.worn_on_both_hands:
+		return _held_weapon.damage
+	return unarmed_damage
 
 
 func _has_new_input(direction: Vector3) -> bool:
@@ -602,7 +728,8 @@ func _current_projectile() -> PackedScene:
 
 
 func _launch_projectile(scene: PackedScene, weapon: Weapon) -> void:
-	var projectile: Node3D = scene.instantiate()
+	var projectile: Projectile = scene.instantiate()
+	projectile.shooter = self
 	get_parent().add_child(projectile)
 	projectile.global_transform = Transform3D(Basis(Vector3.UP, _view_yaw()), weapon.global_transform * weapon.projectile_origin)
 
@@ -812,6 +939,7 @@ func _start_action(animation: StringName, cancellable := false, action_velocity 
 	_shot_step = -1
 	_combo_grace = 0.0
 	_idle_time = 0.0
+	_struck.clear()
 	_play(animation, blend, from)
 
 

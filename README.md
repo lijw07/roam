@@ -17,9 +17,11 @@ scenes/
   dungeon/      One scene per dungeon piece, each with its own collision
   equipment/    One scene per item, each with its own collision
   effects/      Arrow, magic bolt and melee impact effects
-  playground/   Movement and animation test scenes
+  playground/   Movement, animation, inventory and combat test scenes
+  ui/           The health, mana and stamina bars
 resources/
   attacks/      AttackStep resources: one per attack clip, shared by every weapon that uses it
+  potions/      Potion resources: what each potion restores and over how long
 scripts/
   player.gd               Player movement and animation: locomotion, stances, dodge and actions
   animation_test.gd       Animation test scene: camera, HUD, action keys and animation browser
@@ -27,7 +29,17 @@ scripts/
   shield.gd               An off-hand shield and its block animations
   upper_body_twist.gd     Twists the spine, chest and head toward the camera while the legs walk another way
   attack_step.gd          One step of a combo: its animation and when it can chain
-  projectile.gd           Moves an effect forward and frees it after its lifetime
+  projectile.gd           Moves an effect forward, damages the first hurtbox it reaches and stops at walls
+  stat_pool.gd            A refilling pool (mana, stamina): spend, drain, restore, restore over time, passive regen
+  health.gd               A StatPool that can take damage, heal, die and be revived
+  hurtbox.gd              The area that receives hits and passes them to a Health
+  hit.gd                  One hit: its damage, who dealt it and where it came from
+  potion.gd               A potion's restores, poured into the drinker's Health, Mana and Stamina
+  breakable.gd            Frees an object when its Health runs out
+  vitals_hud.gd           Health, mana and stamina bars bound to three pools
+  damage_numbers.gd       Pops a floating number over every hurtbox that takes a hit
+  floating_number.gd      One floating number that rises, fades and frees itself
+  combat_test.gd          Combat test scene: camera, weapon pickups and stat test keys
 ```
 
 ## Player controls
@@ -235,7 +247,8 @@ wands). The arrow and bolt models point along +Z, the way `projectile.gd` flies 
 | Bow | `arrow` (`arrow_bow`, 26 m/s) | 0.02 s, as the string hand opens | the grip |
 | Bow A, bow B | `arrow_a`, `arrow_b` (the Fantasy pack's arrows, 26 m/s) | 0.02 s | the grip |
 
-The projectiles fly straight for 3 s and don't collide yet; no arrow is shown nocked while aiming.
+The projectiles fly straight for 3 s, damage the first hurtbox they reach and stop at walls (see
+Damage); no arrow is shown nocked while aiming.
 
 The bow's draw starts at 0.3 s because its first 0.3 s rises from the plain idle, not the bow's.
 `Ranged_1H_Shooting` / `Ranged_2H_Shooting` (rapid-fire loops) and
@@ -258,8 +271,8 @@ point in its clip: the Shoot step at 0.3 s, when the thrust has finished and the
 and the staff's Raise at 0.7 s, with the staff held overhead. The weapon's `projectile` is used for
 left mouse and `secondary_projectile` for right mouse; it spawns at `projectile_origin` in the weapon's
 space (the tip or head), facing the camera's direction, parented to the player's parent so it flies on
-its own. All are in `scenes/effects/` and use `projectile.gd` (they fly straight for 2.5 s and don't
-collide yet):
+its own. All are in `scenes/effects/` and use `projectile.gd` (they fly straight for 2.5 s, damage the
+first hurtbox they reach and stop at walls):
 
 | Weapon | Left mouse | Right mouse |
 | --- | --- | --- |
@@ -299,6 +312,111 @@ dagger is turned 180° so its curved edge faces up. Every adventurer weapon now 
 
 The idle, fidget, walk and run animations are exports under **Animations**, so a character can
 use a variant such as `Walking_B` or `Running_B`.
+
+## Health, mana and stamina
+Every character scene (the six adventurers and four skeletons) has three stat nodes and a hurtbox:
+
+| Node | Script | Max | Passive regen |
+| --- | --- | --- | --- |
+| `Health` | `health.gd` | 100 | adventurers 1.5/s after 5 s without damage; skeletons none |
+| `Mana` | `stat_pool.gd` | 100 | 5/s after 1.5 s without spending |
+| `Stamina` | `stat_pool.gd` | 100 | 20/s after 1 s without spending |
+| `Hurtbox` | `hurtbox.gd` | | |
+
+`StatPool` is the shared base: `spend(amount)` (false, and nothing taken, if there isn't enough),
+`can_spend`, `drain`, `restore`, `restore_over_time(amount, duration)`, `fill`, `ratio`, `is_empty`
+and `is_full`, with a `changed(value, max_value)` and a `depleted` signal. Draining restarts the
+`regen_delay` countdown, and passive regen (`regen_rate` per second) only runs once it has passed.
+`Health` adds `take_damage(amount, source)`, `heal`, `heal_over_time`, `kill`, `revive(fraction)`,
+`is_dead` and an `invulnerable` switch, with `damaged`, `healed`, `died` and `revived` signals. A dead
+Health ignores damage, healing and regen, and drops any heal still running over time.
+
+The enemies override `Health`'s max: minion 40, rogue 60, mage 50, warrior 80, champion 300. Any
+other object gets health the same way: add a `Health` node and a `Hurtbox` pointing at it. The
+breakable containers (barrels, boxes, crates and kegs in `scenes/dungeon/containers/`) do, with 20–45
+health, and run `breakable.gd`, which frees them when their health runs out. Chests and trunks don't.
+
+### Potions
+A potion is a `Potion` resource with `health`, `mana`, `stamina` and `duration`. `apply_to(drinker)`
+restores each amount into the drinker's `Health`, `Mana` and `Stamina` nodes, all at once when
+`duration` is 0, or spread evenly over `duration` seconds. The player's `drink(potion)` plays
+`Use_Item` and applies it (returning false while dead or busy). There are no potion models yet, so
+they exist only as data:
+
+| Potion | Restores |
+| --- | --- |
+| `health_potion` | 40 health |
+| `mana_potion` | 50 mana |
+| `stamina_potion` | 60 stamina |
+| `regeneration_potion` | 60 health over 5 s |
+
+## Damage
+Hurtboxes sit on the `hurtboxes` physics layer (layer 2), named in `project.godot`; everything else
+stays on `world` (layer 1). A hurtbox copies the collision shapes of the body it belongs to (the
+character's capsule, or the generated collision of an imported model), so it always matches the body.
+`receive(hit)` ignores hits from its own owner and hits while dead, asks `block_check` whether the hit
+is blocked, otherwise damages its Health, and emits `hit_taken(hit, damage)` or `blocked(hit)`.
+
+Each melee `AttackStep` has a hit window, `hit_start` to `hit_end`, measured from the speed of the hand
+bones in each clip; during it every hurtbox the striking weapon's area overlaps takes one hit for that
+step. Dual wielding strikes with both weapons; empty hands and the fist weapons strike with sphere
+queries at both hands and feet (as does a kick); a shield bash strikes with the shield. The sprint
+lunge uses the weapon's `running_attack_hit_start` / `_end` (0.66–0.80 s of `Melee_1H_Attack_Jump_Chop`).
+
+| Clip | Hit window |
+| --- | --- |
+| 1H Slice Diagonal / Slice Horizontal / Stab / Chop | 0.35–0.48 / 0.22–0.35 / 0.34–0.45 / 0.54–0.64 |
+| 2H Slice / Stab / Chop / Spin | 0.34–0.46 / 0.34–0.46 / 0.64–0.89 / 0.62–1.33 |
+| Dual-wield Chop / Stab / Slice | 0.50–0.92 / 0.34–0.46 / 0.52–0.86 |
+| Punch (either hand) / Kick | 0.37–0.49 / 0.22–0.42 |
+| Shield bash (`Melee_Block_Attack`) | 0.32–0.45 |
+
+Damage lives on the weapon (`Weapon.damage`), shield (`Shield.bash_damage`, 8), projectile
+(`damage` on its scene) and player (`unarmed_damage`, 6):
+
+| Weapons | Damage |
+| --- | --- |
+| Daggers | 12 |
+| Fist weapons | 14 |
+| Rapier (`sword_d`) / other 1H swords | 16 / 18 |
+| 1H axes / hammers and maces | 20 / 22 |
+| Spear / halberd | 26 / 30 |
+| 2H swords / 2H axes | 32 / 35 |
+| Arrows / crossbow bolts | 22 / 30 |
+| Wand bolts (`magic_bolt`, `arcane_bolt`) / charged | 12, 14 / 28, 30 |
+| Staff bolts / bursts | 16 / 35 |
+
+Projectiles ray-cast each physics step from where they were to where they move, against hurtboxes and
+`world` bodies, skipping the shooter, so fast arrows can't pass through a target between frames.
+
+Blocking with a shield stops any hit that comes from within `block_arc_degrees` (120°) of where the
+player faces and plays `Melee_Block_Hit`; hits from behind still land. An unblocked hit plays `Hit_A`
+or `Hit_B` on the player and the enemies, and reaching zero health plays `Death_A` or `Death_B`
+(through `die()`, which now kills the Health). `spawn()` revives the player at full health. Enemies
+stand still while they react and stay down once dead, and their hurtboxes switch off.
+
+### UI
+`scenes/ui/vitals_hud.tscn` is three plain bars (health, mana, stamina) with their values, bound to
+the pools set on its `health`, `mana` and `stamina` exports. `damage_numbers.gd` watches every hurtbox
+in the scene and pops a number over the top of whatever was hit: yellow for damage dealt, red for
+damage the player takes, and "Blocked" in grey.
+
+## Combat test
+Open `scenes/playground/combat_test.tscn` and press F6. Every usable weapon and shield lies on the
+floor in four labelled rows (one-handed at z = -5, two-handed and fist weapons at -10, all twelve
+shields at -15, ranged and magic at -20), with the five enemies at z = -28 and the eleven breakable
+containers at -33. The health, mana and stamina bars are bottom left.
+
+| Key | Action |
+| --- | --- |
+| F | Pick up the nearest weapon (the held one goes back to its spot) |
+| 1 / 2 / 3 / 4 | Drink a health / mana / stamina / regeneration potion |
+| 5 | Take 15 damage from behind |
+| 6 / 7 | Spend 20 mana / 25 stamina |
+| R | Reset the arena |
+| Click / Esc | Capture / free the mouse |
+
+The movement and combat controls are the player's own (see Player controls).
 
 ## Playground
 Open `scenes/playground/playground.tscn` and press F6 to walk the knight around a flat floor.

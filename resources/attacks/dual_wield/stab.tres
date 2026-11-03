@@ -8,3 +8,5 @@ animation = &"combat_melee/Melee_Dualwield_Attack_Stab"
 combo_time = 0.85
 window_end = 1.4
 chain_start = 0.05
+hit_start = 0.34
+hit_end = 0.46

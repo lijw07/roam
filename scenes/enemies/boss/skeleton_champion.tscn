@@ -29,4 +29,7 @@ bone_name = "handslot.r"
 
 [node name="SkeletonAxe" parent="Model/Rig_Medium/Skeleton3D/HandslotRSkeletonAxe" instance=ExtResource("3_skeleton_axe")]
 
+[node name="Health" parent="."]
+max_value = 300.0
+
 [editable path="Model"]
