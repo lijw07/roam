@@ -84,6 +84,7 @@ func _play_death() -> void:
 	if dead:
 		return
 	dead = true
+	collision_layer = 0
 	_react(DEATH_POSES.keys().pick_random())
 
 

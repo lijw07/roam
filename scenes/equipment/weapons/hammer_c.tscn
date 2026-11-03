@@ -19,6 +19,7 @@ dual_wieldable = true
 damage = 22.0
 running_attack_hit_start = 0.66
 running_attack_hit_end = 0.8
+stamina_cost = 11.0
 
 [node name="Model" parent="." unique_id=1457662089 instance=ExtResource("1_gxkyi")]
 

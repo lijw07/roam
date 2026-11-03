@@ -16,7 +16,8 @@ grip_rotation_degrees = Vector3(0, 180, 0)
 combo = Array[ExtResource("3_attack_step")]([ExtResource("4_slice"), ExtResource("5_chop"), ExtResource("6_spin")])
 idle_animation = &"combat_melee/Melee_2H_Idle"
 upper_body_animation = &"combat_melee/Melee_2H_Idle"
-damage = 30.0
+damage = 38.0
+stamina_cost = 26.0
 
 [node name="Model" parent="." unique_id=324139365 instance=ExtResource("1_ulytf")]
 

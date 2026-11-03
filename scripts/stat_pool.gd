@@ -90,6 +90,10 @@ func restore_over_time(amount: float, duration: float) -> void:
 		_restores.append(TimedRestore.new(amount, duration))
 
 
+func pause_regen() -> void:
+	_regen_cooldown = maxf(_regen_cooldown, regen_delay)
+
+
 func fill() -> void:
 	_set_value(max_value)
 

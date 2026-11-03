@@ -18,7 +18,8 @@ scenes/
   equipment/    One scene per item, each with its own collision
   effects/      Arrow, magic bolt and melee impact effects
   playground/   Movement, animation, inventory and combat test scenes
-  ui/           The health, mana and stamina bars
+  ui/           The health, mana and stamina bars, and the bar over each enemy
+shaders/        The enemy health bar's billboard fill
 resources/
   attacks/      AttackStep resources: one per attack clip, shared by every weapon that uses it
   potions/      Potion resources: what each potion restores and over how long
@@ -39,6 +40,10 @@ scripts/
   vitals_hud.gd           Health, mana and stamina bars bound to three pools
   damage_numbers.gd       Pops a floating number over every hurtbox that takes a hit
   floating_number.gd      One floating number that rises, fades and frees itself
+  enemy_health_bar.gd     The health bar that floats over an enemy's head
+  hurtbox_watcher.gd      Base for scene-wide hit listeners: watches every hurtbox, present and future
+  hit_outlines.gd         Flashes an outline on whatever the player's hits land on
+  impact_effects.gd       Spawns an impact effect where a hit lands on an enemy
   combat_test.gd          Combat test scene: camera, weapon pickups and stat test keys
 ```
 
@@ -320,7 +325,7 @@ Every character scene (the six adventurers and four skeletons) has three stat no
 | --- | --- | --- | --- |
 | `Health` | `health.gd` | 100 | adventurers 1.5/s after 5 s without damage; skeletons none |
 | `Mana` | `stat_pool.gd` | 100 | 5/s after 1.5 s without spending |
-| `Stamina` | `stat_pool.gd` | 100 | 20/s after 1 s without spending |
+| `Stamina` | `stat_pool.gd` | 100 | 35/s after 0.5 s without spending |
 | `Hurtbox` | `hurtbox.gd` | | |
 
 `StatPool` is the shared base: `spend(amount)` (false, and nothing taken, if there isn't enough),
@@ -331,7 +336,7 @@ and `is_full`, with a `changed(value, max_value)` and a `depleted` signal. Drain
 `is_dead` and an `invulnerable` switch, with `damaged`, `healed`, `died` and `revived` signals. A dead
 Health ignores damage, healing and regen, and drops any heal still running over time.
 
-The enemies override `Health`'s max: minion 40, rogue 60, mage 50, warrior 80, champion 300. Any
+The enemies override `Health`'s max: minion 100, mage 120, rogue 140, warrior 200, champion 800. Any
 other object gets health the same way: add a `Health` node and a `Hurtbox` pointing at it. The
 breakable containers (barrels, boxes, crates and kegs in `scenes/dungeon/containers/`) do, with 20–45
 health, and run `breakable.gd`, which frees them when their health runs out. Chests and trunks don't.
@@ -380,8 +385,8 @@ Damage lives on the weapon (`Weapon.damage`), shield (`Shield.bash_damage`, 8), 
 | Fist weapons | 14 |
 | Rapier (`sword_d`) / other 1H swords | 16 / 18 |
 | 1H axes / hammers and maces | 20 / 22 |
-| Spear / halberd | 26 / 30 |
-| 2H swords / 2H axes | 32 / 35 |
+| Spear / halberd | 30 / 38 |
+| 2H swords / 2H axes | 40 / 45 |
 | Arrows / crossbow bolts | 22 / 30 |
 | Wand bolts (`magic_bolt`, `arcane_bolt`) / charged | 12, 14 / 28, 30 |
 | Staff bolts / bursts | 16 / 35 |
@@ -393,13 +398,59 @@ Blocking with a shield stops any hit that comes from within `block_arc_degrees` 
 player faces and plays `Melee_Block_Hit`; hits from behind still land. An unblocked hit plays `Hit_A`
 or `Hit_B` on the player and the enemies, and reaching zero health plays `Death_A` or `Death_B`
 (through `die()`, which now kills the Health). `spawn()` revives the player at full health. Enemies
-stand still while they react and stay down once dead, and their hurtboxes switch off.
+stand still while they react and stay down once dead; their hurtboxes switch off and their body leaves
+the `world` layer, so the player walks through the corpse and arrows fly past it.
+
+### Stamina costs
+The player's `Stamina` pays for sprinting, attacking and blocking:
+
+| Action | Cost |
+| --- | --- |
+| Sprinting | `sprint_stamina_per_second` (15/s) while running on the ground |
+| A jump | `jump_stamina_cost` (10) |
+| A combo step, sprint lunge or shot | the weapon's `stamina_cost` (both weapons' when dual wielding; `unarmed_stamina_cost`, 6, with empty hands) |
+| A shield bash | the shield's `bash_stamina_cost` (10) |
+| A blocked hit | its damage × the shield's `block_stamina_per_damage` (1) |
+
+One-handed weapons are cheap to swing; two-handed weapons hit about twice as hard but cost three to
+four times the stamina, so a full bar is about twelve sword swings but only three two-handed axe swings:
+
+| Weapons | `stamina_cost` | Damage |
+| --- | --- | --- |
+| Daggers, fist weapons | 6 | 12, 14 |
+| Rapier (`sword_d`) | 7 | 16 |
+| Other 1H swords | 8 | 18 |
+| 1H axes / hammers and maces | 10 / 11 | 20 / 22 |
+| Spear / halberd | 22 / 26 | 30 / 38 |
+| 2H swords / 2H axes | 28 / 32 | 40 / 45 |
+| Crossbows / bows | 8 / 12 | 30 / 22 per bolt or arrow |
+| Wands and staffs | 0 (left for mana) | per bolt |
+
+An attack or jump only needs some stamina left to start and can take the bar to zero; with an empty
+bar the player can't swing, bash, shoot or jump, and a combo stops at the next step. Running the bar dry leaves the
+player winded: Shift walks instead of running until stamina is back to `sprint_recovery_ratio` (30%).
+Stamina doesn't regenerate while the shield is up. A blocked hit that costs more stamina than is left
+breaks the guard: the bar empties and the full hit lands. Dodging is free.
 
 ### UI
 `scenes/ui/vitals_hud.tscn` is three plain bars (health, mana, stamina) with their values, bound to
 the pools set on its `health`, `mana` and `stamina` exports. `damage_numbers.gd` watches every hurtbox
 in the scene and pops a number over the top of whatever was hit: yellow for damage dealt, red for
 damage the player takes, and "Blocked" in grey.
+
+Every enemy scene has a `HealthBar` (`scenes/ui/enemy_health_bar.tscn`): a red bar that always faces the
+camera, placed just above the top of the enemy's hurtbox, that follows its health and hides on death.
+
+`hit_outlines.gd` flashes an outline on whatever takes damage from a hit, red on enemies and white on
+items (the breakable containers), never on the player. It puts an unshaded, front-culled, grown
+material on every mesh of the target as a `material_overlay` (the inverted-hull outline), holds it for
+0.08 s, shrinks it away over 0.3 s, then removes it. The enemy health bar is left out.
+
+`impact_effects.gd` spawns `scenes/effects/melee_sparks.tscn` wherever a weapon, fist, foot, shield or
+projectile hits an enemy: on the side of the enemy's hurtbox nearest the hit, sparks flying back out
+toward the attacker. Melee hits are measured from the middle of the weapon's collision shape (the blade
+or head), fists and kicks from the hand or foot bone, and projectiles from where they struck.
+`damage_numbers.gd`, `hit_outlines.gd` and `impact_effects.gd` all extend `hurtbox_watcher.gd`.
 
 ## Combat test
 Open `scenes/playground/combat_test.tscn` and press F6. Every usable weapon and shield lies on the

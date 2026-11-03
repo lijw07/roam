@@ -41,10 +41,26 @@ func receive(hit: Hit) -> void:
 
 
 func top() -> Vector3:
-	var bounds := AABB(global_position, Vector3.ZERO)
+	var box := bounds()
+	return Vector3(box.get_center().x, box.end.y, box.get_center().z)
+
+
+func closest_point(point: Vector3) -> Vector3:
+	var box := bounds()
+	return point.clamp(box.position, box.end)
+
+
+func outward_toward(point: Vector3) -> Vector3:
+	var outward := point - bounds().get_center()
+	outward.y = 0.0
+	return outward.normalized() if not outward.is_zero_approx() else Vector3.BACK
+
+
+func bounds() -> AABB:
+	var box := AABB(global_position, Vector3.ZERO)
 	for shape: CollisionShape3D in find_children("*", "CollisionShape3D", false, false):
-		bounds = bounds.merge(shape.global_transform * shape.shape.get_debug_mesh().get_aabb())
-	return Vector3(bounds.get_center().x, bounds.end.y, bounds.get_center().z)
+		box = box.merge(shape.global_transform * shape.shape.get_debug_mesh().get_aabb())
+	return box
 
 
 func _set_active(active: bool) -> void:

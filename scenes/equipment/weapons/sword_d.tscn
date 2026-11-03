@@ -20,6 +20,7 @@ dual_wieldable = true
 damage = 16.0
 running_attack_hit_start = 0.66
 running_attack_hit_end = 0.8
+stamina_cost = 7.0
 
 [node name="Model" parent="." unique_id=216228612 instance=ExtResource("1_fwft3")]
 

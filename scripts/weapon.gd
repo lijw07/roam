@@ -6,6 +6,7 @@ const FLIP_THICKNESS_AXIS := Basis(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0
 
 @export var hand: StringName = &"handslot.r"
 @export var damage := 10.0
+@export var stamina_cost := 10.0
 @export var grip_rotation_degrees := Vector3.ZERO
 @export var combo: Array[AttackStep] = []
 @export var secondary_combo: Array[AttackStep] = []

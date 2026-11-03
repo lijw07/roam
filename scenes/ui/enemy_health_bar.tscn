@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy_health_bar.gd" id="1_bar"]
+[ext_resource type="Shader" path="res://shaders/health_bar.gdshader" id="2_shader"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_bar"]
+size = Vector2(0.9, 0.09)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bar"]
+resource_local_to_scene = true
+render_priority = 1
+shader = ExtResource("2_shader")
+shader_parameter/fill = 1.0
+shader_parameter/fill_color = Color(0.78, 0.16, 0.16, 1)
+shader_parameter/empty_color = Color(0, 0, 0, 0.6)
+
+[node name="EnemyHealthBar" type="MeshInstance3D"]
+cast_shadow = 0
+mesh = SubResource("QuadMesh_bar")
+material_override = SubResource("ShaderMaterial_bar")
+script = ExtResource("1_bar")

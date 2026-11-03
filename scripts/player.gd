@@ -69,6 +69,10 @@ const LIMB_STRIKE_RADIUS := 0.16
 @export var gravity_multiplier := 2.0
 @export var fidget_delay := 6.0
 @export var unarmed_damage := 6.0
+@export var unarmed_stamina_cost := 6.0
+@export var sprint_stamina_per_second := 15.0
+@export var jump_stamina_cost := 10.0
+@export_range(0.0, 1.0) var sprint_recovery_ratio := 0.3
 
 @export var unarmed_combo: Array[AttackStep] = [
 	preload("res://resources/attacks/fists/left_punch.tres"),
@@ -95,6 +99,7 @@ const LIMB_STRIKE_RADIUS := 0.16
 @onready var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity") * gravity_multiplier
 @onready var health := get_node_or_null(^"Health") as Health
 @onready var hurtbox := get_node_or_null(^"Hurtbox") as Hurtbox
+@onready var stamina := get_node_or_null(^"Stamina") as StatPool
 
 var dead := false
 var combat_input_enabled := true
@@ -131,17 +136,20 @@ var _facing_yaw := 0.0
 var _limb_bones: Array[int] = []
 var _limb_query := PhysicsShapeQueryParameters3D.new()
 var _struck: Array[Hurtbox] = []
+var _winded := false
 
 
 class Gait:
 	var animation: StringName
 	var speed: float
 	var facing_offset: float
+	var sprinting: bool
 
-	func _init(gait_animation: StringName, gait_speed: float, gait_facing_offset := 0.0) -> void:
+	func _init(gait_animation: StringName, gait_speed: float, gait_facing_offset := 0.0, gait_sprinting := false) -> void:
 		animation = gait_animation
 		speed = gait_speed
 		facing_offset = gait_facing_offset
+		sprinting = gait_sprinting
 
 
 func _ready() -> void:
@@ -154,6 +162,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_update_pick_up()
+	_update_winded()
 	_combo_grace = maxf(_combo_grace - delta, 0.0)
 	var direction := _input_direction()
 	_update_attack()
@@ -162,6 +171,7 @@ func _physics_process(delta: float) -> void:
 	_update_aim_raise()
 	_update_aim_return()
 	_lower_shield_if_released()
+	_hold_stamina_while_blocking()
 	if _action_cancellable and _has_new_input(direction):
 		_end_action()
 	if dead or (is_acting() and not _action_allows_movement()):
@@ -312,13 +322,65 @@ func _on_blocked(_hit: Hit) -> void:
 
 
 func _blocks(hit: Hit) -> bool:
-	if not _is_blocking() or not _can_react_with_shield():
+	if not _is_blocking() or not _can_react_with_shield() or not _faces(hit.origin):
 		return false
-	var to_attacker := hit.origin - global_position
-	to_attacker.y = 0.0
-	if to_attacker.is_zero_approx():
+	return _guard_holds(hit.amount * shield.block_stamina_per_damage)
+
+
+func _faces(point: Vector3) -> bool:
+	var to_point := point - global_position
+	to_point.y = 0.0
+	if to_point.is_zero_approx():
 		return true
-	return model.global_basis.z.angle_to(to_attacker) <= deg_to_rad(shield.block_arc_degrees) * 0.5
+	return model.global_basis.z.angle_to(to_point) <= deg_to_rad(shield.block_arc_degrees) * 0.5
+
+
+func _guard_holds(cost: float) -> bool:
+	if stamina == null:
+		return true
+	var holds := stamina.can_spend(cost)
+	stamina.drain(cost)
+	return holds
+
+
+func _pay_stamina(cost: float) -> bool:
+	if stamina == null or cost <= 0.0:
+		return true
+	if stamina.is_empty():
+		return false
+	stamina.drain(cost)
+	return true
+
+
+func _attack_stamina_cost() -> float:
+	if _held_weapon == null:
+		return unarmed_stamina_cost
+	if off_hand_weapon != null:
+		return _held_weapon.stamina_cost + off_hand_weapon.stamina_cost
+	return _held_weapon.stamina_cost
+
+
+func _wants_to_sprint() -> bool:
+	return _held("sprint") and not _winded
+
+
+func _update_winded() -> void:
+	if stamina == null:
+		return
+	if stamina.is_empty():
+		_winded = true
+	elif _winded and stamina.ratio() >= sprint_recovery_ratio:
+		_winded = false
+
+
+func _spend_sprint_stamina(direction: Vector3, gait: Gait, delta: float) -> void:
+	if stamina != null and gait.sprinting and is_on_floor() and not direction.is_zero_approx():
+		stamina.drain(sprint_stamina_per_second * delta)
+
+
+func _hold_stamina_while_blocking() -> void:
+	if stamina != null and _is_blocking():
+		stamina.pause_regen()
 
 
 func _prepare_limb_strikes() -> void:
@@ -336,13 +398,25 @@ func _strike_targets() -> void:
 	if not _is_striking():
 		return
 	if _is_bashing():
-		_strike_all(shield.get_overlapping_areas(), shield.bash_damage, shield.global_position)
+		_strike_with(shield, shield.bash_damage)
 		return
 	for weapon: Weapon in [_held_weapon, off_hand_weapon]:
 		if weapon != null:
-			_strike_all(weapon.get_overlapping_areas(), weapon.damage, weapon.global_position)
+			_strike_with(weapon, weapon.damage)
 	if _strikes_with_limbs():
-		_strike_all(_areas_touching_limbs(), _limb_damage(), global_position)
+		_strike_with_limbs(_limb_damage())
+
+
+func _strike_with(striker: Area3D, damage: float) -> void:
+	_strike_all(striker.get_overlapping_areas(), damage, _center_of(striker))
+
+
+func _strike_with_limbs(damage: float) -> void:
+	var space := get_world_3d().direct_space_state
+	for bone in _limb_bones:
+		var limb := skeleton.global_transform * skeleton.get_bone_global_pose(bone).origin
+		_limb_query.transform = Transform3D(Basis.IDENTITY, limb)
+		_strike_all(space.intersect_shape(_limb_query).map(func(contact: Dictionary) -> Object: return contact.collider), damage, limb)
 
 
 func _strike_all(areas: Array, damage: float, origin: Vector3) -> void:
@@ -352,15 +426,11 @@ func _strike_all(areas: Array, damage: float, origin: Vector3) -> void:
 			area.receive(Hit.new(damage, self, origin))
 
 
-func _areas_touching_limbs() -> Array[Area3D]:
-	var areas: Array[Area3D] = []
-	var space := get_world_3d().direct_space_state
-	for bone in _limb_bones:
-		_limb_query.transform = Transform3D(Basis.IDENTITY, skeleton.global_transform * skeleton.get_bone_global_pose(bone).origin)
-		for contact in space.intersect_shape(_limb_query):
-			if contact.collider not in areas:
-				areas.append(contact.collider)
-	return areas
+func _center_of(striker: Area3D) -> Vector3:
+	var shape := striker.get_node_or_null(^"CollisionShape3D") as CollisionShape3D
+	if shape == null or shape.shape == null:
+		return striker.global_position
+	return shape.global_transform * shape.shape.get_debug_mesh().get_aabb().get_center()
 
 
 func _is_striking() -> bool:
@@ -429,7 +499,8 @@ func _move_with_input(direction: Vector3, delta: float) -> void:
 			_start_action(shield.raise_animation, true)
 			return
 		if _just_pressed("attack") and _is_blocking():
-			_start_action(shield.bash_animation)
+			if _pay_stamina(shield.bash_stamina_cost):
+				_start_action(shield.bash_animation)
 			return
 		if _is_aiming() and not _aim_raised:
 			_raise_aim(false)
@@ -460,6 +531,7 @@ func _move_while_acting(direction: Vector3, delta: float) -> void:
 
 
 func _travel(direction: Vector3, gait: Gait, delta: float) -> void:
+	_spend_sprint_stamina(direction, gait, delta)
 	velocity.x = direction.x * gait.speed
 	velocity.z = direction.z * gait.speed
 	move_and_slide()
@@ -548,8 +620,8 @@ func _gait(direction: Vector3) -> Gait:
 	var travel_from_view := wrapf(atan2(direction.x, direction.z) - _view_yaw(), -PI, PI)
 	if absf(travel_from_view) > BACKWARD_ARC:
 		return Gait.new(WALK_BACKWARDS_ANIMATION, backwards_speed, PI)
-	if _held("sprint") and not _is_guarding():
-		return Gait.new(_weapon_run_animation(), run_speed)
+	if _wants_to_sprint() and not _is_guarding():
+		return Gait.new(_weapon_run_animation(), run_speed, 0.0, true)
 	return Gait.new(walk_animation, walk_speed)
 
 
@@ -567,7 +639,7 @@ func _apply_vertical_motion(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 		_air_time += delta
-	elif not _is_guarding() and _just_pressed("jump"):
+	elif not _is_guarding() and _just_pressed("jump") and _pay_stamina(jump_stamina_cost):
 		velocity.y = jump_velocity
 		_air_time = AIRBORNE_DELAY
 		_play(_stanced(JUMP_START_ANIMATION), BLEND_TIME, JUMP_TAKEOFF_TIME)
@@ -656,8 +728,9 @@ func _running_attack_animation() -> StringName:
 
 
 func _attack(direction: Vector3) -> void:
-	if _held("sprint") and not direction.is_zero_approx() and _running_attack_animation() != &"":
-		_start_running_attack(direction)
+	if _wants_to_sprint() and not direction.is_zero_approx() and _running_attack_animation() != &"":
+		if _pay_stamina(_attack_stamina_cost()):
+			_start_running_attack(direction)
 		return
 	_attack_with(_combo(), &"attack")
 
@@ -665,6 +738,8 @@ func _attack(direction: Vector3) -> void:
 func _attack_with(combo: Array[AttackStep], input: StringName) -> void:
 	if _combo_grace > 0.0 and _attack_input == input and _attack_combo == combo:
 		_continue_combo()
+		return
+	if not _pay_stamina(_attack_stamina_cost()):
 		return
 	_attack_combo = combo
 	_attack_input = input
@@ -739,6 +814,9 @@ func _has_next_attack_step() -> bool:
 
 
 func _continue_combo() -> void:
+	if not _pay_stamina(_attack_stamina_cost()):
+		_attack_queued = false
+		return
 	_combo_index = _combo_index + 1 if _has_next_attack_step() else 0
 	var step := _attack_combo[_combo_index]
 	_start_attack_step(step, step.chain_start, CHAIN_BLEND)
@@ -773,17 +851,22 @@ func _update_aim_raise() -> void:
 
 
 func _finish_aim_raise() -> void:
-	if _shot_queued:
-		_start_shot_step(0, _ranged_weapon().aimed_shot_start)
-	else:
+	if not _shot_queued or not _fire():
 		_end_action()
 
 
 func _shoot() -> void:
 	if _is_aiming():
-		_start_shot_step(0, _ranged_weapon().aimed_shot_start)
+		_fire()
 	else:
 		_raise_aim(true)
+
+
+func _fire() -> bool:
+	if not _pay_stamina(_attack_stamina_cost()):
+		return false
+	_start_shot_step(0, _ranged_weapon().aimed_shot_start)
+	return true
 
 
 func _start_shot_step(step: int, from: float) -> void:
