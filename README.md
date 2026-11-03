@@ -8,6 +8,8 @@ A game made with Godot where players traverse through a series of procedurally g
 ```
 assets/
   animations/   Character animations (rig_medium, rig_large)
+  BinbunVFX_Vol2/  Binbun's Stylized Hit FX and Elemental Magic FX (free versions, CC0): the hit
+                flashes and the cast circle
   characters/   Adventurer and skeleton models
   dungeon/      Dungeon pieces by type (floors, walls, stairs, ...)
   equipment/    Weapons, shields and items
@@ -43,6 +45,11 @@ scripts/
   enemy_health_bar.gd     The health bar that floats over an enemy's head
   hurtbox_watcher.gd      Base for scene-wide hit listeners: watches every hurtbox, present and future
   hit_outlines.gd         Flashes an outline on whatever the player's hits land on
+  hit_effects.gd          Plays a hit flash where the player's hits land on an enemy
+  cast_effects.gd         Opens a glowing circle under the player while a wand or staff casts
+  projectile_warm_up.gd   Draws every projectile and an arena-wide light once at load, so the first shot doesn't compile shaders
+  warm_up_spot.gd         The point under the floor where warm-ups draw: on screen to the renderer, hidden by the floor
+  loading_cover.gd        Black cover that hides the arena while the warm-ups compile, then fades out
   combat_test.gd          Combat test scene: camera, weapon pickups and stat test keys
 ```
 
@@ -291,6 +298,29 @@ The variants are copies of `magic_bolt` with a different core size and colour, l
 Presses only queue the combo that the same button started, so clicking one button during the
 other's cast doesn't cut it short. `Ranged_Magic_Summon` is unused.
 
+While the player casts, `cast_effects.gd` opens a glowing circle with rising sparks under their feet:
+the free area effect from Binbun's Elemental Magic FX (`vfx_fire_area_01`). It follows the player
+and opens when a `Ranged_Magic_` clip starts. It closes the moment the bolt or burst leaves (the
+player's `projectile_launched` signal), partway through the Shoot or Raise clip, or earlier if another
+clip cuts the cast short, such as a dodge or a hit. The next spellcast opens it again. Its colour is the held
+weapon's `cast_color`, the colour of its bolts. `radius` is 0.8 m and `emission` is 1.2; the pack's
+3.0 washed out to white on GL Compatibility, which has no HDR glow to carry it:
+
+| Weapon | `cast_color` |
+| --- | --- |
+| Wand | blue `(0.35, 0.8, 1)` |
+| Wand A | violet `(0.62, 0.35, 1)` |
+| Staff | green `(0.35, 0.95, 0.3)` |
+| Staff A | amber `(1, 0.5, 0.15)` |
+| Staff B | frost `(0.6, 0.9, 1)` |
+
+There is a single circle, kept for the whole scene, and a cast only changes its shader parameters, so
+casting never creates a material. When the scene starts the circle opens once under the floor (see
+"Warm-ups") and stays up for at least 0.2 s and 16 frames before it hides. Its sparks only start
+emitting 0.1 s into `open`, and a shorter warm-up left their shaders to compile on the first cast (about
+0.28 s with the driver's shader cache off). The 16 frames overlap the projectile warm-up's light, which
+compiles the lit version the circle needs when a bolt launches beside it.
+
 ### Shields
 A shield's root runs `shield.gd` and is held in the left hand alongside a main-hand weapon whose
 `allows_shield` is on (the one-handed sword and axe); picking up a weapon that doesn't allow one, or
@@ -462,7 +492,52 @@ loading: `hit_outlines.gd` puts the outline on every target at zero thickness fo
 starts, and `damage_numbers.gd` pops one invisible number containing every digit and "Blocked" so the
 label shader and its glyphs are ready before the first hit. Enemies also build their in-stance flinch clips
 when they load instead of on their first hit.
-`damage_numbers.gd` and `hit_outlines.gd` both extend `hurtbox_watcher.gd`.
+
+`hit_effects.gd` plays one of the pack's two hit flashes (`vfx_hit_01`, `vfx_hit_02`, picked at random)
+whenever an enemy takes damage, on the side of its hurtbox facing the blow at the height of the strike.
+Hits of `heavy_damage` (30) or more, such as spear, halberd and two-handed swings, flash `heavy_scale`
+(1.4) times bigger. Items and the player get no flash. Each flash frees itself when its animation ends.
+The pack's impact and big impact effects are left unused: on GL Compatibility their core sphere renders as
+a solid white ball. Two changes keep the pack working on this renderer:
+- `impact_sphere.gdshader` no longer writes `PREMUL_ALPHA_FACTOR`, which only Forward+ and Mobile
+  support, so on Compatibility the shader failed to compile and printed errors. Only the unused impact
+  effects draw with it.
+- Each flash's `VFXOmniLightBB` is hidden. On Compatibility the first time a light touches a material
+  compiles a new variant of that material's shader, so the flash light stalled the first hit on each kind
+  of enemy (about 0.5 s with the driver's shader cache off), and a warm-up can't reach every material.
+Both flashes are warmed up when the scene starts, played under the floor.
+
+`damage_numbers.gd`, `hit_outlines.gd` and `hit_effects.gd` all extend `hurtbox_watcher.gd`.
+
+### Warm-ups
+GL Compatibility compiles a shader the first time something is drawn with it, on the frame it appears,
+and it has no background compiling. So every effect that would first appear mid-fight is drawn once
+while the arena loads, and the cost lands there.
+
+`projectile_warm_up.gd` covers ranged weapons. The first wand or staff use used to freeze the game: the
+first bolt compiled its own core and trail materials, and its `OmniLight3D` (the only lights in the
+arena) compiled a lit version of every material it reached: the floor, the player, the cast circle. That
+was 19 shader programs, and the worst frame took 2.3 s with the driver's shader cache off. On GL
+Compatibility even unshaded materials get a separate version when a light touches them. So the warm-up
+first waits four unlit frames, which let the other warm-ups compile their unlit versions. Then it shows
+every `projectile` and `secondary_projectile` of the weapons in the scene, standing still, dealing no
+damage, with their lights at 0.001 energy. Alongside them goes one faint light with a 60 m range that
+reaches everything in view. After ten frames all of it is freed.
+
+Warm-ups have to be on screen to compile, but nobody should see them. Shrinking them didn't work:
+particles live in world space and ignore the node's scale, so the sparks played on the player. Two layers
+hide them:
+- `WarmUpSpot.under_floor()` puts the hit flashes, the cast circle and the projectiles 3 m under the
+  floor, on the line from the camera through the player's feet. The renderer still draws them, but the
+  floor covers every pixel.
+- `LoadingCover` (`loading_cover.gd`), a black `ColorRect` on canvas layer 100, holds for at least 20
+  frames and 0.5 s, then fades out over 0.3 s and frees itself. Every warm-up finishes behind it (the
+  projectiles by frame 15, the cast circle by frame 17), and so does the slow first frame that compiles
+  the rest of the arena. It ignores the mouse, so the first click still reaches the game.
+
+The outline and damage-number warm-ups draw in place: a zero-width outline on every target, and one
+fully transparent number. Both happen behind the cover. Once the cover is gone, the first swing, hit,
+cast, bolt, arrow and crossbow bolt compile nothing, whether or not they hit.
 
 ## Combat test
 Open `scenes/playground/combat_test.tscn` and press F6. Every usable weapon and shield lies on the

@@ -2,6 +2,7 @@ extends CharacterBody3D
 
 signal animation_changed(animation: StringName)
 signal item_released(item: Node3D)
+signal projectile_launched(projectile: Projectile)
 
 const BLEND_TIME := 0.15
 const RIGHT_HAND := &"handslot.r"
@@ -807,6 +808,7 @@ func _launch_projectile(scene: PackedScene, weapon: Weapon) -> void:
 	projectile.shooter = self
 	get_parent().add_child(projectile)
 	projectile.global_transform = Transform3D(Basis(Vector3.UP, _view_yaw()), weapon.global_transform * weapon.projectile_origin)
+	projectile_launched.emit(projectile)
 
 
 func _has_next_attack_step() -> bool:

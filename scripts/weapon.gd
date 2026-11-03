@@ -35,6 +35,9 @@ const FLIP_THICKNESS_AXIS := Basis(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0
 @export var aim_return_time := 0.0
 @export var shot_release_time := -1.0
 
+@export_group("Magic")
+@export var cast_color := Color.WHITE
+
 
 func _ready() -> void:
 	set_collision_mask_value(Hurtbox.LAYER, true)

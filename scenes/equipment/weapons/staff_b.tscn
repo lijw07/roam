@@ -15,6 +15,7 @@ points = PackedVector3Array(-0.31824955, 1.0583441, -0.030909253, -0.31824955, 1
 [node name="StaffB" type="Area3D" unique_id=16028543]
 script = ExtResource("2_weapon")
 projectile = ExtResource("9_left_projectile")
+cast_color = Color(0.6, 0.9, 1, 1)
 secondary_projectile = ExtResource("10_right_projectile")
 projectile_origin = Vector3(0, 1.35, 0)
 combo = Array[ExtResource("3_attack_step")]([ExtResource("4_long_spellcast"), ExtResource("5_shoot")])
