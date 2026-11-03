@@ -19,8 +19,10 @@ func _init() -> void:
 func pop(value: String, color: Color, at: Vector3) -> void:
 	text = value
 	modulate = color
+	outline_modulate.a = color.a
 	global_position = at
 	var tween := create_tween().set_parallel()
 	tween.tween_property(self, "global_position:y", at.y + RISE, DURATION).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tween.tween_property(self, "modulate:a", 0.0, DURATION * (1.0 - FADE_START)).set_delay(DURATION * FADE_START)
+	for faded_property in ["modulate:a", "outline_modulate:a"]:
+		tween.tween_property(self, faded_property, 0.0, DURATION * (1.0 - FADE_START)).set_delay(DURATION * FADE_START)
 	tween.chain().tween_callback(queue_free)

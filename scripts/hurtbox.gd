@@ -45,17 +45,6 @@ func top() -> Vector3:
 	return Vector3(box.get_center().x, box.end.y, box.get_center().z)
 
 
-func closest_point(point: Vector3) -> Vector3:
-	var box := bounds()
-	return point.clamp(box.position, box.end)
-
-
-func outward_toward(point: Vector3) -> Vector3:
-	var outward := point - bounds().get_center()
-	outward.y = 0.0
-	return outward.normalized() if not outward.is_zero_approx() else Vector3.BACK
-
-
 func bounds() -> AABB:
 	var box := AABB(global_position, Vector3.ZERO)
 	for shape: CollisionShape3D in find_children("*", "CollisionShape3D", false, false):

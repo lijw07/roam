@@ -19,7 +19,7 @@ scenes/
   effects/      Arrow, magic bolt and melee impact effects
   playground/   Movement, animation, inventory and combat test scenes
   ui/           The health, mana and stamina bars, and the bar over each enemy
-shaders/        The enemy health bar's billboard fill
+shaders/        The enemy health bar's billboard fill and the hit outline
 resources/
   attacks/      AttackStep resources: one per attack clip, shared by every weapon that uses it
   potions/      Potion resources: what each potion restores and over how long
@@ -43,7 +43,6 @@ scripts/
   enemy_health_bar.gd     The health bar that floats over an enemy's head
   hurtbox_watcher.gd      Base for scene-wide hit listeners: watches every hurtbox, present and future
   hit_outlines.gd         Flashes an outline on whatever the player's hits land on
-  impact_effects.gd       Spawns an impact effect where a hit lands on an enemy
   combat_test.gd          Combat test scene: camera, weapon pickups and stat test keys
 ```
 
@@ -398,8 +397,15 @@ Blocking with a shield stops any hit that comes from within `block_arc_degrees` 
 player faces and plays `Melee_Block_Hit`; hits from behind still land. An unblocked hit plays `Hit_A`
 or `Hit_B` on the player and the enemies, and reaching zero health plays `Death_A` or `Death_B`
 (through `die()`, which now kills the Health). `spawn()` revives the player at full health. Enemies
-stand still while they react and stay down once dead; their hurtboxes switch off and their body leaves
-the `world` layer, so the player walks through the corpse and arrows fly past it.
+stand still while they react, and stay down once dead. `Hit_A` and `Hit_B` were authored from the plain
+`Idle_A` stance, so crossfading them on an enemy with another idle (the minion's raised fists, the mage's
+staff, the champion's two-handed stance) dragged the whole body out of its stance and back. Instead each
+enemy builds an additive copy on first use (`flinch_in_stance/Hit_A`, `Hit_B`): every bone keeps the
+pose of the enemy's own idle and only adds how far the hit clip moves it from the clip's first frame.
+The flinch starts from the stance, so it blends in over just 0.06 s, and it blends back into the idle over
+the last 0.25 s of the clip. Deaths still play the plain clips, blending in over 0.2 s. Once dead, their body leaves the `world` layer at once, and
+as soon as it rests on the floor every collision shape under it (body capsule, hurtbox, held weapons)
+is disabled and its physics stops, so the player walks through the corpse and arrows fly past it.
 
 ### Stamina costs
 The player's `Stamina` pays for sprinting, attacking and blocking:
@@ -442,15 +448,21 @@ Every enemy scene has a `HealthBar` (`scenes/ui/enemy_health_bar.tscn`): a red b
 camera, placed just above the top of the enemy's hurtbox, that follows its health and hides on death.
 
 `hit_outlines.gd` flashes an outline on whatever takes damage from a hit, red on enemies and white on
-items (the breakable containers), never on the player. It puts an unshaded, front-culled, grown
-material on every mesh of the target as a `material_overlay` (the inverted-hull outline), holds it for
-0.08 s, shrinks it away over 0.3 s, then removes it. The enemy health bar is left out.
+items (the breakable containers), never on the player. Every mesh of the target gets the same shared
+`ShaderMaterial` (`shaders/hit_outline.gdshader`, an unshaded, front-culled inverted hull) as its
+`material_overlay`, and the colour and thickness are per-mesh instance uniforms
+(`set_instance_shader_parameter`). The outline holds for 0.08 s, shrinks away over 0.3 s, then the
+overlay is removed. The enemy health bar is left out.
 
-`impact_effects.gd` spawns `scenes/effects/melee_sparks.tscn` wherever a weapon, fist, foot, shield or
-projectile hits an enemy: on the side of the enemy's hurtbox nearest the hit, sparks flying back out
-toward the attacker. Melee hits are measured from the middle of the weapon's collision shape (the blade
-or head), fists and kicks from the hand or foot bone, and projectiles from where they struck.
-`damage_numbers.gd`, `hit_outlines.gd` and `impact_effects.gd` all extend `hurtbox_watcher.gd`.
+Hits must never create materials. The GL Compatibility renderer compiles shaders again for every new
+material instance, even one identical to a material already in use, and a compile in the middle of a fight
+is a visible hitch (measured at 175–450 ms per hit with the driver's shader cache off). Creating a fresh
+outline material per hit caused a microstutter on every hit. With one shared material, a hit costs no compile. The first compile is moved to
+loading: `hit_outlines.gd` puts the outline on every target at zero thickness for two frames when the scene
+starts, and `damage_numbers.gd` pops one invisible number containing every digit and "Blocked" so the
+label shader and its glyphs are ready before the first hit. Enemies also build their in-stance flinch clips
+when they load instead of on their first hit.
+`damage_numbers.gd` and `hit_outlines.gd` both extend `hurtbox_watcher.gd`.
 
 ## Combat test
 Open `scenes/playground/combat_test.tscn` and press F6. Every usable weapon and shield lies on the
