@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/effects/magic_bolt.tscn" id="1_magic_bolt"]
+
+[node name="SkeletonMagicBolt" instance=ExtResource("1_magic_bolt")]
+speed = 36.0

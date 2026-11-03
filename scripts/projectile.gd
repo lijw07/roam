@@ -12,6 +12,7 @@ const SMALLEST_SCALE := 0.01
 @export_range(0.0, 1.0) var shrink_from := 1.0
 
 var shooter: Node3D = null
+var ignored: Array[RID] = []
 
 var _age := 0.0
 var _travelled := 0.0
@@ -86,7 +87,7 @@ func _active_hurtbox_hit(ray_hit: Dictionary) -> Dictionary:
 
 
 func _shooter_rids() -> Array[RID]:
-	var rids: Array[RID] = []
+	var rids: Array[RID] = ignored.duplicate()
 	if not is_instance_valid(shooter):
 		return rids
 	if shooter is CollisionObject3D:

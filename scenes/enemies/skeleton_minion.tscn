@@ -3,11 +3,18 @@
 [ext_resource type="PackedScene" path="res://scenes/characters/skeletons/skeleton_minion.tscn" id="1_base"]
 [ext_resource type="Script" path="res://scripts/enemy.gd" id="2_enemy"]
 [ext_resource type="PackedScene" path="res://scenes/ui/enemy_health_bar.tscn" id="93_health_bar"]
+[ext_resource type="Script" path="res://scripts/enemy_brain.gd" id="80_brain"]
+[ext_resource type="Script" path="res://scripts/attack_step.gd" id="81_attack_step"]
+[ext_resource type="Resource" path="res://resources/attacks/unarmed/punch.tres" id="82_punch"]
+[ext_resource type="Resource" path="res://resources/attacks/unarmed/kick.tres" id="83_kick"]
 
 [node name="SkeletonMinion" instance=ExtResource("1_base")]
 script = ExtResource("2_enemy")
 threat = 1
 idle_animation = &"combat_melee/Melee_Unarmed_Idle"
+attacks = Array[ExtResource("81_attack_step")]([ExtResource("82_punch"), ExtResource("83_kick")])
+attack_damage = 8.0
+strafe_speed = 2.4
 
 [node name="Health" parent="."]
 max_value = 100.0
@@ -15,5 +22,12 @@ max_value = 100.0
 [node name="HealthBar" parent="." node_paths=PackedStringArray("health", "hurtbox") instance=ExtResource("93_health_bar")]
 health = NodePath("../Health")
 hurtbox = NodePath("../Hurtbox")
+
+[node name="Brain" type="Node3D" parent="."]
+script = ExtResource("80_brain")
+attack_range = 1.1
+circle_distance = 3.0
+attack_cooldown = 1.2
+block_skill = 0.6
 
 [editable path="Model"]

@@ -43,7 +43,11 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	camera_rig.global_position = player.global_position + Vector3.UP * RIG_HEIGHT
 	player.camera_yaw = camera_rig.rotation.y
-	info.text = "%s\n%s" % [CONTROLS % [TEST_DAMAGE, TEST_MANA_COST, TEST_STAMINA_COST], _weapon_text()]
+	info.text = _info_text()
+
+
+func _info_text() -> String:
+	return "%s\n%s" % [CONTROLS % [TEST_DAMAGE, TEST_MANA_COST, TEST_STAMINA_COST], _weapon_text()]
 
 
 func _unhandled_input(event: InputEvent) -> void:

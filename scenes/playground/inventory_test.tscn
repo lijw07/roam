@@ -53,6 +53,7 @@
 [ext_resource type="PackedScene" uid="uid://c81y3eco5mkve" path="res://scenes/resources/wood_plank_b.tscn" id="50_wood_plank_b"]
 [ext_resource type="PackedScene" uid="uid://sofdxetg64j7" path="res://scenes/resources/wood_plank_c.tscn" id="51_wood_plank_c"]
 [ext_resource type="PackedScene" uid="uid://ogyw28j2n42e" path="res://scenes/resources/wood_planks_stack_small.tscn" id="52_wood_planks_stack_small"]
+[ext_resource type="Script" path="res://scripts/camera_boom.gd" id="90_camera_boom"]
 
 [sub_resource type="Environment" id="Environment_test"]
 background_mode = 1
@@ -443,8 +444,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
 [node name="Pitch" type="Node3D" parent="CameraRig"]
 transform = Transform3D(1, 0, 0, 0, 0.9393727, 0.3428978, 0, -0.3428978, 0.9393727, 0, 0, 0)
 
-[node name="Camera3D" type="Camera3D" parent="CameraRig/Pitch"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
+[node name="CameraBoom" type="SpringArm3D" parent="CameraRig/Pitch"]
+script = ExtResource("90_camera_boom")
+spring_length = 6.0
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig/Pitch/CameraBoom"]
 fov = 60.0
 
 [node name="HUD" type="CanvasLayer" parent="."]

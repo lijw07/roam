@@ -193,6 +193,10 @@ func is_acting() -> bool:
 	return _action != &""
 
 
+func is_attacking() -> bool:
+	return _attacking and not dead
+
+
 func current_animation() -> StringName:
 	return StringName(animation_player.assigned_animation)
 
@@ -541,6 +545,8 @@ func _travel(direction: Vector3, gait: Gait, delta: float) -> void:
 
 
 func _action_allows_movement() -> bool:
+	if _action in HIT_ANIMATIONS:
+		return true
 	if _attack_step != null:
 		return not _attack_step.uses_legs
 	if _shot_step >= 0:
