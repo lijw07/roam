@@ -15,6 +15,7 @@ class Slot:
 	var scene_path := ""
 	var count := 0
 	var max_stack := 0
+	var potion: Potion = null
 
 
 func _ready() -> void:
@@ -57,6 +58,17 @@ func count_at(index: int) -> int:
 	return slots[index].count
 
 
+func potion_at(index: int) -> Potion:
+	return slots[index].potion if count_at(index) > 0 else null
+
+
+func use_one(index: int) -> void:
+	if count_at(index) == 0:
+		return
+	_take(index, 1)
+	changed.emit()
+
+
 func movable_amount(from_index: int, to_index: int) -> int:
 	var source := slots[from_index]
 	var target := slots[to_index]
@@ -78,6 +90,7 @@ func move(from_index: int, to_index: int, amount: int) -> void:
 	target.item_name = source.item_name
 	target.scene_path = source.scene_path
 	target.max_stack = source.max_stack
+	target.potion = source.potion
 	target.count += moved
 	_take(from_index, moved)
 	changed.emit()
@@ -103,6 +116,7 @@ func _fill(slot: Slot, pickup: ItemPickup, amount: int) -> void:
 	slot.item_name = pickup.item_name
 	slot.scene_path = pickup.item_scene_path()
 	slot.max_stack = pickup.max_stack
+	slot.potion = pickup.potion
 	slot.count += amount
 
 

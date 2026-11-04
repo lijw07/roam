@@ -18,6 +18,7 @@ radius = 0.48
 height = 2.16
 
 [node name="Mage" type="CharacterBody3D" unique_id=989352654]
+collision_mask = 5
 
 [node name="Model" parent="." unique_id=169327681 instance=ExtResource("1_h1vvf")]
 
@@ -38,8 +39,6 @@ libraries/tools = ExtResource("9_w055v")
 
 [node name="Health" type="Node" parent="."]
 script = ExtResource("91_health")
-regen_rate = 1.5
-regen_delay = 5.0
 
 [node name="Mana" type="Node" parent="."]
 script = ExtResource("90_stat_pool")

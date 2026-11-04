@@ -7,7 +7,7 @@ const MAX_PITCH := 0.3
 const DOOR_REACH := 3.0
 const HOVERED_DOOR_REACH := 3.5
 const REACH_HEIGHT := 1.0
-const CONTROLS := "WASD move   Shift run   Space jump   LMB attack   RMB block   F door / pick up   Tab inventory   R new dungeon   Esc free mouse"
+const CONTROLS := "WASD move   Shift run   Space jump   LMB attack   RMB block   F door / pick up   Tab inventory (right-click a potion to drink)   R new dungeon   Esc free mouse"
 const DEATH_TEXT := "You died   R to try a new dungeon"
 
 @onready var player: CharacterBody3D = $Player

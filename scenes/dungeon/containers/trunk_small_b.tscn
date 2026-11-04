@@ -2,4 +2,15 @@
 
 [ext_resource type="PackedScene" uid="uid://de4jhvfji53pf" path="res://assets/dungeon/containers/trunk_small_B.gltf" id="1_model"]
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_blocker0"]
+size = Vector3(0.675, 3.5, 0.583)
+
 [node name="TrunkSmallB" instance=ExtResource("1_model")]
+
+[node name="CharacterBlocker" type="StaticBody3D" parent="."]
+collision_layer = 4
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBlocker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -0)
+shape = SubResource("BoxShape3D_blocker0")

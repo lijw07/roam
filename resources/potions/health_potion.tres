@@ -5,4 +5,4 @@
 [resource]
 script = ExtResource("1_potion")
 potion_name = "Health Potion"
-health = 40.0
+health = 35.0

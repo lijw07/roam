@@ -13,3 +13,4 @@ reaction_time = 0.15
 combo_chance = 0.55
 flank_bias = 0.8
 recover_time = 0.5
+ranged_caution = 0.8

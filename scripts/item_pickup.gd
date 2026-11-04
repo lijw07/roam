@@ -16,6 +16,7 @@ const CATCH_DISTANCE := 0.3
 @export var max_stack := 6
 @export_file("*.tscn") var full_stack_scene := ""
 @export_file("*.tscn") var single_item_scene := ""
+@export var potion: Potion
 
 var _landed := true
 var _puller: Node3D = null

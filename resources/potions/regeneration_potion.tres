@@ -6,4 +6,4 @@
 script = ExtResource("1_potion")
 potion_name = "Regeneration Potion"
 health = 60.0
-duration = 5.0
+duration = 30.0
