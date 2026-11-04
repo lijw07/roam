@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/dungeon/loot/coin_stack_small.gltf" id="1_model"]
+[ext_resource type="Script" path="res://scripts/item_pickup.gd" id="2_item_pickup"]
+
+[sub_resource type="ConvexPolygonShape3D" id="Shape_coin_stack_small"]
+points = PackedVector3Array(-0.44525, 0.0, -0.46083, -0.44525, 0.0, 0.43552, -0.44525, 0.47823, -0.46083, -0.44525, 0.47823, 0.43552, 0.51386, 0.0, -0.46083, 0.51386, 0.0, 0.43552, 0.51386, 0.47823, -0.46083, 0.51386, 0.47823, 0.43552)
+
+[node name="CoinStackSmall" type="Area3D"]
+script = ExtResource("2_item_pickup")
+item_name = "Coin"
+count = 6
+single_item_scene = "res://scenes/resources/coin.tscn"
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("Shape_coin_stack_small")

@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/loot_table.gd" id="1_loot_table"]
+[ext_resource type="Script" path="res://scripts/loot_tier.gd" id="2_loot_tier"]
+[ext_resource type="PackedScene" path="res://scenes/resources/coin.tscn" id="scene_coin"]
+[ext_resource type="PackedScene" path="res://scenes/resources/coin_stack_small.tscn" id="scene_coin_stack_small"]
+[ext_resource type="PackedScene" path="res://scenes/resources/coin_stack_medium.tscn" id="scene_coin_stack_medium"]
+[ext_resource type="PackedScene" path="res://scenes/resources/coin_stack_large.tscn" id="scene_coin_stack_large"]
+
+[sub_resource type="Resource" id="tier_common"]
+script = ExtResource("2_loot_tier")
+weight = 60.0
+items = Array[PackedScene]([ExtResource("scene_coin")])
+
+[sub_resource type="Resource" id="tier_uncommon"]
+script = ExtResource("2_loot_tier")
+weight = 25.0
+items = Array[PackedScene]([ExtResource("scene_coin_stack_small")])
+
+[sub_resource type="Resource" id="tier_rare"]
+script = ExtResource("2_loot_tier")
+weight = 12.0
+items = Array[PackedScene]([ExtResource("scene_coin_stack_medium")])
+
+[sub_resource type="Resource" id="tier_very_rare"]
+script = ExtResource("2_loot_tier")
+weight = 3.0
+items = Array[PackedScene]([ExtResource("scene_coin_stack_large")])
+
+[resource]
+script = ExtResource("1_loot_table")
+tiers = Array[ExtResource("2_loot_tier")]([SubResource("tier_common"), SubResource("tier_uncommon"), SubResource("tier_rare"), SubResource("tier_very_rare")])

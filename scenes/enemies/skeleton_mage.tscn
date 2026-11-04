@@ -9,6 +9,10 @@
 [ext_resource type="Resource" path="res://resources/attacks/magic/shoot.tres" id="82_shoot"]
 [ext_resource type="Resource" path="res://resources/attacks/magic/long_spellcast.tres" id="83_long_spellcast"]
 [ext_resource type="PackedScene" path="res://scenes/effects/skeleton_magic_bolt.tscn" id="89_projectile"]
+[ext_resource type="Script" path="res://scripts/item_dropper.gd" id="95_item_dropper"]
+[ext_resource type="Script" path="res://scripts/loot_table.gd" id="96_loot_table"]
+[ext_resource type="Resource" path="res://resources/loot/enemy_resources.tres" id="97_enemy_resources"]
+[ext_resource type="Resource" path="res://resources/loot/enemy_coins.tres" id="98_enemy_coins"]
 
 [node name="SkeletonMage" instance=ExtResource("1_base")]
 script = ExtResource("2_enemy")
@@ -37,5 +41,9 @@ attack_range = 11.0
 circle_distance = 7.5
 attack_cooldown = 2.5
 block_skill = 0.4
+
+[node name="ItemDropper" type="Node" parent="."]
+script = ExtResource("95_item_dropper")
+loot_tables = Array[ExtResource("96_loot_table")]([ExtResource("97_enemy_resources"), ExtResource("98_enemy_coins")])
 
 [editable path="Model"]

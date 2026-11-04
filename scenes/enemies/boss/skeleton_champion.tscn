@@ -9,6 +9,10 @@
 [ext_resource type="Resource" path="res://resources/attacks/two_handed/chop.tres" id="82_chop"]
 [ext_resource type="Resource" path="res://resources/attacks/two_handed/slice.tres" id="83_slice"]
 [ext_resource type="Resource" path="res://resources/attacks/two_handed/spin.tres" id="84_spin"]
+[ext_resource type="Script" path="res://scripts/item_dropper.gd" id="95_item_dropper"]
+[ext_resource type="Script" path="res://scripts/loot_table.gd" id="96_loot_table"]
+[ext_resource type="Resource" path="res://resources/loot/enemy_resources.tres" id="97_enemy_resources"]
+[ext_resource type="Resource" path="res://resources/loot/enemy_coins.tres" id="98_enemy_coins"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_boss"]
 radius = 0.64
@@ -51,5 +55,9 @@ attack_range = 2.6
 circle_distance = 4.0
 attack_cooldown = 2.2
 block_skill = 0.5
+
+[node name="ItemDropper" type="Node" parent="."]
+script = ExtResource("95_item_dropper")
+loot_tables = Array[ExtResource("96_loot_table")]([ExtResource("97_enemy_resources"), ExtResource("98_enemy_coins")])
 
 [editable path="Model"]

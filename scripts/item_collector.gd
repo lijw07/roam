@@ -3,8 +3,15 @@ extends Node
 
 @export var inventory: Inventory
 @export var reach := 1.6
+@export var pull_radius := 2.5
 
 @onready var body: Node3D = get_parent()
+
+
+func _physics_process(_delta: float) -> void:
+	for pickup: ItemPickup in get_tree().get_nodes_in_group(ItemPickup.GROUP):
+		if _should_pull(pickup):
+			pickup.pull_into(body, inventory)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -21,6 +28,12 @@ func nearest_pickup() -> ItemPickup:
 			best = distance
 			nearest = pickup
 	return nearest
+
+
+func _should_pull(pickup: ItemPickup) -> bool:
+	return pickup.can_be_pulled() \
+		and body.global_position.distance_to(pickup.global_position) <= pull_radius \
+		and inventory.has_room_for(pickup.item_name)
 
 
 func _collect_nearest() -> void:

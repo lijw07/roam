@@ -36,6 +36,12 @@ func _release(scene_path: String, count: int) -> void:
 
 
 func _create_pickup(scene_path: String, count: int) -> ItemPickup:
+	var pickup := _single_or_pile(scene_path, count)
+	pickup.auto_pick_up = false
+	return pickup
+
+
+func _single_or_pile(scene_path: String, count: int) -> ItemPickup:
 	var item := _instantiate(scene_path)
 	item.count = count
 	if count < inventory.max_stack or item.full_stack_scene.is_empty():
