@@ -172,7 +172,11 @@ func is_ranged() -> bool:
 
 
 func wants_token() -> bool:
-	return state == State.ENGAGE and _cooldown <= 0.0 and _guard_delay < 0.0 and enemy.can_act() and _distance_to_target() <= circle_distance + attack_range and (is_ranged() or _can_get_at_target())
+	if state != State.ENGAGE or _cooldown > 0.0 or _guard_delay >= 0.0:
+		return false
+	if not enemy.can_act() or not enemy.has_attack_stamina():
+		return false
+	return _distance_to_target() <= circle_distance + attack_range and (is_ranged() or _can_get_at_target())
 
 
 func waiting_time() -> float:
@@ -353,7 +357,7 @@ func _update_ring_pace(distance: float) -> void:
 
 func _close_in() -> void:
 	enemy.focus = _target()
-	if _state_time > APPROACH_TIMEOUT:
+	if _state_time > APPROACH_TIMEOUT or not enemy.has_attack_stamina():
 		_enter(State.ENGAGE)
 		return
 	if is_ranged():

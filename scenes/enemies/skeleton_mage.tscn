@@ -21,6 +21,7 @@ idle_animation = &"tools/Holding_A"
 attacks = Array[ExtResource("81_attack_step")]([ExtResource("82_shoot")])
 projectile = ExtResource("89_projectile")
 lead_in = ExtResource("83_long_spellcast")
+attack_stamina_cost = 0.0
 
 [node name="HandslotRSkeletonStaff" type="BoneAttachment3D" parent="Model/Rig_Medium/Skeleton3D"]
 bone_name = "handslot.r"

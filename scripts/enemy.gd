@@ -59,6 +59,8 @@ const CORPSE_SINK_TIME := 2.0
 @export_range(0.0, 360.0) var attack_arc_degrees := 110.0
 @export var projectile: PackedScene
 @export var block_stamina_per_damage := 1.0
+@export var attack_stamina_cost := 12.0
+@export_range(0.0, 1.0) var stamina_recovery_ratio := 0.5
 @export_range(0.0, 180.0) var block_arc_degrees := 140.0
 
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
@@ -82,6 +84,7 @@ var _projectile_fired := false
 var _struck: Array[Hurtbox] = []
 var _guarding := false
 var _guard_ready := false
+var _winded := false
 var _main_hand: BoneAttachment3D = null
 var _strike_sphere := SphereShape3D.new()
 var _strike_query := PhysicsShapeQueryParameters3D.new()
@@ -103,6 +106,7 @@ func _physics_process(delta: float) -> void:
 	if dead:
 		_settle_corpse(delta)
 		return
+	_update_winded()
 	if _reaction != &"":
 		_hold_still(delta)
 		_recover_from_reaction_when_due()
@@ -134,7 +138,7 @@ func is_ranged() -> bool:
 
 
 func attack(steps: Array[AttackStep]) -> bool:
-	if not can_act() or steps.is_empty():
+	if not can_act() or steps.is_empty() or not has_attack_stamina():
 		return false
 	lower_guard()
 	_queued_steps = _with_lead_in(steps)
@@ -150,7 +154,22 @@ func _with_lead_in(steps: Array[AttackStep]) -> Array[AttackStep]:
 	return sequence
 
 
+func has_attack_stamina() -> bool:
+	return stamina == null or attack_stamina_cost <= 0.0 or not _winded
+
+
+func _update_winded() -> void:
+	if stamina == null:
+		return
+	if stamina.is_empty():
+		_winded = true
+	elif _winded and stamina.ratio() >= stamina_recovery_ratio:
+		_winded = false
+
+
 func _begin_step(step: AttackStep, from: float, blend: float) -> void:
+	if stamina != null:
+		stamina.drain(attack_stamina_cost)
 	_attack_step = step
 	_projectile_fired = false
 	_struck.clear()
@@ -272,8 +291,16 @@ func _update_attack(delta: float) -> void:
 		_turn_toward_focus(delta, attack_turn_speed)
 	_strike_targets(time)
 	_fire_projectile_when_due(time)
-	if _attack_step != null and not _queued_steps.is_empty() and time >= _attack_step.combo_time:
+	if _attack_step != null and _can_chain() and time >= _attack_step.combo_time:
 		_chain_next_step()
+
+
+func _can_chain() -> bool:
+	return not _queued_steps.is_empty() and _has_stamina_left()
+
+
+func _has_stamina_left() -> bool:
+	return stamina == null or attack_stamina_cost <= 0.0 or not stamina.is_empty()
 
 
 func _strike_start() -> float:
@@ -556,10 +583,10 @@ func _recover_from_reaction_when_due() -> void:
 
 func _on_animation_finished(animation: StringName) -> void:
 	if _attack_step != null and animation == _attack_step.animation:
-		if _queued_steps.is_empty():
-			_finish_attack()
-		else:
+		if _can_chain():
 			_chain_next_step()
+		else:
+			_finish_attack()
 		return
 	if _guarding and animation == guard_raise_animation:
 		_guard_ready = true

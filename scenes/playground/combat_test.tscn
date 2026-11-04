@@ -76,6 +76,7 @@
 [ext_resource type="Script" path="res://scripts/aim_targeting.gd" id="92_aim_targeting"]
 [ext_resource type="Script" path="res://scripts/crosshair.gd" id="93_crosshair"]
 [ext_resource type="Script" path="res://scripts/shoulder_camera.gd" id="94_shoulder_camera"]
+[ext_resource type="Script" path="res://scripts/render_warm_up.gd" id="90_render_warm_up"]
 
 [sub_resource type="Environment" id="Environment_arena"]
 background_mode = 1
@@ -879,6 +880,9 @@ theme_override_constants/outline_size = 6
 health = NodePath("../../Player/Health")
 mana = NodePath("../../Player/Mana")
 stamina = NodePath("../../Player/Stamina")
+
+[node name="RenderWarmUp" type="Node3D" parent="."]
+script = ExtResource("90_render_warm_up")
 
 [node name="LoadingCover" type="CanvasLayer" parent="."]
 layer = 100

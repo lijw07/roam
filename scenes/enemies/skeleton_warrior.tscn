@@ -22,7 +22,6 @@ idle_animation = &"general/Idle_A"
 attacks = Array[ExtResource("81_attack_step")]([ExtResource("82_slice_horizontal"), ExtResource("83_stab"), ExtResource("84_chop")])
 attack_reach = 2.1
 attack_damage = 14.0
-block_stamina_per_damage = 0.6
 
 [node name="HandslotRSkeletonBlade" type="BoneAttachment3D" parent="Model/Rig_Medium/Skeleton3D"]
 bone_name = "handslot.r"

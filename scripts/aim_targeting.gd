@@ -12,14 +12,19 @@ const START_MARGIN := 0.5
 
 var target: Enemy = null
 var looked_at: Node3D = null
+var hovered_door: Door = null
+var hovered_door_point := Vector3.ZERO
 
 var _ray := PhysicsRayQueryParameters3D.new()
+var _solid_ray := PhysicsRayQueryParameters3D.new()
 
 
 func _ready() -> void:
 	_ray.collide_with_areas = true
 	_ray.collide_with_bodies = true
 	_ray.collision_mask = (1 << (WORLD_LAYER - 1)) | (1 << (Hurtbox.LAYER - 1))
+	_solid_ray.collide_with_areas = false
+	_solid_ray.collision_mask = 1 << (WORLD_LAYER - 1)
 
 
 func _physics_process(_delta: float) -> void:
@@ -27,6 +32,7 @@ func _physics_process(_delta: float) -> void:
 	if camera == null or not is_instance_valid(player):
 		looked_at = null
 		target = null
+		hovered_door = null
 		return
 	var forward := -camera.global_basis.z
 	var chest := player.global_position + Vector3.UP * CHEST_HEIGHT
@@ -40,6 +46,35 @@ func _physics_process(_delta: float) -> void:
 		looked_at = _pickup_near_ray(start, aim_point)
 	target = looked_at as Enemy
 	player.set("aim_point", aim_point)
+	_find_hovered_door(start, end)
+
+
+func _find_hovered_door(start: Vector3, end: Vector3) -> void:
+	var hit := _first_solid_hit(start, end)
+	hovered_door = _door_of(hit.get("collider"))
+	hovered_door_point = hit.get("position", end)
+
+
+func _first_solid_hit(start: Vector3, end: Vector3) -> Dictionary:
+	var exclude := _player_rids()
+	_solid_ray.from = start
+	_solid_ray.to = end
+	for _pass in MAX_PASSES:
+		_solid_ray.exclude = exclude
+		var hit := player.get_world_3d().direct_space_state.intersect_ray(_solid_ray)
+		if hit.is_empty() or not _passes_through(hit.collider):
+			return hit
+		exclude.append(hit.rid)
+	return {}
+
+
+func _door_of(collider: Object) -> Door:
+	var node := collider as Node
+	if node == null or not node.is_in_group(Door.LEAF_GROUP):
+		return null
+	while node != null and not (node is Door):
+		node = node.get_parent()
+	return node as Door
 
 
 func _pickup_near_ray(start: Vector3, stop: Vector3) -> ItemPickup:

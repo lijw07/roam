@@ -25,14 +25,6 @@ func take_damage(amount: float, source: Node = null) -> float:
 	return dealt
 
 
-func heal(amount: float) -> float:
-	return restore(amount)
-
-
-func heal_over_time(amount: float, duration: float) -> void:
-	restore_over_time(amount, duration)
-
-
 func restore(amount: float) -> float:
 	var restored := super(amount)
 	if restored > 0.0:

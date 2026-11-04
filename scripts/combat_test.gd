@@ -15,7 +15,7 @@ const POTIONS := {
 	KEY_3: preload("res://resources/potions/stamina_potion.tres"),
 	KEY_4: preload("res://resources/potions/regeneration_potion.tres"),
 }
-const CONTROLS := "WASD move   Shift run   Space jump   Alt dodge   LMB attack   RMB block / aim / cast   F pick up   R reset arena   Esc free mouse\n1 health potion   2 mana potion   3 stamina potion   4 regeneration potion   5 take %d damage   6 spend %d mana   7 spend %d stamina"
+const CONTROLS := "WASD move   Shift run   Space jump   LMB attack   RMB block / aim / cast   F pick up   R reset arena   Esc free mouse\n1 health potion   2 mana potion   3 stamina potion   4 regeneration potion   5 take %d damage   6 spend %d mana   7 spend %d stamina"
 
 @onready var player: CharacterBody3D = $Player
 @onready var camera_rig: ShoulderCamera = $CameraRig

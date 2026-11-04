@@ -15,10 +15,6 @@ const JUMP_TAKEOFF_TIME := 0.27
 const WALK_BACKWARDS_ANIMATION := &"movement_advanced/Walking_Backwards"
 const BACKWARD_ARC := deg_to_rad(100.0)
 const MAX_TWIST := deg_to_rad(90.0)
-const DODGE_FORWARD_ANIMATION := &"movement_advanced/Dodge_Forward"
-const DODGE_BACKWARD_ANIMATION := &"movement_advanced/Dodge_Backward"
-const DODGE_LEFT_ANIMATION := &"movement_advanced/Dodge_Left"
-const DODGE_RIGHT_ANIMATION := &"movement_advanced/Dodge_Right"
 const HIT_ANIMATIONS: Array[StringName] = [&"general/Hit_A", &"general/Hit_B"]
 const DEATH_POSES := {
 	&"general/Death_A": &"general/Death_A_Pose",
@@ -47,7 +43,6 @@ const UPPER_BODY_BONES: Array[StringName] = [
 ]
 const ROOT_TRACK := ^"Rig_Medium/Skeleton3D:root"
 const HIPS_TRACK := ^"Rig_Medium/Skeleton3D:hips"
-const IN_PLACE_LIBRARY := &"in_place"
 const MIRRORED_LIBRARY := &"mirrored"
 const AIM_HOLD_LIBRARY := &"aim_hold"
 const MOVING_ACTION_LIBRARY := &"moving_action"
@@ -56,7 +51,7 @@ const MIRROR_ACROSS_X := Transform3D(Basis(Vector3(-1, 0, 0), Vector3(0, 1, 0), 
 const BONE_TRACK_TYPES: Array[Animation.TrackType] = [Animation.TYPE_POSITION_3D, Animation.TYPE_ROTATION_3D, Animation.TYPE_SCALE_3D]
 const SPINE_TRACK := ^"Rig_Medium/Skeleton3D:spine"
 const LAYER_SAMPLE_STEP := 1.0 / 30.0
-const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"dodge", &"attack"]
+const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"attack"]
 const COMBAT_ACTIONS: Array[StringName] = [&"attack", &"secondary"]
 const LIMB_BONES: Array[StringName] = [&"hand.l", &"hand.r", &"foot.l", &"foot.r"]
 const LIMB_STRIKE_RADIUS := 0.16
@@ -64,7 +59,6 @@ const LIMB_STRIKE_RADIUS := 0.16
 @export var walk_speed := 3.0
 @export var run_speed := 6.5
 @export var backwards_speed := 2.5
-@export var dodge_speed := 6.0
 @export var lunge_speed := 4.0
 @export var jump_velocity := 8.0
 @export var turn_speed := 12.0
@@ -526,9 +520,6 @@ func _input_direction() -> Vector3:
 
 func _move_with_input(direction: Vector3, delta: float) -> void:
 	if is_on_floor():
-		if _just_pressed("dodge"):
-			_dodge(direction)
-			return
 		if _is_blocking() and not _shield_raised:
 			_shield_raised = true
 			_start_action(shield.raise_animation, true)
@@ -668,10 +659,6 @@ func _weapon_run_animation() -> StringName:
 	return run_animation
 
 
-func _to_local_direction(direction: Vector3) -> Vector3:
-	return model.global_basis.inverse() * direction
-
-
 func _apply_vertical_motion(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= gravity * delta
@@ -728,18 +715,6 @@ func _animate_idle(delta: float) -> void:
 	if _idle_time >= fidget_delay + fidget_length:
 		_idle_time = 0.0
 	_play(fidget_animation if _idle_time >= fidget_delay else idle_animation)
-
-
-func _dodge(direction: Vector3) -> void:
-	var heading := -model.global_basis.z if direction.is_zero_approx() else direction.normalized()
-	var animation := _dodge_animation(_to_local_direction(heading))
-	_start_action(_stanced(_in_place(animation)), false, heading * dodge_speed)
-
-
-func _dodge_animation(local_heading: Vector3) -> StringName:
-	if absf(local_heading.x) > absf(local_heading.z):
-		return DODGE_LEFT_ANIMATION if local_heading.x > 0.0 else DODGE_RIGHT_ANIMATION
-	return DODGE_FORWARD_ANIMATION if local_heading.z > 0.0 else DODGE_BACKWARD_ANIMATION
 
 
 func _can_attack() -> bool:
@@ -976,6 +951,41 @@ func _hold(item: Node3D) -> void:
 		_take_off_hand_weapon(item)
 	else:
 		_take_main_hand_item(item)
+	prepare_animations()
+
+
+func prepare_animations() -> void:
+	for clip: StringName in [idle_animation, fidget_animation, JUMP_START_ANIMATION, JUMP_AIR_ANIMATION, JUMP_LAND_ANIMATION]:
+		_stanced(clip)
+	for gait_clip: StringName in [walk_animation, _weapon_run_animation(), WALK_BACKWARDS_ANIMATION]:
+		_stanced(gait_clip)
+		for action in _actions_on_the_move():
+			_action_on_the_move(action, gait_clip)
+		for hold in _holds_on_the_move():
+			_hold_on_the_move(hold, gait_clip)
+
+
+func _actions_on_the_move() -> Array[StringName]:
+	var actions: Array[StringName] = [INTERACT_ANIMATION, THROW_ANIMATION]
+	for step: AttackStep in _combo() + _secondary_combo():
+		if not step.uses_legs:
+			actions.append(_mirrored(step.animation) if step.mirrored else step.animation)
+	var weapon := _ranged_weapon()
+	if weapon != null:
+		actions.append(weapon.aim_animation)
+		actions.append_array(weapon.shot_animations)
+	if shield != null:
+		actions.append_array([shield.raise_animation, shield.hit_animation, shield.bash_animation])
+	return actions
+
+
+func _holds_on_the_move() -> Array[StringName]:
+	var holds: Array[StringName] = []
+	if shield != null:
+		holds.append(shield.hold_animation)
+	if _ranged_weapon() != null:
+		holds.append(_aim_hold_animation())
+	return holds
 
 
 func _take_main_hand_item(item: Node3D) -> void:
@@ -1200,10 +1210,6 @@ func _pelvis_rotation_at(animation: Animation, time: float) -> Quaternion:
 	return _rotation_at(animation, ROOT_TRACK, time) * _rotation_at(animation, HIPS_TRACK, time)
 
 
-func _in_place(animation: StringName) -> StringName:
-	return _derived_animation(IN_PLACE_LIBRARY, animation, _without_root_slide)
-
-
 func _mirrored(animation: StringName) -> StringName:
 	return _derived_animation(MIRRORED_LIBRARY, animation, _mirror)
 
@@ -1245,14 +1251,6 @@ func _track_value_at(animation: Animation, track: int, time: float) -> Variant:
 			return animation.rotation_track_interpolate(track, time)
 		_:
 			return animation.scale_track_interpolate(track, time)
-
-
-func _without_root_slide(source: Animation) -> Animation:
-	var copy: Animation = source.duplicate(true)
-	var root_slide := copy.find_track(ROOT_TRACK, Animation.TYPE_POSITION_3D)
-	if root_slide >= 0:
-		copy.remove_track(root_slide)
-	return copy
 
 
 func _mirror(source: Animation) -> Animation:

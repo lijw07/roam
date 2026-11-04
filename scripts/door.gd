@@ -8,6 +8,7 @@ signal opened
 signal closed
 
 const LEAF_GROUP := &"door_leaves"
+const CLEAR_DISTANCE := 0.75
 
 @export_node_path("Node3D") var leaf_path: NodePath
 ## Positive swings toward the wall's front (+Z), which faces into rooms.
@@ -64,7 +65,7 @@ func set_open(value: bool) -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if _overlaps_character():
+	if _push_out_characters():
 		return
 	_body.collision_layer = _solid_layer
 	set_physics_process(false)
@@ -76,21 +77,34 @@ func _pass_through_bodies() -> void:
 	_body.collision_layer = 0
 
 
-func _overlaps_character() -> bool:
+func _push_out_characters() -> bool:
+	var pushed := false
 	for child in _body.get_children():
-		if child is CollisionShape3D and _shape_overlaps_character(child as CollisionShape3D):
-			return true
-	return false
+		if child is CollisionShape3D:
+			for character in _characters_inside(child as CollisionShape3D):
+				_push_clear_of(character, child as CollisionShape3D)
+				pushed = true
+	return pushed
 
 
-func _shape_overlaps_character(shape_node: CollisionShape3D) -> bool:
+func _characters_inside(shape_node: CollisionShape3D) -> Array[CharacterBody3D]:
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = shape_node.shape
 	query.transform = shape_node.global_transform
 	query.collision_mask = _solid_layer
 	query.exclude = [_body.get_rid()]
-	var hits := _body.get_world_3d().direct_space_state.intersect_shape(query)
-	return hits.any(func(hit: Dictionary) -> bool: return hit.get("collider") is CharacterBody3D)
+	var characters: Array[CharacterBody3D] = []
+	for hit in _body.get_world_3d().direct_space_state.intersect_shape(query):
+		if hit.get("collider") is CharacterBody3D:
+			characters.append(hit.get("collider") as CharacterBody3D)
+	return characters
+
+
+func _push_clear_of(character: CharacterBody3D, shape_node: CollisionShape3D) -> void:
+	var normal := shape_node.global_basis.z.normalized()
+	var offset := (character.global_position - shape_node.global_position).dot(normal)
+	var side := 1.0 if offset >= 0.0 else -1.0
+	character.global_position += normal * (side * CLEAR_DISTANCE - offset)
 
 
 func _collision_body_of(leaf: Node3D) -> CollisionObject3D:

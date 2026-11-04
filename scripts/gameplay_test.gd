@@ -5,7 +5,9 @@ const MOUSE_SENSITIVITY := 0.003
 const MIN_PITCH := -1.2
 const MAX_PITCH := 0.3
 const DOOR_REACH := 3.0
-const CONTROLS := "WASD move   Shift run   Space jump   Alt dodge   LMB attack   RMB block   F door / pick up   Tab inventory   R new dungeon   Esc free mouse"
+const HOVERED_DOOR_REACH := 3.5
+const REACH_HEIGHT := 1.0
+const CONTROLS := "WASD move   Shift run   Space jump   LMB attack   RMB block   F door / pick up   Tab inventory   R new dungeon   Esc free mouse"
 const DEATH_TEXT := "You died   R to try a new dungeon"
 
 @onready var player: CharacterBody3D = $Player
@@ -17,6 +19,7 @@ const DEATH_TEXT := "You died   R to try a new dungeon"
 @onready var camera_pitch: Node3D = $CameraRig/Pitch
 @onready var info: Label = $HUD/Info
 @onready var inventory_ui: Control = $HUD/Inventory
+@onready var aim_targeting: AimTargeting = $AimTargeting
 
 var _doors: Array[Door] = []
 var _navigation_stale := false
@@ -38,8 +41,8 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if event.is_action_pressed("interact") and _nearest_door() != null:
-		_toggle_nearest_door()
+	if event.is_action_pressed("interact") and _door_to_use() != null:
+		_toggle_door()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and not event.echo:
 		_on_key_pressed(event.physical_keycode)
@@ -104,9 +107,21 @@ func _look(mouse_motion: Vector2) -> void:
 	camera_rig.rotation.y -= mouse_motion.x * sensitivity
 
 
-func _toggle_nearest_door() -> void:
-	_nearest_door().toggle()
+func _toggle_door() -> void:
+	_door_to_use().toggle()
 	player.interact()
+
+
+func _door_to_use() -> Door:
+	var hovered := _hovered_door()
+	return hovered if hovered != null else _nearest_door()
+
+
+func _hovered_door() -> Door:
+	var reach_from := player.global_position + Vector3.UP * REACH_HEIGHT
+	if aim_targeting.hovered_door_point.distance_to(reach_from) > HOVERED_DOOR_REACH:
+		return null
+	return aim_targeting.hovered_door
 
 
 func _nearest_door() -> Door:
@@ -123,7 +138,7 @@ func _nearest_door() -> Door:
 func _status_text() -> String:
 	if player.dead:
 		return DEATH_TEXT
-	var door := _nearest_door()
+	var door := _door_to_use()
 	if door != null:
 		return "F  %s door" % ("close" if door.is_open else "open")
 	return _pick_up_prompt()
