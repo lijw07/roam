@@ -5,11 +5,20 @@
 [ext_resource type="PackedScene" path="res://scenes/equipment/skeletons/skeleton_blade.tscn" id="3_skeleton_blade"]
 [ext_resource type="PackedScene" path="res://scenes/equipment/skeletons/skeleton_shield_small_a.tscn" id="4_skeleton_shield_small_a"]
 [ext_resource type="PackedScene" path="res://scenes/ui/enemy_health_bar.tscn" id="93_health_bar"]
+[ext_resource type="Script" path="res://scripts/enemy_brain.gd" id="80_brain"]
+[ext_resource type="Script" path="res://scripts/attack_step.gd" id="81_attack_step"]
+[ext_resource type="Resource" path="res://resources/attacks/one_handed/slice_horizontal.tres" id="82_slice_horizontal"]
+[ext_resource type="Resource" path="res://resources/attacks/one_handed/stab.tres" id="83_stab"]
+[ext_resource type="Resource" path="res://resources/attacks/one_handed/chop.tres" id="84_chop"]
 
 [node name="SkeletonWarrior" instance=ExtResource("1_base")]
 script = ExtResource("2_enemy")
 threat = 2
 idle_animation = &"general/Idle_A"
+attacks = Array[ExtResource("81_attack_step")]([ExtResource("82_slice_horizontal"), ExtResource("83_stab"), ExtResource("84_chop")])
+attack_reach = 2.1
+attack_damage = 14.0
+block_stamina_per_damage = 0.6
 
 [node name="HandslotRSkeletonBlade" type="BoneAttachment3D" parent="Model/Rig_Medium/Skeleton3D"]
 bone_name = "handslot.r"
@@ -28,5 +37,12 @@ max_value = 200.0
 [node name="HealthBar" parent="." node_paths=PackedStringArray("health", "hurtbox") instance=ExtResource("93_health_bar")]
 health = NodePath("../Health")
 hurtbox = NodePath("../Hurtbox")
+
+[node name="Brain" type="Node3D" parent="."]
+script = ExtResource("80_brain")
+attack_range = 1.8
+circle_distance = 3.0
+attack_cooldown = 1.8
+block_skill = 1.5
 
 [editable path="Model"]

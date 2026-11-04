@@ -4,6 +4,11 @@
 [ext_resource type="Script" path="res://scripts/enemy.gd" id="2_enemy"]
 [ext_resource type="PackedScene" path="res://scenes/equipment/skeletons/skeleton_axe.tscn" id="3_skeleton_axe"]
 [ext_resource type="PackedScene" path="res://scenes/ui/enemy_health_bar.tscn" id="93_health_bar"]
+[ext_resource type="Script" path="res://scripts/enemy_brain.gd" id="80_brain"]
+[ext_resource type="Script" path="res://scripts/attack_step.gd" id="81_attack_step"]
+[ext_resource type="Resource" path="res://resources/attacks/two_handed/chop.tres" id="82_chop"]
+[ext_resource type="Resource" path="res://resources/attacks/two_handed/slice.tres" id="83_slice"]
+[ext_resource type="Resource" path="res://resources/attacks/two_handed/spin.tres" id="84_spin"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_boss"]
 radius = 0.64
@@ -17,6 +22,9 @@ run_speed = 10.8
 idle_animation = &"combat_melee/Melee_2H_Idle"
 walk_animation = &"movement_basic/Walking_C"
 run_animation = &"movement_advanced/Running_HoldingRifle"
+attacks = Array[ExtResource("81_attack_step")]([ExtResource("82_chop"), ExtResource("83_slice"), ExtResource("84_spin")])
+attack_reach = 3.0
+attack_damage = 25.0
 
 [node name="Model" parent="."]
 transform = Transform3D(1.6, 0, 0, 0, 1.6, 0, 0, 0, 1.6, 0, 0, 0)
@@ -36,5 +44,12 @@ max_value = 800.0
 [node name="HealthBar" parent="." node_paths=PackedStringArray("health", "hurtbox") instance=ExtResource("93_health_bar")]
 health = NodePath("../Health")
 hurtbox = NodePath("../Hurtbox")
+
+[node name="Brain" type="Node3D" parent="."]
+script = ExtResource("80_brain")
+attack_range = 2.6
+circle_distance = 4.0
+attack_cooldown = 2.2
+block_skill = 0.5
 
 [editable path="Model"]

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CombatDifficulty" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat_difficulty.gd" id="1_difficulty"]
+
+[resource]
+script = ExtResource("1_difficulty")
+display_name = "Hard"
+max_melee_attackers = 3
+max_ranged_attackers = 2
+attack_interval = 0.5
+windup_speed = 1.1
+block_chance = 0.75
+reaction_time = 0.15
+combo_chance = 0.55
+flank_bias = 0.8
+recover_time = 0.5

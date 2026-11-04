@@ -4,11 +4,19 @@
 [ext_resource type="Script" path="res://scripts/enemy.gd" id="2_enemy"]
 [ext_resource type="PackedScene" path="res://scenes/equipment/skeletons/skeleton_staff.tscn" id="3_skeleton_staff"]
 [ext_resource type="PackedScene" path="res://scenes/ui/enemy_health_bar.tscn" id="93_health_bar"]
+[ext_resource type="Script" path="res://scripts/enemy_brain.gd" id="80_brain"]
+[ext_resource type="Script" path="res://scripts/attack_step.gd" id="81_attack_step"]
+[ext_resource type="Resource" path="res://resources/attacks/magic/shoot.tres" id="82_shoot"]
+[ext_resource type="Resource" path="res://resources/attacks/magic/long_spellcast.tres" id="83_long_spellcast"]
+[ext_resource type="PackedScene" path="res://scenes/effects/skeleton_magic_bolt.tscn" id="89_projectile"]
 
 [node name="SkeletonMage" instance=ExtResource("1_base")]
 script = ExtResource("2_enemy")
 threat = 3
 idle_animation = &"tools/Holding_A"
+attacks = Array[ExtResource("81_attack_step")]([ExtResource("82_shoot")])
+projectile = ExtResource("89_projectile")
+lead_in = ExtResource("83_long_spellcast")
 
 [node name="HandslotRSkeletonStaff" type="BoneAttachment3D" parent="Model/Rig_Medium/Skeleton3D"]
 bone_name = "handslot.r"
@@ -21,5 +29,13 @@ max_value = 120.0
 [node name="HealthBar" parent="." node_paths=PackedStringArray("health", "hurtbox") instance=ExtResource("93_health_bar")]
 health = NodePath("../Health")
 hurtbox = NodePath("../Hurtbox")
+
+[node name="Brain" type="Node3D" parent="."]
+script = ExtResource("80_brain")
+sight_range = 11.0
+attack_range = 11.0
+circle_distance = 7.5
+attack_cooldown = 2.5
+block_skill = 0.4
 
 [editable path="Model"]

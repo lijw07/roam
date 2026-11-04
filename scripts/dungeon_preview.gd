@@ -36,7 +36,7 @@ var _explorer: CharacterBody3D
 # and the spring arm pulls the camera in when a wall gets between it and the knight.
 var _rig := Node3D.new()
 var _pitch := Node3D.new()
-var _arm := SpringArm3D.new()
+var _arm := CameraBoom.new()
 var _walk_camera := Camera3D.new()
 var _doors: Array[Door] = []
 var _dragging := false
@@ -63,7 +63,6 @@ func _ready() -> void:
 	probe.radius = 0.4
 	_arm.shape = probe
 	_arm.spring_length = 4.5
-	_arm.add_excluded_object(_explorer.get_rid())
 	_arm.add_child(_walk_camera)
 	_walk_camera.fov = 70.0
 
