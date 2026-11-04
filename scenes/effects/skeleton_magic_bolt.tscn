@@ -4,3 +4,4 @@
 
 [node name="SkeletonMagicBolt" instance=ExtResource("1_magic_bolt")]
 speed = 36.0
+damage = 12.0

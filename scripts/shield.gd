@@ -7,7 +7,7 @@ class_name Shield
 @export var hold_animation: StringName = &"combat_melee/Melee_Blocking"
 @export var hit_animation: StringName = &"combat_melee/Melee_Block_Hit"
 @export var bash_animation: StringName = &"combat_melee/Melee_Block_Attack"
-@export var bash_damage := 8.0
+@export var bash_damage := 12.0
 @export var bash_stamina_cost := 10.0
 @export var block_stamina_per_damage := 1.0
 @export var bash_hit_start := 0.32

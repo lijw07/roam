@@ -16,7 +16,7 @@ grip_rotation_degrees = Vector3(-90, 180, 0)
 worn_on_both_hands = true
 combo = Array[ExtResource("3_attack_step")]([ExtResource("6_left_punch"), ExtResource("4_punch")])
 secondary_combo = Array[ExtResource("3_attack_step")]([ExtResource("5_kick")])
-damage = 14.0
+damage = 21.0
 stamina_cost = 6.0
 
 [node name="Model" parent="." unique_id=946602837 instance=ExtResource("1_hp8i4")]
