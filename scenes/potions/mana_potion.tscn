@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://jsxljcwca386" path="res://assets/dungeon/props/bottle_B_green.gltf" id="1_model"]
+[ext_resource type="Script" uid="uid://03xsnqdxic15" path="res://scripts/item_pickup.gd" id="2_item_pickup"]
+[ext_resource type="Resource" path="res://resources/potions/mana_potion.tres" id="3_potion"]
+
+[sub_resource type="CylinderShape3D" id="Shape_bottle"]
+height = 0.886
+radius = 0.276
+
+[node name="ManaPotion" type="Area3D"]
+script = ExtResource("2_item_pickup")
+item_name = "Mana Potion"
+potion = ExtResource("3_potion")
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.1772, 0)
+shape = SubResource("Shape_bottle")

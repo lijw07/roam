@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://scripts/loot_table.gd" id="96_loot_table"]
 [ext_resource type="Resource" path="res://resources/loot/enemy_resources.tres" id="97_enemy_resources"]
 [ext_resource type="Resource" path="res://resources/loot/enemy_coins.tres" id="98_enemy_coins"]
+[ext_resource type="Resource" path="res://resources/loot/enemy_potions.tres" id="99_enemy_potions"]
 
 [node name="SkeletonMage" instance=ExtResource("1_base")]
 script = ExtResource("2_enemy")
@@ -48,6 +49,6 @@ block_skill = 0.4
 
 [node name="ItemDropper" type="Node" parent="."]
 script = ExtResource("95_item_dropper")
-loot_tables = Array[ExtResource("96_loot_table")]([ExtResource("97_enemy_resources"), ExtResource("98_enemy_coins")])
+loot_tables = Array[ExtResource("96_loot_table")]([ExtResource("97_enemy_resources"), ExtResource("98_enemy_coins"), ExtResource("99_enemy_potions")])
 
 [editable path="Model"]

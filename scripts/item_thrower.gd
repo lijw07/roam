@@ -8,6 +8,7 @@ const MODEL_PATH := ^"Model"
 const SKELETON_PATH := ^"Model/Rig_Medium/Skeleton3D"
 const GROUND_PROBE_HEIGHT := 2.0
 const GROUND_PROBE_DEPTH := 6.0
+const WORLD_MASK := 1
 
 @export var inventory: Inventory
 @export var throw_distance := 2.0
@@ -71,7 +72,7 @@ func _flat_forward() -> Vector3:
 
 func _ground_below(point: Vector3) -> Vector3:
 	var from := point + Vector3.UP * GROUND_PROBE_HEIGHT
-	var query := PhysicsRayQueryParameters3D.create(from, from + Vector3.DOWN * GROUND_PROBE_DEPTH, 0xFFFFFFFF, [body.get_rid()])
+	var query := PhysicsRayQueryParameters3D.create(from, from + Vector3.DOWN * GROUND_PROBE_DEPTH, WORLD_MASK, [body.get_rid()])
 	var hit := body.get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty():
 		return Vector3(point.x, body.global_position.y, point.z)

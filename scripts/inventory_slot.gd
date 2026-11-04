@@ -3,6 +3,7 @@ extends ColorRect
 
 signal drag_started(index: int)
 signal dropped_on(from_index: int, to_index: int)
+signal used(index: int)
 
 const SIZE := Vector2(64, 64)
 const BACKGROUND := Color(0, 0, 0, 0.45)
@@ -35,6 +36,12 @@ func show_item(icon: Texture2D, count: int) -> void:
 	_count_label.text = _count_text()
 
 
+func _gui_input(event: InputEvent) -> void:
+	if _is_right_click(event) and _count > 0:
+		used.emit(index)
+		accept_event()
+
+
 func _get_drag_data(_at_position: Vector2) -> Variant:
 	if _count == 0:
 		return null
@@ -49,6 +56,11 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 
 func _drop_data(_at_position: Vector2, data: Variant) -> void:
 	dropped_on.emit((data as InventorySlot).index, index)
+
+
+func _is_right_click(event: InputEvent) -> bool:
+	var click := event as InputEventMouseButton
+	return click != null and click.pressed and click.button_index == MOUSE_BUTTON_RIGHT
 
 
 func _count_text() -> String:

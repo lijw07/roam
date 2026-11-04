@@ -56,6 +56,8 @@ const QUEUE_RECHECK_TIME := 0.4
 @export var awareness_radius := 3.0
 @export var give_up_distance := 18.0
 @export var give_up_time := 4.0
+@export var ranged_search_time := 9.0
+@export var cautious_distance := 6.0
 @export var roam_radius := 4.0
 @export var roam_pause_min := 2.0
 @export var roam_pause_max := 5.0
@@ -94,6 +96,8 @@ var _roam_point := Vector3.ZERO
 var _has_roam_point := false
 var _roam_pause := 0.0
 var _unseen_time := 0.0
+var _last_seen_position := Vector3.ZERO
+var _cautious := false
 var _pursuit_timer := 0.0
 var _circling := false
 var _last_move_time := -INF
@@ -160,6 +164,8 @@ func engage() -> void:
 	if state in [State.IDLE, State.RETURN] and not enemy.dead:
 		_unseen_time = 0.0
 		_reachable_time = REACH_SETTLE_TIME
+		_last_seen_position = _target().global_position
+		_cautious = randf() < _director.difficulty.ranged_caution
 		_enter(State.ENGAGE)
 
 
@@ -259,8 +265,28 @@ func _keep_track_of_target(delta: float) -> void:
 	_pursuit_timer = SIGHT_CHECK_INTERVAL
 	var tracked := _distance_to_target() <= awareness_radius or can_see(_target_chest())
 	_unseen_time = 0.0 if tracked else _unseen_time + SIGHT_CHECK_INTERVAL
-	if _unseen_time >= give_up_time:
+	if tracked:
+		_last_seen_position = _target().global_position
+	if _unseen_time >= _search_time():
 		_enter(State.RETURN)
+
+
+func _search_time() -> float:
+	return ranged_search_time if is_ranged() else give_up_time
+
+
+func _hunts_for_a_shot() -> bool:
+	return is_ranged() and _unseen_time > 0.0
+
+
+func _hunt_for_a_shot() -> void:
+	enemy.focus = null
+	if _cautious and _distance_to_target() <= cautious_distance:
+		_watch_from_here()
+		return
+	var to_last_seen := _flat(_last_seen_position - enemy.global_position).length()
+	var goal := _last_seen_position if to_last_seen > ARRIVE_DISTANCE else _target().global_position
+	_move_to(goal, true, false)
 
 
 func _return_home(delta: float) -> void:
@@ -333,6 +359,9 @@ func _watch_from_here() -> void:
 
 
 func _hold_position_in_ring() -> void:
+	if _hunts_for_a_shot():
+		_hunt_for_a_shot()
+		return
 	if _waits_for_opening():
 		_watch_from_here()
 		return
@@ -400,7 +429,9 @@ func _target_hurtbox() -> Hurtbox:
 
 
 func _find_a_shot() -> void:
-	if _distance_to_target() <= attack_range and _has_clear_shot():
+	if _hunts_for_a_shot():
+		_hunt_for_a_shot()
+	elif _distance_to_target() <= attack_range and _has_clear_shot():
 		_start_attack()
 	elif _distance_to_target() > attack_range:
 		_move_to(_target().global_position, true, false)

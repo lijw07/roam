@@ -2,4 +2,15 @@
 
 [ext_resource type="PackedScene" uid="uid://b32sa66hecdgo" path="res://assets/dungeon/furniture/table_medium_broken.gltf" id="1_model"]
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_blocker0"]
+size = Vector3(2.277, 3.5, 2.428)
+
 [node name="TableMediumBroken" instance=ExtResource("1_model")]
+
+[node name="CharacterBlocker" type="StaticBody3D" parent="."]
+collision_layer = 4
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBlocker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.088, 1.75, 0.254)
+shape = SubResource("BoxShape3D_blocker0")

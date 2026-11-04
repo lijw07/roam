@@ -5,4 +5,4 @@
 [resource]
 script = ExtResource("1_potion")
 potion_name = "Mana Potion"
-mana = 50.0
+mana = 35.0

@@ -7,6 +7,7 @@ const DROP_TEXT := "Drop"
 @export var inventory: Inventory
 @export var icon_renderer: ItemIconRenderer
 @export var amount_popup: AmountPopup
+@export var drinker: Node3D
 
 var _slots: Array[InventorySlot] = []
 var _dragged_index := NO_DRAG
@@ -39,6 +40,7 @@ func _create_slot(index: int) -> InventorySlot:
 	slot.index = index
 	slot.drag_started.connect(_on_drag_started)
 	slot.dropped_on.connect(_on_dropped_on_slot)
+	slot.used.connect(_on_slot_used)
 	add_child(slot)
 	return slot
 
@@ -63,6 +65,12 @@ func _on_dropped_on_slot(from_index: int, to_index: int) -> void:
 		_with_amount(MOVE_TEXT, movable, func(amount: int) -> void: inventory.move(from_index, to_index, amount))
 	else:
 		inventory.swap(from_index, to_index)
+
+
+func _on_slot_used(index: int) -> void:
+	var potion := inventory.potion_at(index)
+	if potion != null and drinker.drink(potion):
+		inventory.use_one(index)
 
 
 func _finish_drag() -> void:

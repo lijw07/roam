@@ -2,4 +2,15 @@
 
 [ext_resource type="PackedScene" uid="uid://c7n0v65kj3g2e" path="res://assets/dungeon/furniture/table_small_decorated_A.gltf" id="1_model"]
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_blocker0"]
+size = Vector3(1.039, 3.5, 1.211)
+
 [node name="TableSmallDecoratedA" instance=ExtResource("1_model")]
+
+[node name="CharacterBlocker" type="StaticBody3D" parent="."]
+collision_layer = 4
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBlocker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02, 1.75, -0.016)
+shape = SubResource("BoxShape3D_blocker0")

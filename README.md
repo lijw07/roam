@@ -374,15 +374,20 @@ health, and run `breakable.gd`, which frees them when their health runs out. Che
 A potion is a `Potion` resource with `health`, `mana`, `stamina` and `duration`. `apply_to(drinker)`
 restores each amount into the drinker's `Health`, `Mana` and `Stamina` nodes, all at once when
 `duration` is 0, or spread evenly over `duration` seconds. The player's `drink(potion)` plays
-`Use_Item` and applies it (returning false while dead or busy). There are no potion models yet, so
-they exist only as data:
+`Use_Item` and applies it (returning false while dead or busy).
 
-| Potion | Restores |
-| --- | --- |
-| `health_potion` | 40 health |
-| `mana_potion` | 50 mana |
-| `stamina_potion` | 60 stamina |
-| `regeneration_potion` | 60 health over 5 s |
+| Potion | Restores | Pickup scene | Stand-in model |
+| --- | --- | --- | --- |
+| `health_potion` | 35 health | `scenes/potions/health_potion.tscn` | `bottle_A_labeled_brown` |
+| `mana_potion` | 35 mana | `scenes/potions/mana_potion.tscn` | `bottle_B_green` |
+| `stamina_potion` | 35 stamina | `scenes/potions/stamina_potion.tscn` | `bottle_C_brown` |
+| `regeneration_potion` | 60 health over 30 s | `scenes/potions/regeneration_potion.tscn` | `bottle_A_labeled_green` |
+
+Each pickup scene is an `ItemPickup` whose `potion` points at its resource, so potions are picked
+up automatically, stack up to 6 and can be thrown like any other item. There are no potion models,
+so the pickups use the dungeon's bottle props as stand-ins. Right-click a potion in the inventory
+to drink one. Enemies drop a random potion 12% of the time (`resources/loot/enemy_potions.tres`),
+on top of their resource and coins.
 
 ## Damage
 Hurtboxes sit on the `hurtboxes` physics layer (layer 2), named in `project.godot`; everything else
@@ -576,6 +581,18 @@ containers at -33. The health, mana and stamina bars are bottom left.
 | Click / Esc | Capture / free the mouse |
 
 The movement and combat controls are the player's own (see Player controls).
+
+## Interactable item test
+Open `scenes/playground/interactable_item_test.tscn` and press F6. The knight starts at 50 health,
+with three of each potion in labelled columns ahead (health, mana, stamina, regeneration). Walk
+near them to pick them up, open the inventory with Tab and right-click a potion to drink it. The
+health, mana and stamina bars are bottom left.
+
+| Key | Action |
+| --- | --- |
+| 1 / 2 | Spend 50 mana / 50 stamina |
+| R | Reset the scene |
+| Click / Esc | Capture / free the mouse |
 
 ## Playground
 Open `scenes/playground/playground.tscn` and press F6 to walk the knight around a flat floor.
