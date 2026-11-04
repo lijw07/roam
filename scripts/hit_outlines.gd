@@ -1,6 +1,8 @@
 extends HurtboxWatcher
 
 const OUTLINE_SHADER := preload("res://shaders/hit_outline.gdshader")
+const PROP_OUTLINE_SHADER := preload("res://shaders/prop_outline.gdshader")
+const OUTLINE_MASK_SHADER := preload("res://shaders/outline_mask.gdshader")
 const COLOR_PARAMETER := &"outline_color"
 const WIDTH_PARAMETER := &"outline_width"
 const WIDTH_PROPERTY := ^"shader_parameter/outline_width"
@@ -8,7 +10,8 @@ const FLASH_WIDTH := 0.04
 const HOLD_TIME := 0.08
 const FADE_TIME := 0.3
 const WARM_UP_FRAMES := 2
-const RADIAL_PARAMETER := &"radial"
+const RADIAL_CENTER_PARAMETER := &"radial_center"
+const PROP_OUTLINE_PRIORITY := 1
 
 @export var player: Node3D
 @export var targeting: AimTargeting
@@ -70,9 +73,8 @@ func _show_state_outline(outlined: Node3D, color: Color) -> void:
 	if _flashes.has(id):
 		return
 	if not _state_outlines.has(id):
-		_state_outlines[id] = _outline_material(color, state_width)
-		_state_outlines[id].set_shader_parameter(RADIAL_PARAMETER, not (outlined is Enemy))
-		_outline_meshes(_meshes_of(outlined), _state_outlines[id])
+		_state_outlines[id] = _outline_material(color, state_width, outlined)
+		_outline_meshes(_meshes_of(outlined), _overlay_for(_state_outlines[id], outlined))
 	_state_outlines[id].set_shader_parameter(COLOR_PARAMETER, color)
 
 
@@ -86,8 +88,10 @@ func _drop_state_outline(id: int) -> void:
 func _warm_up_outline() -> void:
 	var meshes: Array[MeshInstance3D] = []
 	for hurtbox: Hurtbox in _watched:
-		meshes.append_array(_meshes_of(hurtbox.get_parent()))
-	_outline_meshes(meshes, _outline_material(aggro_color, 0.0))
+		var owner_node := hurtbox.get_parent() as Node3D
+		var owned := _meshes_of(owner_node)
+		_outline_meshes(owned, _overlay_for(_outline_material(aggro_color, 0.0, owner_node), owner_node))
+		meshes.append_array(owned)
 	for _frame in WARM_UP_FRAMES:
 		await get_tree().process_frame
 	_clear_outline(meshes)
@@ -99,7 +103,7 @@ func _flash(target: Node3D) -> void:
 		_flashes[id].kill()
 	_state_outlines.erase(id)
 	var meshes := _meshes_of(target)
-	var outline := _outline_material(hit_color, FLASH_WIDTH)
+	var outline := _outline_material(hit_color, FLASH_WIDTH, target)
 	_outline_meshes(meshes, outline)
 	var tween := create_tween()
 	tween.tween_interval(HOLD_TIME)
@@ -113,17 +117,29 @@ func _finish_flash(id: int, meshes: Array[MeshInstance3D]) -> void:
 	_flashes.erase(id)
 
 
-func _outline_material(color: Color, width: float) -> ShaderMaterial:
+func _outline_material(color: Color, width: float, target: Node3D) -> ShaderMaterial:
 	var outline := ShaderMaterial.new()
-	outline.shader = OUTLINE_SHADER
+	outline.shader = OUTLINE_SHADER if target is Enemy else PROP_OUTLINE_SHADER
 	outline.set_shader_parameter(COLOR_PARAMETER, color)
 	outline.set_shader_parameter(WIDTH_PARAMETER, width)
+	if not (target is Enemy):
+		outline.render_priority = PROP_OUTLINE_PRIORITY
+		outline.set_shader_parameter(RADIAL_CENTER_PARAMETER, _local_center(target))
 	return outline
 
 
-func _outline_meshes(meshes: Array[MeshInstance3D], outline: ShaderMaterial) -> void:
+func _overlay_for(outline: ShaderMaterial, target: Node3D) -> Material:
+	if target is Enemy:
+		return outline
+	var mask := ShaderMaterial.new()
+	mask.shader = OUTLINE_MASK_SHADER
+	mask.next_pass = outline
+	return mask
+
+
+func _outline_meshes(meshes: Array[MeshInstance3D], overlay: Material) -> void:
 	for mesh in meshes:
-		mesh.material_overlay = outline
+		mesh.material_overlay = overlay
 
 
 func _clear_outline(meshes: Array[MeshInstance3D]) -> void:
@@ -132,8 +148,15 @@ func _clear_outline(meshes: Array[MeshInstance3D]) -> void:
 			mesh.material_overlay = null
 
 
+func _local_center(target: Node3D) -> Vector3:
+	var meshes := _meshes_of(target)
+	return Vector3.ZERO if meshes.is_empty() else meshes[0].get_aabb().get_center()
+
+
 func _meshes_of(target: Node3D) -> Array[MeshInstance3D]:
 	var meshes: Array[MeshInstance3D] = []
+	if target is MeshInstance3D:
+		meshes.append(target as MeshInstance3D)
 	for mesh: MeshInstance3D in target.find_children("*", "MeshInstance3D", true, false):
 		if mesh.mesh != null and not (mesh is EnemyHealthBar):
 			meshes.append(mesh)

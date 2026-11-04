@@ -1,12 +1,14 @@
 extends HurtboxWatcher
 
-const HIT_EFFECTS: Array[PackedScene] = [
-	preload("res://assets/BinbunVFX_Vol2/StylizedHitFX/effects/hit/vfx_hit_01.tscn"),
-	preload("res://assets/BinbunVFX_Vol2/StylizedHitFX/effects/hit/vfx_hit_02.tscn"),
-]
-const VIEW_SPHERE_PARAMETER := &"vfx_player_view_sphere"
-const PLAYER_CENTER_HEIGHT := 1.0
-const PLAYER_VIEW_RADIUS := 0.8
+const HIT_EFFECT := preload(
+	"res://assets/BinbunVFX_Vol2/StylizedHitFX/effects/hit/vfx_hit_01.tscn"
+)
+const BLOCK_EFFECT := preload(
+	"res://assets/BinbunVFX_Vol2/StylizedHitFX/effects/hit/vfx_hit_02.tscn"
+)
+const EFFECT_SPACING_MS := 300
+const GLOW_PATH := ^"Glow"
+const SURFACE_DEPTH := 0.25
 
 @export var player: Node3D
 @export var heavy_damage := 30.0
@@ -15,7 +17,7 @@ const PLAYER_VIEW_RADIUS := 0.8
 @export var effect_emission := 1.6
 @export var effect_speed := 1.25
 
-var _materials: Dictionary[ShaderMaterial, bool] = {}
+var _last_effect_ms: Dictionary[int, int] = {}
 
 
 func _ready() -> void:
@@ -23,51 +25,33 @@ func _ready() -> void:
 	_warm_up_effects()
 
 
-func _process(_delta: float) -> void:
-	_share_player_view_sphere(_player_view_sphere())
-
-
-func _exit_tree() -> void:
-	_share_player_view_sphere(Vector4.ZERO)
-
-
-func _share_player_view_sphere(sphere: Vector4) -> void:
-	for material: ShaderMaterial in _materials:
-		material.set_shader_parameter(VIEW_SPHERE_PARAMETER, sphere)
-
-
 func _on_hit_taken(hit: Hit, damage: float, hurtbox: Hurtbox) -> void:
 	if damage > 0.0:
-		_play_impact(hit, hurtbox, heavy_scale if damage >= heavy_damage else effect_scale)
+		_play_impact(HIT_EFFECT, hit, hurtbox, heavy_scale if damage >= heavy_damage else effect_scale)
 
 
 func _on_blocked(hit: Hit, hurtbox: Hurtbox) -> void:
-	if hurtbox.get_parent() is Enemy:
-		_play_impact(hit, hurtbox, effect_scale)
+	_play_impact(BLOCK_EFFECT, hit, hurtbox, effect_scale)
 
 
-func _play_impact(hit: Hit, hurtbox: Hurtbox, size: float) -> void:
-	var target := hurtbox.get_parent()
-	if target is Enemy:
-		_spawn(HIT_EFFECTS.pick_random(), _contact_point(hit, hurtbox, _viewer_position(hit)), size)
-	elif target == player:
-		_spawn(HIT_EFFECTS.pick_random(), _contact_point(hit, hurtbox, hit.origin), size)
+func _play_impact(effect: PackedScene, hit: Hit, hurtbox: Hurtbox, size: float) -> void:
+	if _played_recently_on(hurtbox):
+		return
+	_last_effect_ms[hurtbox.get_instance_id()] = Time.get_ticks_msec()
+	var facing := hit.origin if hurtbox.get_parent() == player else _viewer_position(hit)
+	_spawn(effect, _contact_point(hit, hurtbox, facing), size)
 
 
-func _player_view_sphere() -> Vector4:
-	var camera := get_viewport().get_camera_3d()
-	if camera == null or not is_instance_valid(player):
-		return Vector4.ZERO
-	var chest := player.global_position + Vector3.UP * PLAYER_CENTER_HEIGHT
-	var center := camera.global_transform.affine_inverse() * chest
-	return Vector4(center.x, center.y, center.z, PLAYER_VIEW_RADIUS)
+func _played_recently_on(hurtbox: Hurtbox) -> bool:
+	var last: int = _last_effect_ms.get(hurtbox.get_instance_id(), -EFFECT_SPACING_MS)
+	return Time.get_ticks_msec() - last < EFFECT_SPACING_MS
 
 
 func _warm_up_effects() -> void:
 	await get_tree().process_frame
 	if player == null:
 		return
-	for effect in HIT_EFFECTS:
+	for effect: PackedScene in [HIT_EFFECT, BLOCK_EFFECT]:
 		_spawn(effect, WarmUpSpot.under_floor(self, player.global_position), 1.0)
 
 
@@ -81,10 +65,17 @@ func _spawn(effect: PackedScene, at: Vector3, size: float) -> void:
 	instance.emission = effect_emission
 	instance.speed_scale = effect_speed
 	instance.light.hide()
-	for material in instance.materials:
-		_materials[material] = true
+	instance.get_node(GLOW_PATH).hide()
+	for particles in instance.particles:
+		particles.interpolate = false
 	instance.finished.connect(instance.queue_free)
-	instance.play()
+	_play_once_placed(instance)
+
+
+func _play_once_placed(instance: VFXImpactBB) -> void:
+	await get_tree().process_frame
+	if is_instance_valid(instance):
+		instance.play()
 
 
 func _contact_point(hit: Hit, hurtbox: Hurtbox, facing: Vector3) -> Vector3:
@@ -94,7 +85,7 @@ func _contact_point(hit: Hit, hurtbox: Hurtbox, facing: Vector3) -> Vector3:
 	var surface := Vector3(center.x, clampf(hit.origin.y, box.position.y, box.end.y), center.z)
 	if toward.is_zero_approx():
 		return surface
-	return surface + toward.normalized() * maxf(box.size.x, box.size.z) * 0.5
+	return surface + toward.normalized() * maxf(box.size.x, box.size.z) * SURFACE_DEPTH
 
 
 func _viewer_position(hit: Hit) -> Vector3:

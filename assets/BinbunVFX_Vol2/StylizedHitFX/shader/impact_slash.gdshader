@@ -1,8 +1,6 @@
 shader_type spatial;
 render_mode unshaded;
 
-#include "res://shaders/vfx_occlusion.gdshaderinc"
-
 group_uniforms Color;
 uniform vec3 primary_color : source_color = vec3(1.0);
 uniform vec3 secondary_color : source_color = vec3(1.0, 0.6, 0.2);
@@ -34,9 +32,6 @@ void vertex() {
 }
 
 void fragment() {
-	if (vfx_covers_player(VERTEX)) {
-		discard;
-	}
 	float factor = alpha_as_factor ? COLOR.a : animation_factor;
 	
 	vec2 scaled_uv = (1.0 - UV - vec2(0.5, 0.0)) * vec2(2.0, 1.0);

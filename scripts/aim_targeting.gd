@@ -76,6 +76,8 @@ func _first_hit(start: Vector3, end: Vector3) -> Dictionary:
 
 
 func _passes_through(collider: Object) -> bool:
+	if collider is Node and player.is_ancestor_of(collider as Node):
+		return true
 	if collider is Hurtbox:
 		return not (collider as Hurtbox).is_active()
 	return collider is Area3D and not (collider is ItemPickup)
@@ -84,6 +86,8 @@ func _passes_through(collider: Object) -> bool:
 func _outlinable_of(collider: Object) -> Node3D:
 	if collider is ItemPickup:
 		return collider as ItemPickup
+	if collider is Node and (collider as Node).is_in_group(Door.LEAF_GROUP):
+		return (collider as Node).get_parent() as Node3D
 	var node := collider as Node
 	while node != null:
 		var hurtbox := _hurtbox_of(node)

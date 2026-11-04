@@ -7,6 +7,8 @@ class_name Door
 signal opened
 signal closed
 
+const LEAF_GROUP := &"door_leaves"
+
 @export_node_path("Node3D") var leaf_path: NodePath
 ## Positive swings toward the wall's front (+Z), which faces into rooms.
 @export var open_angle := 100.0
@@ -26,6 +28,7 @@ func _ready() -> void:
 	_leaf = get_node(leaf_path)
 	_body = _collision_body_of(_leaf)
 	_body.add_to_group(CameraBoom.IGNORED_GROUP)
+	_body.add_to_group(LEAF_GROUP)
 	_solid_layer = _body.collision_layer
 	_closed_yaw = _leaf.rotation.y
 	set_physics_process(false)

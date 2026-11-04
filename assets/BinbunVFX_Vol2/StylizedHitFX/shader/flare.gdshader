@@ -1,8 +1,6 @@
 shader_type spatial;
 render_mode unshaded, blend_add, cull_disabled;
 
-#include "res://shaders/vfx_occlusion.gdshaderinc"
-
 #include "util/blend_util.gdshaderinc"
 
 group_uniforms Color;
@@ -46,9 +44,6 @@ void vertex() {
 }
 
 void fragment() {
-	if (vfx_covers_player(VERTEX)) {
-		discard;
-	}
 	float flare = texture(flare_texture, UV).r;
 	flare = pow(flare, 8.0) * 0.8;
 	

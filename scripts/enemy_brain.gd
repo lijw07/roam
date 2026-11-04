@@ -378,6 +378,8 @@ func _target_reachable() -> bool:
 
 
 func _has_path_to(target: Vector3) -> bool:
+	if not _navigation_ready():
+		return true
 	var map := _agent.get_navigation_map()
 	var closest := NavigationServer3D.map_get_closest_point(map, target)
 	var gap := _flat(closest - target).length()
@@ -550,10 +552,16 @@ func _move_to(goal: Vector3, run: bool, arrive := true) -> void:
 
 
 func _reachable(goal: Vector3) -> Vector3:
+	if not _navigation_ready():
+		return goal
 	var closest := NavigationServer3D.map_get_closest_point(_agent.get_navigation_map(), goal)
 	if _flat(closest - goal).length() > MAX_SNAP_DISTANCE:
 		return goal
 	return Vector3(closest.x, goal.y, closest.z)
+
+
+func _navigation_ready() -> bool:
+	return NavigationServer3D.map_get_iteration_id(_agent.get_navigation_map()) > 0
 
 
 func _detoured(desired: Vector3) -> Vector3:
