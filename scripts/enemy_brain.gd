@@ -34,6 +34,7 @@ const PRESSURE_WINDOW := 1.5
 const PRESSURE_GUARD_BONUS := 0.25
 const PRESSURE_RETREAT_HITS := 2
 const SIDESTEP_DISTANCE := 2.0
+const ROAM_POINT_TIMEOUT := 8.0
 const REPATH_INTERVAL := 0.5
 const MAX_SNAP_DISTANCE := 2.0
 const PATH_LOOK_AHEAD := 0.8
@@ -47,6 +48,9 @@ const DETOUR_TIME := 0.6
 @export var awareness_radius := 3.0
 @export var give_up_distance := 18.0
 @export var give_up_time := 4.0
+@export var roam_radius := 4.0
+@export var roam_pause_min := 2.0
+@export var roam_pause_max := 5.0
 @export var attack_range := 1.9
 @export var circle_distance := 3.2
 @export var attack_cooldown := 1.5
@@ -79,6 +83,9 @@ var _sidestep_sign := 1.0
 var _running_to_slot := false
 var _home := Vector3.ZERO
 var _home_facing := Vector3.ZERO
+var _roam_point := Vector3.ZERO
+var _has_roam_point := false
+var _roam_pause := 0.0
 var _unseen_time := 0.0
 var _pursuit_timer := 0.0
 var _circling := false
@@ -101,6 +108,7 @@ func _ready() -> void:
 	_prepare_rays()
 	_sidestep_sign = 1.0 if get_instance_id() % 2 == 0 else -1.0
 	_sight_timer = randf() * SIGHT_CHECK_INTERVAL
+	_roam_pause = randf_range(0.0, roam_pause_max)
 	_connect_enemy()
 	_director.register(self)
 	set_physics_process(true)
@@ -121,7 +129,7 @@ func _physics_process(delta: float) -> void:
 		_keep_track_of_target(delta)
 	match state:
 		State.IDLE:
-			_look_for_target(delta)
+			_roam(delta)
 		State.RETURN:
 			_return_home(delta)
 		State.ENGAGE:
@@ -247,16 +255,41 @@ func _walk_home() -> void:
 	enemy.focus = null
 	var distance := _flat(_home - enemy.global_position).length()
 	if distance <= ARRIVE_DISTANCE:
-		enemy.move_direction = Vector3.ZERO
 		_enter(State.IDLE)
+		_rest_between_roams()
 		return
 	_move_to(_home, distance > RUN_DISTANCE)
 
 
-func _look_for_target(delta: float) -> void:
-	enemy.move_direction = Vector3.ZERO
+func _roam(delta: float) -> void:
 	enemy.focus = null
 	_watch_for_target(delta)
+	if state != State.IDLE:
+		return
+	if roam_radius <= 0.0 or _roam_pause > 0.0:
+		_roam_pause -= delta
+		enemy.move_direction = Vector3.ZERO
+		return
+	if not _has_roam_point:
+		_roam_point = _pick_roam_point()
+		_has_roam_point = true
+		_state_time = 0.0
+	if _flat(_roam_point - enemy.global_position).length() <= ARRIVE_DISTANCE or _state_time > ROAM_POINT_TIMEOUT:
+		_rest_between_roams()
+		return
+	_move_to(_roam_point, false)
+
+
+func _pick_roam_point() -> Vector3:
+	var angle := randf() * TAU
+	var distance := sqrt(randf()) * roam_radius
+	return _reachable(_home + Vector3(sin(angle), 0.0, cos(angle)) * distance)
+
+
+func _rest_between_roams() -> void:
+	_has_roam_point = false
+	_roam_pause = randf_range(roam_pause_min, roam_pause_max)
+	enemy.move_direction = Vector3.ZERO
 
 
 func _watch_for_target(delta: float) -> void:
@@ -442,10 +475,10 @@ func _move_to(goal: Vector3, run: bool, arrive := true) -> void:
 
 
 func _reachable(goal: Vector3) -> Vector3:
-	var snapped := NavigationServer3D.map_get_closest_point(_agent.get_navigation_map(), goal)
-	if _flat(snapped - goal).length() > MAX_SNAP_DISTANCE:
+	var closest := NavigationServer3D.map_get_closest_point(_agent.get_navigation_map(), goal)
+	if _flat(closest - goal).length() > MAX_SNAP_DISTANCE:
 		return goal
-	return Vector3(snapped.x, goal.y, snapped.z)
+	return Vector3(closest.x, goal.y, closest.z)
 
 
 func _detoured(desired: Vector3) -> Vector3:
