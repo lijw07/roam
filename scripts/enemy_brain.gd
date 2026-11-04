@@ -1,7 +1,7 @@
 class_name EnemyBrain
 extends Node3D
 
-enum State { IDLE, ENGAGE, APPROACH, ATTACK, RECOVER, GUARD }
+enum State { IDLE, ENGAGE, APPROACH, ATTACK, RECOVER, GUARD, RETURN }
 
 const EYE_HEIGHT := 1.5
 const CHEST_HEIGHT := 1.1
@@ -14,6 +14,11 @@ const ARRIVE_DISTANCE := 0.35
 const SLOW_DISTANCE := 1.2
 const MIN_THROTTLE := 0.35
 const RUN_DISTANCE := 4.0
+const WALK_DISTANCE := 2.5
+const CIRCLE_ENTER_DISTANCE := 1.2
+const CIRCLE_EXIT_DISTANCE := 2.0
+const MOVE_GAP := 0.1
+const TRYING_THROTTLE := 0.5
 const FOCUS_DISTANCE := 9.0
 const NEIGHBOUR_RADIUS := 2.0
 const APPROACH_TIMEOUT := 3.0
@@ -37,7 +42,11 @@ const STUCK_CHECK_INTERVAL := 0.5
 const STUCK_PROGRESS := 0.2
 const DETOUR_TIME := 0.6
 
-@export var sight_range := 14.0
+@export var sight_range := 9.0
+@export_range(0.0, 360.0) var sight_arc_degrees := 140.0
+@export var awareness_radius := 3.0
+@export var give_up_distance := 18.0
+@export var give_up_time := 4.0
 @export var attack_range := 1.9
 @export var circle_distance := 3.2
 @export var attack_cooldown := 1.5
@@ -67,6 +76,13 @@ var _stuck_check_position := Vector3.ZERO
 var _detour_time := 0.0
 var _detour_sign := 1.0
 var _sidestep_sign := 1.0
+var _running_to_slot := false
+var _home := Vector3.ZERO
+var _home_facing := Vector3.ZERO
+var _unseen_time := 0.0
+var _pursuit_timer := 0.0
+var _circling := false
+var _last_move_time := -INF
 var _sight_ray := PhysicsRayQueryParameters3D.new()
 var _shot_ray := PhysicsRayQueryParameters3D.new()
 
@@ -78,6 +94,9 @@ func _ready() -> void:
 		return
 	if not enemy.is_node_ready():
 		await enemy.ready
+	_home = enemy.global_position
+	_home_facing = _flat(enemy.global_basis.z).normalized()
+	enemy.rest_facing = _home_facing
 	_prepare_navigation()
 	_prepare_rays()
 	_sidestep_sign = 1.0 if get_instance_id() % 2 == 0 else -1.0
@@ -98,9 +117,13 @@ func _physics_process(delta: float) -> void:
 		_stand_down()
 		return
 	_watch_target_attacks(delta)
+	if state in [State.ENGAGE, State.APPROACH, State.RECOVER]:
+		_keep_track_of_target(delta)
 	match state:
 		State.IDLE:
 			_look_for_target(delta)
+		State.RETURN:
+			_return_home(delta)
 		State.ENGAGE:
 			_hold_position_in_ring()
 		State.APPROACH:
@@ -114,12 +137,13 @@ func _physics_process(delta: float) -> void:
 
 
 func engage() -> void:
-	if state == State.IDLE and not enemy.dead:
+	if state in [State.IDLE, State.RETURN] and not enemy.dead:
+		_unseen_time = 0.0
 		_enter(State.ENGAGE)
 
 
 func is_engaged() -> bool:
-	return state != State.IDLE and not enemy.dead
+	return state not in [State.IDLE, State.RETURN] and not enemy.dead
 
 
 func is_ranged() -> bool:
@@ -181,6 +205,7 @@ func _enter(next: State) -> void:
 		enemy.lower_guard()
 	if next != State.APPROACH and next != State.ATTACK:
 		_director.release_token(self)
+	enemy.rest_facing = _home_facing if next == State.IDLE else Vector3.ZERO
 	state = next
 	_state_time = 0.0
 
@@ -190,31 +215,78 @@ func _target() -> Node3D:
 
 
 func _stand_down() -> void:
-	enemy.move_direction = Vector3.ZERO
 	enemy.focus = null
-	if state != State.IDLE:
-		_enter(State.ENGAGE)
+	if state not in [State.IDLE, State.RETURN]:
+		_enter(State.RETURN)
+	if state == State.RETURN:
+		_walk_home()
+	else:
+		enemy.move_direction = Vector3.ZERO
+
+
+func _keep_track_of_target(delta: float) -> void:
+	if _distance_to_target() > give_up_distance:
+		_enter(State.RETURN)
+		return
+	_pursuit_timer -= delta
+	if _pursuit_timer > 0.0:
+		return
+	_pursuit_timer = SIGHT_CHECK_INTERVAL
+	var tracked := _distance_to_target() <= awareness_radius or can_see(_target_chest())
+	_unseen_time = 0.0 if tracked else _unseen_time + SIGHT_CHECK_INTERVAL
+	if _unseen_time >= give_up_time:
+		_enter(State.RETURN)
+
+
+func _return_home(delta: float) -> void:
+	_walk_home()
+	_watch_for_target(delta)
+
+
+func _walk_home() -> void:
+	enemy.focus = null
+	var distance := _flat(_home - enemy.global_position).length()
+	if distance <= ARRIVE_DISTANCE:
+		enemy.move_direction = Vector3.ZERO
+		_enter(State.IDLE)
+		return
+	_move_to(_home, distance > RUN_DISTANCE)
 
 
 func _look_for_target(delta: float) -> void:
 	enemy.move_direction = Vector3.ZERO
 	enemy.focus = null
+	_watch_for_target(delta)
+
+
+func _watch_for_target(delta: float) -> void:
 	_sight_timer -= delta
 	if _sight_timer > 0.0:
 		return
 	_sight_timer = SIGHT_CHECK_INTERVAL
-	if _can_see_target():
+	if _notices_target():
 		_director.alert(self)
 
 
 func _hold_position_in_ring() -> void:
-	var distance := _distance_to_target()
-	enemy.focus = _target() if distance <= FOCUS_DISTANCE else null
 	var slot := _director.slot_for(self)
-	_move_to(slot, _flat(slot - enemy.global_position).length() > RUN_DISTANCE)
+	_update_ring_pace(_flat(slot - enemy.global_position).length())
+	enemy.focus = _target() if _circling and _distance_to_target() <= FOCUS_DISTANCE else null
+	_move_to(slot, _running_to_slot)
 	if _director.holds_token(self):
 		_combo_count = 0
 		_enter(State.APPROACH)
+
+
+func _update_ring_pace(distance: float) -> void:
+	if distance > RUN_DISTANCE:
+		_running_to_slot = true
+	elif distance < WALK_DISTANCE:
+		_running_to_slot = false
+	if distance < CIRCLE_ENTER_DISTANCE:
+		_circling = true
+	elif distance > CIRCLE_EXIT_DISTANCE:
+		_circling = false
 
 
 func _close_in() -> void:
@@ -227,14 +299,14 @@ func _close_in() -> void:
 	elif _distance_to_target() <= attack_range:
 		_start_attack()
 	else:
-		_move_to(_target().global_position, true)
+		_move_to(_target().global_position, true, false)
 
 
 func _find_a_shot() -> void:
 	if _distance_to_target() <= attack_range and _has_clear_shot():
 		_start_attack()
 	elif _distance_to_target() > attack_range:
-		_move_to(_target().global_position, true)
+		_move_to(_target().global_position, true, false)
 	else:
 		_move_to(_sidestep_point(), false)
 
@@ -333,7 +405,7 @@ func _on_hit_taken(_hit: Hit, damage: float) -> void:
 		return
 	_recent_hits.append(_clock)
 	_guard_delay = -1.0
-	if state == State.IDLE:
+	if state in [State.IDLE, State.RETURN]:
 		_director.alert(self)
 		return
 	if state in [State.APPROACH, State.ATTACK, State.GUARD] or _recent_hits.size() >= PRESSURE_RETREAT_HITS:
@@ -353,7 +425,7 @@ func _on_died() -> void:
 	set_physics_process(false)
 
 
-func _move_to(goal: Vector3, run: bool) -> void:
+func _move_to(goal: Vector3, run: bool, arrive := true) -> void:
 	var reachable := _reachable(goal)
 	var distance := _flat(reachable - enemy.global_position).length()
 	var neighbours := _director.allies_near(self, NEIGHBOUR_RADIUS)
@@ -363,7 +435,8 @@ func _move_to(goal: Vector3, run: bool) -> void:
 		return
 	var waypoint := _next_waypoint(reachable)
 	var desired := _flat(waypoint - enemy.global_position).normalized()
-	desired *= clampf(distance / SLOW_DISTANCE, MIN_THROTTLE, 1.0)
+	if arrive:
+		desired *= clampf(distance / SLOW_DISTANCE, MIN_THROTTLE, 1.0)
 	_steering.look_ahead = FREE_LOOK_AHEAD if waypoint.is_equal_approx(reachable) else PATH_LOOK_AHEAD
 	enemy.move_direction = _steering.steer(enemy, _detoured(desired), neighbours, _steering_exclusions())
 
@@ -376,21 +449,28 @@ func _reachable(goal: Vector3) -> Vector3:
 
 
 func _detoured(desired: Vector3) -> Vector3:
-	_check_progress()
+	_track_progress(desired)
 	if _detour_time <= 0.0:
 		return desired
 	return desired.rotated(Vector3.UP, _detour_sign * PI * 0.5)
 
 
-func _check_progress() -> void:
-	var elapsed := _clock - _stuck_check_time
-	if elapsed < STUCK_CHECK_INTERVAL:
+func _track_progress(desired: Vector3) -> void:
+	var resumed := _clock - _last_move_time > MOVE_GAP
+	_last_move_time = _clock
+	if resumed or desired.length() < TRYING_THROTTLE:
+		_restart_progress_check()
 		return
-	var stuck := elapsed < STUCK_CHECK_INTERVAL * 2.0 and _flat(enemy.global_position - _stuck_check_position).length() < STUCK_PROGRESS
-	if stuck and _detour_time <= 0.0:
+	if _clock - _stuck_check_time < STUCK_CHECK_INTERVAL:
+		return
+	if _flat(enemy.global_position - _stuck_check_position).length() < STUCK_PROGRESS and _detour_time <= 0.0:
 		_detour_time = DETOUR_TIME
 		_detour_sign = -_detour_sign
 		_last_repath_time = -INF
+	_restart_progress_check()
+
+
+func _restart_progress_check() -> void:
 	_stuck_check_time = _clock
 	_stuck_check_position = enemy.global_position
 
@@ -420,12 +500,14 @@ func _sidestep_point() -> Vector3:
 	return enemy.global_position + to_target.cross(Vector3.UP) * SIDESTEP_DISTANCE * _sidestep_sign
 
 
-func _can_see_target() -> bool:
-	if _distance_to_target() > sight_range:
-		return false
+func eye_position() -> Vector3:
+	return enemy.global_position + Vector3.UP * EYE_HEIGHT
+
+
+func can_see(point: Vector3) -> bool:
 	var exclude := _steering_exclusions()
-	_sight_ray.from = enemy.global_position + Vector3.UP * EYE_HEIGHT
-	_sight_ray.to = _target().global_position + Vector3.UP * CHEST_HEIGHT
+	_sight_ray.from = eye_position()
+	_sight_ray.to = point
 	for _pass in SIGHT_RAY_PASSES:
 		_sight_ray.exclude = exclude
 		var hit := get_world_3d().direct_space_state.intersect_ray(_sight_ray)
@@ -437,11 +519,30 @@ func _can_see_target() -> bool:
 	return true
 
 
-func _has_clear_shot() -> bool:
-	if not _can_see_target():
+func _notices_target() -> bool:
+	var distance := _distance_to_target()
+	if distance > sight_range:
 		return false
-	_shot_ray.from = enemy.global_position + Vector3.UP * EYE_HEIGHT
-	_shot_ray.to = _target().global_position + Vector3.UP * CHEST_HEIGHT
+	if distance > awareness_radius and not _in_view(_target().global_position):
+		return false
+	return can_see(_target_chest())
+
+
+func _in_view(point: Vector3) -> bool:
+	var offset := _flat(point - enemy.global_position)
+	var facing := _flat(enemy.global_basis.z).normalized()
+	return offset.is_zero_approx() or facing.angle_to(offset) <= deg_to_rad(sight_arc_degrees) * 0.5
+
+
+func _target_chest() -> Vector3:
+	return _target().global_position + Vector3.UP * CHEST_HEIGHT
+
+
+func _has_clear_shot() -> bool:
+	if not can_see(_target_chest()):
+		return false
+	_shot_ray.from = eye_position()
+	_shot_ray.to = _target_chest()
 	var hit := get_world_3d().direct_space_state.intersect_ray(_shot_ray)
 	return hit.is_empty() or (hit.collider as Node).get_parent() == _target()
 

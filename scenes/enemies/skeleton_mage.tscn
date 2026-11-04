@@ -32,7 +32,7 @@ hurtbox = NodePath("../Hurtbox")
 
 [node name="Brain" type="Node3D" parent="."]
 script = ExtResource("80_brain")
-sight_range = 16.0
+sight_range = 11.0
 attack_range = 11.0
 circle_distance = 7.5
 attack_cooldown = 2.5

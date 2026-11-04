@@ -14,10 +14,10 @@ const DEATH_POSES := {
 	&"general/Death_A": &"general/Death_A_Pose",
 	&"general/Death_B": &"general/Death_B_Pose",
 }
-const SKELETON_PATH := ^"Model/Rig_Medium/Skeleton3D"
 const MAIN_HAND := &"handslot.r"
-const LIMB_BONES: Array[StringName] = [&"hand.l", &"hand.r", &"foot.l", &"foot.r"]
-const LIMB_STRIKE_RADIUS := 0.18
+const STRIKE_HEIGHT := 1.1
+const BLOCKED_SPEED := 0.4
+const STRIKE_ORIGIN_OFFSET := 0.5
 const STRAFE_LEFT_ANIMATION := &"movement_advanced/Running_Strafe_Left"
 const STRAFE_RIGHT_ANIMATION := &"movement_advanced/Running_Strafe_Right"
 const BACKWARD_ANIMATION := &"movement_advanced/Walking_Backwards"
@@ -28,7 +28,7 @@ const UNARMED_PROJECTILE_ORIGIN := Vector3(0.0, 1.4, 0.5)
 
 @export var threat := 2
 @export var walk_speed := 3.0
-@export var run_speed := 6.5
+@export var run_speed := 5.0
 @export var strafe_speed := 2.2
 @export var turn_speed := 8.0
 @export var attack_turn_speed := 5.0
@@ -48,12 +48,13 @@ const UNARMED_PROJECTILE_ORIGIN := Vector3(0.0, 1.4, 0.5)
 @export var attacks: Array[AttackStep] = []
 @export var lead_in: AttackStep
 @export var attack_damage := 10.0
+@export var attack_reach := 1.8
+@export_range(0.0, 360.0) var attack_arc_degrees := 110.0
 @export var projectile: PackedScene
 @export var block_stamina_per_damage := 1.0
 @export_range(0.0, 180.0) var block_arc_degrees := 140.0
 
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
-@onready var skeleton: Skeleton3D = get_node(SKELETON_PATH)
 @onready var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity") * gravity_multiplier
 @onready var health := get_node_or_null(^"Health") as Health
 @onready var hurtbox := get_node_or_null(^"Hurtbox") as Hurtbox
@@ -63,6 +64,7 @@ var move_direction := Vector3.ZERO
 var running := false
 var dead := false
 var focus: Node3D = null
+var rest_facing := Vector3.ZERO
 
 var _air_time := 0.0
 var _reaction: StringName = &""
@@ -74,9 +76,7 @@ var _struck: Array[Hurtbox] = []
 var _guarding := false
 var _guard_ready := false
 var _main_hand: BoneAttachment3D = null
-var _strike_shapes: Dictionary[CollisionShape3D, Vector3] = {}
-var _limb_bones: Array[int] = []
-var _limb_sphere := SphereShape3D.new()
+var _strike_sphere := SphereShape3D.new()
 var _strike_query := PhysicsShapeQueryParameters3D.new()
 
 
@@ -279,38 +279,31 @@ func _prepare_strikes() -> void:
 	_strike_query.collide_with_areas = true
 	_strike_query.collide_with_bodies = false
 	_strike_query.collision_mask = 1 << (Hurtbox.LAYER - 1)
-	_limb_sphere.radius = LIMB_STRIKE_RADIUS
-	if _main_hand != null:
-		for shape: CollisionShape3D in _main_hand.find_children("*", "CollisionShape3D", true, false):
-			if shape.shape != null:
-				_strike_shapes[shape] = shape.shape.get_debug_mesh().get_aabb().get_center()
-	if _strike_shapes.is_empty():
-		for bone in LIMB_BONES:
-			_limb_bones.append(skeleton.find_bone(bone))
+	_strike_query.shape = _strike_sphere
 
 
 func _strike_targets(time: float) -> void:
 	if _attack_step == null or not _attack_step.is_striking_at(time):
 		return
-	for shape in _strike_shapes:
-		_strike_with(shape.shape, shape.global_transform, shape.global_transform * _strike_shapes[shape])
-	for bone in _limb_bones:
-		var limb := skeleton.global_transform * skeleton.get_bone_global_pose(bone).origin
-		_strike_with(_limb_sphere, Transform3D(Basis.IDENTITY, limb), limb)
-
-
-func _strike_with(shape: Shape3D, shape_transform: Transform3D, origin: Vector3) -> void:
-	_strike_query.shape = shape
-	_strike_query.transform = shape_transform
+	var center := global_position + Vector3.UP * STRIKE_HEIGHT
+	_strike_sphere.radius = attack_reach
+	_strike_query.transform = Transform3D(Basis.IDENTITY, center)
 	for contact in get_world_3d().direct_space_state.intersect_shape(_strike_query):
 		var target := contact.collider as Hurtbox
 		if target != null and _can_strike(target):
 			_struck.append(target)
-			target.receive(Hit.new(attack_damage, self, origin))
+			target.receive(Hit.new(attack_damage, self, center + _forward() * STRIKE_ORIGIN_OFFSET))
 
 
 func _can_strike(target: Hurtbox) -> bool:
-	return target != hurtbox and target not in _struck and not (target.get_parent() is Enemy)
+	return target != hurtbox and target not in _struck and not (target.get_parent() is Enemy) and _in_strike_arc(target)
+
+
+func _in_strike_arc(target: Hurtbox) -> bool:
+	var offset := _flat(target.global_position - global_position)
+	if offset.is_zero_approx():
+		return true
+	return _forward().angle_to(offset) <= deg_to_rad(attack_arc_degrees) * 0.5
 
 
 func _fire_projectile_when_due(time: float) -> void:
@@ -383,8 +376,9 @@ func _travel(delta: float) -> void:
 	velocity.z = direction.z * speed
 	_apply_gravity(delta)
 	move_and_slide()
-	_face(_facing_direction(direction), delta, turn_speed)
-	var clip := _locomotion_animation(direction)
+	var motion := _actual_motion(direction)
+	_face(_facing_direction(motion), delta, turn_speed)
+	var clip := _locomotion_animation(motion)
 	_play(clip, BLEND_TIME, strafe_animation_speed if clip in [STRAFE_LEFT_ANIMATION, STRAFE_RIGHT_ANIMATION] else 1.0)
 
 
@@ -397,6 +391,13 @@ func _hold_guard(delta: float) -> void:
 		_play(guard_hold_animation)
 
 
+func _actual_motion(direction: Vector3) -> Vector3:
+	var moved := _flat(get_real_velocity())
+	if moved.length() < BLOCKED_SPEED:
+		return Vector3.ZERO
+	return moved.normalized() * direction.length()
+
+
 func _speed_for(direction: Vector3) -> float:
 	if _is_strafing(direction):
 		return strafe_speed
@@ -404,12 +405,18 @@ func _speed_for(direction: Vector3) -> float:
 
 
 func _is_strafing(direction: Vector3) -> bool:
-	return is_instance_valid(focus) and not direction.is_zero_approx() and _forward().angle_to(direction) > FORWARD_ARC
+	return _faces_focus(direction) and not direction.is_zero_approx() and _forward().angle_to(direction) > FORWARD_ARC
+
+
+func _faces_focus(direction: Vector3) -> bool:
+	return is_instance_valid(focus) and (not running or direction.is_zero_approx())
 
 
 func _facing_direction(direction: Vector3) -> Vector3:
-	if is_instance_valid(focus):
+	if _faces_focus(direction):
 		return _flat(focus.global_position - global_position)
+	if direction.is_zero_approx():
+		return rest_facing
 	return direction
 
 

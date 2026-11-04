@@ -23,6 +23,7 @@ idle_animation = &"combat_melee/Melee_2H_Idle"
 walk_animation = &"movement_basic/Walking_C"
 run_animation = &"movement_advanced/Running_HoldingRifle"
 attacks = Array[ExtResource("81_attack_step")]([ExtResource("82_chop"), ExtResource("83_slice"), ExtResource("84_spin")])
+attack_reach = 3.0
 attack_damage = 25.0
 
 [node name="Model" parent="."]
@@ -46,7 +47,7 @@ hurtbox = NodePath("../Hurtbox")
 
 [node name="Brain" type="Node3D" parent="."]
 script = ExtResource("80_brain")
-attack_range = 2.4
+attack_range = 2.6
 circle_distance = 4.0
 attack_cooldown = 2.2
 block_skill = 0.5

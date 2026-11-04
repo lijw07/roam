@@ -15,6 +15,7 @@ var shooter: Node3D = null
 var ignored: Array[RID] = []
 
 var _age := 0.0
+var _launch_checked := false
 var _travelled := 0.0
 var _light_energies: Dictionary[Light3D, float] = {}
 var _particle_scales: Dictionary[CPUParticles3D, Vector2] = {}
@@ -28,6 +29,11 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if not _launch_checked:
+		_launch_checked = true
+		if _launched_inside_world():
+			queue_free()
+			return
 	_age += delta
 	if speed > 0.0 and _fly(_next_motion(delta)):
 		queue_free()
@@ -71,10 +77,18 @@ func _fly(motion: Vector3) -> bool:
 	return false
 
 
+func _launched_inside_world() -> bool:
+	if not is_instance_valid(shooter):
+		return false
+	var body_center := Vector3(shooter.global_position.x, global_position.y, shooter.global_position.z)
+	return not _cast(body_center, global_position, false).is_empty()
+
+
 func _cast(from: Vector3, to: Vector3, hurtboxes: bool) -> Dictionary:
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	query.collide_with_areas = hurtboxes
 	query.collide_with_bodies = not hurtboxes
+	query.hit_from_inside = not hurtboxes
 	query.collision_mask = 1 << ((Hurtbox.LAYER if hurtboxes else WORLD_LAYER) - 1)
 	query.exclude = _shooter_rids()
 	return get_world_3d().direct_space_state.intersect_ray(query)

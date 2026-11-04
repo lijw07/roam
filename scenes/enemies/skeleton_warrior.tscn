@@ -16,6 +16,7 @@ script = ExtResource("2_enemy")
 threat = 2
 idle_animation = &"general/Idle_A"
 attacks = Array[ExtResource("81_attack_step")]([ExtResource("82_slice_horizontal"), ExtResource("83_stab"), ExtResource("84_chop")])
+attack_reach = 2.1
 attack_damage = 14.0
 block_stamina_per_damage = 0.6
 
@@ -39,7 +40,7 @@ hurtbox = NodePath("../Hurtbox")
 
 [node name="Brain" type="Node3D" parent="."]
 script = ExtResource("80_brain")
-attack_range = 1.7
+attack_range = 1.8
 circle_distance = 3.0
 attack_cooldown = 1.8
 block_skill = 1.5

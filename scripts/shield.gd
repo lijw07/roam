@@ -12,7 +12,6 @@ class_name Shield
 @export var block_stamina_per_damage := 1.0
 @export var bash_hit_start := 0.32
 @export var bash_hit_end := 0.45
-@export_range(0.0, 180.0) var block_arc_degrees := 120.0
 
 
 func _ready() -> void:

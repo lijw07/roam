@@ -13,7 +13,7 @@ const MIN_SLOT_DISTANCE := 1.2
 
 @export var target: Node3D
 @export var difficulty: CombatDifficulty
-@export var alert_radius := 12.0
+@export var assist_radius := 3.5
 @export var circle_lead := 0.25
 @export var circle_flip_interval := 6.0
 
@@ -67,9 +67,14 @@ func brains() -> Array[EnemyBrain]:
 
 
 func alert(source: EnemyBrain) -> void:
+	source.engage()
 	for brain in _brains:
-		if brain.global_position.distance_to(source.global_position) <= alert_radius:
+		if brain != source and _answers_alert(brain, source):
 			brain.engage()
+
+
+func _answers_alert(brain: EnemyBrain, source: EnemyBrain) -> bool:
+	return brain.global_position.distance_to(source.global_position) <= assist_radius and brain.can_see(source.eye_position())
 
 
 func has_living_target() -> bool:

@@ -133,6 +133,7 @@ var _pick_up_animation := PICK_UP_ANIMATION
 var _left_hand_pair: Node3D = null
 var _held_weapon: Weapon = null
 var _upper_body_twist := UpperBodyTwist.new()
+var _hit_flinch := UpperBodyFlinch.new()
 var _facing_yaw := 0.0
 var _limb_bones: Array[int] = []
 var _limb_query := PhysicsShapeQueryParameters3D.new()
@@ -155,6 +156,7 @@ class Gait:
 
 func _ready() -> void:
 	animation_player.animation_finished.connect(_on_animation_finished)
+	skeleton.add_child(_hit_flinch)
 	skeleton.add_child(_upper_body_twist)
 	_facing_yaw = model.rotation.y
 	_prepare_limb_strikes()
@@ -173,6 +175,7 @@ func _physics_process(delta: float) -> void:
 	_update_aim_return()
 	_lower_shield_if_released()
 	_hold_stamina_while_blocking()
+	_walk_out_of_hit(direction)
 	if _action_cancellable and _has_new_input(direction):
 		_end_action()
 	if dead or (is_acting() and not _action_allows_movement()):
@@ -270,7 +273,7 @@ func take_hit() -> void:
 	if _is_blocking() and _can_react_with_shield():
 		_start_action(shield.hit_animation)
 		return
-	_start_action(HIT_ANIMATIONS.pick_random())
+	_react_to_hit()
 
 
 func die() -> void:
@@ -319,7 +322,25 @@ func _connect_health() -> void:
 
 func _on_hit_taken(_hit: Hit, damage: float) -> void:
 	if damage > 0.0 and not dead:
-		_start_action(HIT_ANIMATIONS.pick_random())
+		_react_to_hit()
+
+
+func _react_to_hit() -> void:
+	var hit: StringName = HIT_ANIMATIONS.pick_random()
+	if _input_direction().is_zero_approx():
+		_start_action(hit)
+		return
+	_end_action()
+	_hit_flinch.play(animation_player.get_animation(hit))
+
+
+func _walk_out_of_hit(direction: Vector3) -> void:
+	if dead or _action not in HIT_ANIMATIONS or direction.is_zero_approx():
+		return
+	var hit := animation_player.get_animation(_action)
+	var elapsed := animation_player.current_animation_position
+	_end_action()
+	_hit_flinch.play(hit, elapsed)
 
 
 func _on_blocked(_hit: Hit) -> void:
@@ -327,17 +348,9 @@ func _on_blocked(_hit: Hit) -> void:
 
 
 func _blocks(hit: Hit) -> bool:
-	if not _is_blocking() or not _can_react_with_shield() or not _faces(hit.origin):
+	if not _is_blocking() or not _can_react_with_shield():
 		return false
 	return _guard_holds(hit.amount * shield.block_stamina_per_damage)
-
-
-func _faces(point: Vector3) -> bool:
-	var to_point := point - global_position
-	to_point.y = 0.0
-	if to_point.is_zero_approx():
-		return true
-	return model.global_basis.z.angle_to(to_point) <= deg_to_rad(shield.block_arc_degrees) * 0.5
 
 
 func _guard_holds(cost: float) -> bool:
@@ -545,8 +558,6 @@ func _travel(direction: Vector3, gait: Gait, delta: float) -> void:
 
 
 func _action_allows_movement() -> bool:
-	if _action in HIT_ANIMATIONS:
-		return true
 	if _attack_step != null:
 		return not _attack_step.uses_legs
 	if _shot_step >= 0:
@@ -615,7 +626,7 @@ func _turn_toward(target_yaw: float, delta: float) -> void:
 
 
 func _can_react_with_shield() -> bool:
-	return not is_acting() or _action in [shield.raise_animation, shield.hit_animation]
+	return not is_acting() or _action in [shield.raise_animation, shield.hit_animation] or _action in HIT_ANIMATIONS
 
 
 func _lower_shield_if_released() -> void:
@@ -1020,6 +1031,7 @@ func _hand_slot(hand: StringName) -> BoneAttachment3D:
 
 
 func _start_action(animation: StringName, cancellable := false, action_velocity := Vector3.ZERO, blend := BLEND_TIME, from := 0.0) -> void:
+	_hit_flinch.stop()
 	_action = animation
 	_action_cancellable = cancellable
 	_action_velocity = action_velocity

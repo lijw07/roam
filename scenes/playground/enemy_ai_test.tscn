@@ -31,7 +31,8 @@
 [ext_resource type="PackedScene" uid="uid://dorlqgks0xc4k" path="res://scenes/equipment/adventurers/wand.tscn" id="34_wand"]
 [ext_resource type="PackedScene" uid="uid://dla15ya6vekhr" path="res://scenes/equipment/adventurers/staff.tscn" id="35_staff"]
 [ext_resource type="PackedScene" uid="uid://bt8oqbmhcl6bf" path="res://scenes/equipment/adventurers/bow_withstring.tscn" id="36_bowwithstring"]
-[ext_resource type="Script" path="res://scripts/camera_boom.gd" id="90_camera_boom"]
+[ext_resource type="Script" uid="uid://dodahtnwvrmk4" path="res://scripts/camera_boom.gd" id="90_camera_boom"]
+[ext_resource type="Script" uid="uid://ikxqj06bre15" path="res://scripts/hit_log.gd" id="91_hit_log"]
 
 [sub_resource type="Environment" id="Environment_arena"]
 background_mode = 1
@@ -479,32 +480,26 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 7.5, 0.2, 9.5)
 
 [node name="WarriorA" parent="Enemies" unique_id=1826251038 instance=ExtResource("23_warrior")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -18)
-visible = false
 
 [node name="MinionA1" parent="Enemies" unique_id=1902409837 instance=ExtResource("21_minion")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.5, 0, -19)
-visible = false
 
 [node name="MinionA2" parent="Enemies" unique_id=691545066 instance=ExtResource("21_minion")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0, -19)
-visible = false
 
 [node name="RogueB" parent="Enemies" unique_id=219793452 instance=ExtResource("22_rogue")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -11)
-visible = false
-
-[node name="WarriorB" parent="Enemies" unique_id=311979680 instance=ExtResource("23_warrior")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, -14)
-visible = false
 
 [node name="MageB" parent="Enemies" unique_id=1139140002 instance=ExtResource("24_mage")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, -23)
+
+[node name="WarriorB" parent="Enemies" unique_id=311979680 instance=ExtResource("23_warrior")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, -14)
 
 [node name="CombatDirector" type="Node" parent="." unique_id=366419942 node_paths=PackedStringArray("target")]
 script = ExtResource("3_director")
 target = NodePath("../Player")
 difficulty = ExtResource("4_normal")
-alert_radius = 15.0
 
 [node name="DamageNumbers" type="Node3D" parent="." unique_id=140469196 node_paths=PackedStringArray("player")]
 script = ExtResource("5_numbers")
@@ -526,16 +521,20 @@ player = NodePath("../Player")
 script = ExtResource("9_warm")
 player = NodePath("../Player")
 
+[node name="HitLog" type="Node3D" parent="." unique_id=1441611984 node_paths=PackedStringArray("player")]
+script = ExtResource("91_hit_log")
+player = NodePath("../Player")
+
 [node name="CameraRig" type="Node3D" parent="." unique_id=522703979]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 6)
 
 [node name="Pitch" type="Node3D" parent="CameraRig" unique_id=1047897406]
 transform = Transform3D(1, 0, 0, 0, 0.9393727, 0.3428978, 0, -0.3428978, 0.9393727, 0, 0, 0)
 
-[node name="CameraBoom" type="SpringArm3D" parent="CameraRig/Pitch"]
-script = ExtResource("90_camera_boom")
+[node name="CameraBoom" type="SpringArm3D" parent="CameraRig/Pitch" unique_id=1537823004]
 spring_length = 6.0
 margin = 0.2
+script = ExtResource("90_camera_boom")
 
 [node name="Camera3D" type="Camera3D" parent="CameraRig/Pitch/CameraBoom" unique_id=1331340762]
 fov = 60.0
