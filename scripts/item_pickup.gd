@@ -39,6 +39,12 @@ func collect_into(inventory: Inventory) -> bool:
 	return stored > 0
 
 
+func pick_up_text() -> String:
+	if count > 1:
+		return "Pick up %s x%d" % [item_name, count]
+	return "Pick up %s" % item_name
+
+
 func item_scene_path() -> String:
 	return scene_file_path if single_item_scene.is_empty() else single_item_scene
 

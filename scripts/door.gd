@@ -28,7 +28,6 @@ var _tween: Tween
 func _ready() -> void:
 	_leaf = get_node(leaf_path)
 	_body = _collision_body_of(_leaf)
-	_body.add_to_group(CameraBoom.IGNORED_GROUP)
 	_body.add_to_group(LEAF_GROUP)
 	_solid_layer = _body.collision_layer
 	_closed_yaw = _leaf.rotation.y
@@ -36,6 +35,7 @@ func _ready() -> void:
 	if start_open:
 		is_open = true
 		_leaf.rotation.y = _target_yaw()
+	_update_camera_collision()
 
 
 func open() -> void:
@@ -54,6 +54,8 @@ func set_open(value: bool) -> void:
 	if value == is_open:
 		return
 	is_open = value
+	if is_open:
+		_update_camera_collision()
 	if _tween:
 		_tween.kill()
 	_pass_through_bodies()
@@ -69,7 +71,15 @@ func _physics_process(_delta: float) -> void:
 		return
 	_body.collision_layer = _solid_layer
 	set_physics_process(false)
+	_update_camera_collision()
 	(opened if is_open else closed).emit()
+
+
+func _update_camera_collision() -> void:
+	if is_open:
+		_body.add_to_group(CameraBoom.IGNORED_GROUP)
+	else:
+		_body.remove_from_group(CameraBoom.IGNORED_GROUP)
 
 
 func _pass_through_bodies() -> void:

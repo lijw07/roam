@@ -18,6 +18,7 @@ const CONTROLS := "WASD move   Shift run   Tab inventory   right-click a potion 
 @onready var camera_pitch: Node3D = $CameraRig/Pitch
 @onready var info: Label = $HUD/Info
 @onready var inventory_ui: Control = $HUD/Inventory
+@onready var interact_prompt: InteractPrompt = $HUD/InteractPrompt
 
 
 func _ready() -> void:
@@ -29,7 +30,8 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	camera_rig.global_position = player.global_position + Vector3.UP * RIG_HEIGHT
 	player.camera_yaw = camera_rig.rotation.y
-	info.text = "%s\n%s" % [CONTROLS % [TEST_MANA_COST, TEST_STAMINA_COST], _pick_up_prompt()]
+	info.text = CONTROLS % [TEST_MANA_COST, TEST_STAMINA_COST]
+	_update_interact_prompt()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -64,10 +66,9 @@ func _look(mouse_motion: Vector2) -> void:
 	camera_rig.rotation.y -= mouse_motion.x * sensitivity
 
 
-func _pick_up_prompt() -> String:
-	var pickup := item_collector.nearest_pickup()
-	if pickup == null or pickup.auto_pick_up:
-		return ""
-	if pickup.count > 1:
-		return "F  pick up %s x%d" % [pickup.item_name, pickup.count]
-	return "F  pick up %s" % pickup.item_name
+func _update_interact_prompt() -> void:
+	var pickup := item_collector.manual_pickup()
+	if pickup == null or inventory_ui.visible:
+		interact_prompt.hide()
+	else:
+		interact_prompt.show_action(pickup.pick_up_text())

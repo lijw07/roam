@@ -55,6 +55,8 @@
 [ext_resource type="PackedScene" uid="uid://ogyw28j2n42e" path="res://scenes/resources/wood_planks_stack_small.tscn" id="52_wood_planks_stack_small"]
 [ext_resource type="Script" uid="uid://dodahtnwvrmk4" path="res://scripts/camera_boom.gd" id="90_camera_boom"]
 [ext_resource type="Script" path="res://scripts/shoulder_camera.gd" id="94_shoulder_camera"]
+[ext_resource type="Script" path="res://scripts/item_tooltip.gd" id="item_tooltip_script"]
+[ext_resource type="Script" path="res://scripts/interact_prompt.gd" id="interact_prompt_script"]
 
 [sub_resource type="Environment" id="Environment_test"]
 background_mode = 1
@@ -492,7 +494,7 @@ theme_override_constants/outline_size = 6
 [node name="ItemIcons" type="Node" parent="HUD" unique_id=705758396]
 script = ExtResource("9_item_icon_renderer")
 
-[node name="Inventory" type="GridContainer" parent="HUD" unique_id=1077617997 node_paths=PackedStringArray("inventory", "icon_renderer", "amount_popup", "drinker")]
+[node name="Inventory" type="GridContainer" parent="HUD" unique_id=1077617997 node_paths=PackedStringArray("inventory", "icon_renderer", "amount_popup", "drinker", "tooltip")]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -507,6 +509,13 @@ inventory = NodePath("../../Player/Inventory")
 icon_renderer = NodePath("../ItemIcons")
 amount_popup = NodePath("../AmountPopup")
 drinker = NodePath("../../Player")
+tooltip = NodePath("../ItemTooltip")
 
 [node name="AmountPopup" type="PanelContainer" parent="HUD" unique_id=2071375225]
 script = ExtResource("9_amount_popup")
+
+[node name="InteractPrompt" type="PanelContainer" parent="HUD"]
+script = ExtResource("interact_prompt_script")
+
+[node name="ItemTooltip" type="PanelContainer" parent="HUD"]
+script = ExtResource("item_tooltip_script")

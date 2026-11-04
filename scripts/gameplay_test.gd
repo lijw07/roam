@@ -4,7 +4,6 @@ const RIG_HEIGHT := 1.4
 const MOUSE_SENSITIVITY := 0.003
 const MIN_PITCH := -1.2
 const MAX_PITCH := 0.3
-const DOOR_REACH := 3.0
 const HOVERED_DOOR_REACH := 3.5
 const REACH_HEIGHT := 1.0
 const CONTROLS := "WASD move   Shift run   Space jump   LMB attack   RMB block   F door / pick up   Tab inventory (right-click a potion to drink)   R new dungeon   Esc free mouse"
@@ -20,8 +19,8 @@ const DEATH_TEXT := "You died   R to try a new dungeon"
 @onready var info: Label = $HUD/Info
 @onready var inventory_ui: Control = $HUD/Inventory
 @onready var aim_targeting: AimTargeting = $AimTargeting
+@onready var interact_prompt: InteractPrompt = $HUD/InteractPrompt
 
-var _doors: Array[Door] = []
 var _navigation_stale := false
 
 
@@ -38,6 +37,7 @@ func _process(_delta: float) -> void:
 	camera_rig.global_position = player.global_position + Vector3.UP * RIG_HEIGHT
 	player.camera_yaw = camera_rig.rotation.y
 	info.text = "%s\n%s" % [CONTROLS, _status_text()]
+	_update_interact_prompt()
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -78,7 +78,6 @@ func _enter_dungeon() -> void:
 
 
 func _track_door(door: Door) -> void:
-	_doors.append(door)
 	door.opened.connect(_rebake_navigation)
 	door.closed.connect(_rebake_navigation)
 
@@ -113,41 +112,30 @@ func _toggle_door() -> void:
 
 
 func _door_to_use() -> Door:
-	var hovered := _hovered_door()
-	return hovered if hovered != null else _nearest_door()
-
-
-func _hovered_door() -> Door:
 	var reach_from := player.global_position + Vector3.UP * REACH_HEIGHT
 	if aim_targeting.hovered_door_point.distance_to(reach_from) > HOVERED_DOOR_REACH:
 		return null
 	return aim_targeting.hovered_door
 
 
-func _nearest_door() -> Door:
-	var nearest: Door = null
-	var best := DOOR_REACH
-	for door in _doors:
-		var distance := door.global_position.distance_to(player.global_position)
-		if distance < best:
-			best = distance
-			nearest = door
-	return nearest
-
-
 func _status_text() -> String:
-	if player.dead:
-		return DEATH_TEXT
+	return DEATH_TEXT if player.dead else ""
+
+
+func _update_interact_prompt() -> void:
+	if player.dead or inventory_ui.visible:
+		interact_prompt.hide()
+		return
 	var door := _door_to_use()
 	if door != null:
-		return "F  %s door" % ("close" if door.is_open else "open")
-	return _pick_up_prompt()
+		interact_prompt.show_action(_door_action(door))
+		return
+	var pickup := item_collector.manual_pickup()
+	if pickup != null:
+		interact_prompt.show_action(pickup.pick_up_text())
+	else:
+		interact_prompt.hide()
 
 
-func _pick_up_prompt() -> String:
-	var pickup := item_collector.nearest_pickup()
-	if pickup == null or pickup.auto_pick_up:
-		return ""
-	if pickup.count > 1:
-		return "F  pick up %s x%d" % [pickup.item_name, pickup.count]
-	return "F  pick up %s" % pickup.item_name
+func _door_action(door: Door) -> String:
+	return "Close door" if door.is_open else "Open door"

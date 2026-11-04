@@ -1,6 +1,7 @@
 extends GridContainer
 
 const NO_DRAG := -1
+const NO_HOVER := -1
 const MOVE_TEXT := "Move"
 const DROP_TEXT := "Drop"
 
@@ -8,9 +9,11 @@ const DROP_TEXT := "Drop"
 @export var icon_renderer: ItemIconRenderer
 @export var amount_popup: AmountPopup
 @export var drinker: Node3D
+@export var tooltip: ItemTooltip
 
 var _slots: Array[InventorySlot] = []
 var _dragged_index := NO_DRAG
+var _hovered_index := NO_HOVER
 var _apply_amount := Callable()
 
 
@@ -41,6 +44,8 @@ func _create_slot(index: int) -> InventorySlot:
 	slot.drag_started.connect(_on_drag_started)
 	slot.dropped_on.connect(_on_dropped_on_slot)
 	slot.used.connect(_on_slot_used)
+	slot.hovered.connect(_on_slot_hovered)
+	slot.unhovered.connect(_on_slot_unhovered)
 	add_child(slot)
 	return slot
 
@@ -49,6 +54,7 @@ func _refresh() -> void:
 	for index in _slots.size():
 		var slot := inventory.slots[index]
 		_slots[index].show_item(_icon_for(slot), slot.count)
+	_refresh_tooltip()
 
 
 func _icon_for(slot: Inventory.Slot) -> Texture2D:
@@ -57,6 +63,30 @@ func _icon_for(slot: Inventory.Slot) -> Texture2D:
 
 func _on_drag_started(index: int) -> void:
 	_dragged_index = index
+	_refresh_tooltip()
+
+
+func _on_slot_hovered(index: int) -> void:
+	_hovered_index = index
+	_refresh_tooltip()
+
+
+func _on_slot_unhovered(index: int) -> void:
+	if _hovered_index == index:
+		_hovered_index = NO_HOVER
+		_refresh_tooltip()
+
+
+func _refresh_tooltip() -> void:
+	if _shows_tooltip():
+		tooltip.show_slot(inventory.slots[_hovered_index])
+	else:
+		tooltip.hide()
+
+
+func _shows_tooltip() -> bool:
+	return visible and _hovered_index != NO_HOVER and _dragged_index == NO_DRAG \
+		and inventory.count_at(_hovered_index) > 0
 
 
 func _on_dropped_on_slot(from_index: int, to_index: int) -> void:
@@ -77,6 +107,7 @@ func _finish_drag() -> void:
 	if _dragged_index != NO_DRAG and _dropped_outside():
 		_throw(_dragged_index)
 	_dragged_index = NO_DRAG
+	_refresh_tooltip()
 
 
 func _throw(index: int) -> void:
@@ -103,6 +134,8 @@ func _on_amount_confirmed(amount: int) -> void:
 func _on_visibility_changed() -> void:
 	if not visible:
 		amount_popup.close()
+		_hovered_index = NO_HOVER
+	_refresh_tooltip()
 
 
 func _choosing_amount() -> bool:

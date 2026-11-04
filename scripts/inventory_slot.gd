@@ -4,6 +4,8 @@ extends ColorRect
 signal drag_started(index: int)
 signal dropped_on(from_index: int, to_index: int)
 signal used(index: int)
+signal hovered(index: int)
+signal unhovered(index: int)
 
 const SIZE := Vector2(64, 64)
 const BACKGROUND := Color(0, 0, 0, 0.45)
@@ -27,6 +29,8 @@ func _init() -> void:
 	color = BACKGROUND
 	_icon_rect = _add_icon(self)
 	_count_label = _add_count_label(self)
+	mouse_entered.connect(func() -> void: hovered.emit(index))
+	mouse_exited.connect(func() -> void: unhovered.emit(index))
 
 
 func show_item(icon: Texture2D, count: int) -> void:

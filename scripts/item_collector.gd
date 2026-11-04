@@ -30,6 +30,11 @@ func nearest_pickup() -> ItemPickup:
 	return nearest
 
 
+func manual_pickup() -> ItemPickup:
+	var pickup := nearest_pickup()
+	return pickup if pickup != null and not pickup.auto_pick_up else null
+
+
 func _should_pull(pickup: ItemPickup) -> bool:
 	return pickup.can_be_pulled() \
 		and body.global_position.distance_to(pickup.global_position) <= pull_radius \

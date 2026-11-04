@@ -26,7 +26,8 @@ const STRAFE_LEFT_ANIMATION := &"movement_advanced/Running_Strafe_Left"
 const STRAFE_RIGHT_ANIMATION := &"movement_advanced/Running_Strafe_Right"
 const BACKWARD_ANIMATION := &"movement_advanced/Walking_Backwards"
 const FORWARD_ARC := deg_to_rad(50.0)
-const BACKWARD_ARC := deg_to_rad(130.0)
+const BACKWARD_ARC := deg_to_rad(110.0)
+const DELIBERATE_SPEED_RATIO := 0.6
 const AIM_HEIGHT := 1.1
 const UNARMED_PROJECTILE_ORIGIN := Vector3(0.0, 1.4, 0.5)
 const CORPSE_SINK_DEPTH := 1.5
@@ -473,7 +474,9 @@ func _hold_guard(delta: float) -> void:
 
 func _actual_motion(direction: Vector3, intended: Vector3) -> Vector3:
 	var moved := _flat(get_real_velocity())
-	if moved.length() < BLOCKED_SPEED or moved.dot(intended) < 0.0:
+	if moved.length() < BLOCKED_SPEED:
+		return Vector3.ZERO
+	if moved.dot(intended) < 0.0 and moved.length() < _speed_for(direction) * DELIBERATE_SPEED_RATIO:
 		return Vector3.ZERO
 	return moved.normalized() * direction.length()
 

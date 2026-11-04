@@ -17,6 +17,8 @@
 [ext_resource type="PackedScene" path="res://scenes/potions/mana_potion.tscn" id="15_mana_potion"]
 [ext_resource type="PackedScene" path="res://scenes/potions/stamina_potion.tscn" id="16_stamina_potion"]
 [ext_resource type="PackedScene" path="res://scenes/potions/regeneration_potion.tscn" id="17_regeneration_potion"]
+[ext_resource type="Script" path="res://scripts/item_tooltip.gd" id="item_tooltip_script"]
+[ext_resource type="Script" path="res://scripts/interact_prompt.gd" id="interact_prompt_script"]
 
 [sub_resource type="Environment" id="Environment_test"]
 background_mode = 1
@@ -240,7 +242,7 @@ stamina = NodePath("../../Player/Stamina")
 [node name="ItemIcons" type="Node" parent="HUD"]
 script = ExtResource("10_item_icon_renderer")
 
-[node name="Inventory" type="GridContainer" parent="HUD" node_paths=PackedStringArray("inventory", "icon_renderer", "amount_popup", "drinker")]
+[node name="Inventory" type="GridContainer" parent="HUD" node_paths=PackedStringArray("inventory", "icon_renderer", "amount_popup", "drinker", "tooltip")]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -255,6 +257,13 @@ inventory = NodePath("../../Player/Inventory")
 icon_renderer = NodePath("../ItemIcons")
 amount_popup = NodePath("../AmountPopup")
 drinker = NodePath("../../Player")
+tooltip = NodePath("../ItemTooltip")
 
 [node name="AmountPopup" type="PanelContainer" parent="HUD"]
 script = ExtResource("9_amount_popup")
+
+[node name="InteractPrompt" type="PanelContainer" parent="HUD"]
+script = ExtResource("interact_prompt_script")
+
+[node name="ItemTooltip" type="PanelContainer" parent="HUD"]
+script = ExtResource("item_tooltip_script")
