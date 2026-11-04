@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/loot_table.gd" id="1_loot_table"]
+[ext_resource type="Script" path="res://scripts/loot_tier.gd" id="2_loot_tier"]
+[ext_resource type="PackedScene" path="res://scenes/resources/copper_nugget_small.tscn" id="scene_copper_nugget_small"]
+[ext_resource type="PackedScene" path="res://scenes/resources/copper_nugget_medium.tscn" id="scene_copper_nugget_medium"]
+[ext_resource type="PackedScene" path="res://scenes/resources/copper_nugget_large.tscn" id="scene_copper_nugget_large"]
+[ext_resource type="PackedScene" path="res://scenes/resources/iron_nugget_small.tscn" id="scene_iron_nugget_small"]
+[ext_resource type="PackedScene" path="res://scenes/resources/iron_nugget_medium.tscn" id="scene_iron_nugget_medium"]
+[ext_resource type="PackedScene" path="res://scenes/resources/iron_nugget_large.tscn" id="scene_iron_nugget_large"]
+[ext_resource type="PackedScene" path="res://scenes/resources/silver_nugget_small.tscn" id="scene_silver_nugget_small"]
+[ext_resource type="PackedScene" path="res://scenes/resources/silver_nugget_medium.tscn" id="scene_silver_nugget_medium"]
+[ext_resource type="PackedScene" path="res://scenes/resources/silver_nugget_large.tscn" id="scene_silver_nugget_large"]
+[ext_resource type="PackedScene" path="res://scenes/resources/gold_nugget_small.tscn" id="scene_gold_nugget_small"]
+[ext_resource type="PackedScene" path="res://scenes/resources/gold_nugget_medium.tscn" id="scene_gold_nugget_medium"]
+[ext_resource type="PackedScene" path="res://scenes/resources/gold_nugget_large.tscn" id="scene_gold_nugget_large"]
+
+[sub_resource type="Resource" id="tier_copper_iron"]
+script = ExtResource("2_loot_tier")
+weight = 60.0
+items = Array[PackedScene]([ExtResource("scene_copper_nugget_small"), ExtResource("scene_copper_nugget_medium"), ExtResource("scene_copper_nugget_large"), ExtResource("scene_iron_nugget_small"), ExtResource("scene_iron_nugget_medium"), ExtResource("scene_iron_nugget_large")])
+
+[sub_resource type="Resource" id="tier_silver"]
+script = ExtResource("2_loot_tier")
+weight = 30.0
+items = Array[PackedScene]([ExtResource("scene_silver_nugget_small"), ExtResource("scene_silver_nugget_medium"), ExtResource("scene_silver_nugget_large")])
+
+[sub_resource type="Resource" id="tier_gold"]
+script = ExtResource("2_loot_tier")
+weight = 10.0
+items = Array[PackedScene]([ExtResource("scene_gold_nugget_small"), ExtResource("scene_gold_nugget_medium"), ExtResource("scene_gold_nugget_large")])
+
+[resource]
+script = ExtResource("1_loot_table")
+tiers = Array[ExtResource("2_loot_tier")]([SubResource("tier_copper_iron"), SubResource("tier_silver"), SubResource("tier_gold")])
+chance = 0.1

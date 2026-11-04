@@ -10,6 +10,7 @@ radius = 0.18001
 [node name="Coin" type="Area3D"]
 script = ExtResource("2_item_pickup")
 item_name = "Coin"
+max_stack = 25
 full_stack_scene = "res://scenes/resources/coin_stack_small.tscn"
 
 [node name="Model" parent="." instance=ExtResource("1_model")]

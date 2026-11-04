@@ -9,6 +9,7 @@ points = PackedVector3Array(-0.44634, 0.0, -0.50739, -0.44634, 0.0, 0.52672, -0.
 [node name="CoinStackMedium" type="Area3D"]
 script = ExtResource("2_item_pickup")
 item_name = "Coin"
+max_stack = 25
 count = 12
 single_item_scene = "res://scenes/resources/coin.tscn"
 

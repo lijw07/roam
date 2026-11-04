@@ -13,6 +13,8 @@ count = 6
 single_item_scene = "res://scenes/resources/textiles_a.tscn"
 
 [node name="Model" parent="." unique_id=1302532622 instance=ExtResource("1_8k6je")]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=477272111]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 shape = SubResource("ConvexPolygonShape3D_unyc2")

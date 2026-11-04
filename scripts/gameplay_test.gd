@@ -13,7 +13,7 @@ const DEATH_TEXT := "You died   R to try a new dungeon"
 @onready var navigation_region: NavigationRegion3D = $NavigationRegion3D
 @onready var generator: DungeonGenerator = $NavigationRegion3D/DungeonGenerator
 @onready var starting_gear: Node3D = $StartingGear
-@onready var camera_rig: Node3D = $CameraRig
+@onready var camera_rig: ShoulderCamera = $CameraRig
 @onready var camera_pitch: Node3D = $CameraRig/Pitch
 @onready var info: Label = $HUD/Info
 @onready var inventory_ui: Control = $HUD/Inventory
@@ -99,8 +99,9 @@ func _on_inventory_toggled() -> void:
 
 
 func _look(mouse_motion: Vector2) -> void:
-	camera_pitch.rotation.x = clampf(camera_pitch.rotation.x - mouse_motion.y * MOUSE_SENSITIVITY, MIN_PITCH, MAX_PITCH)
-	camera_rig.rotation.y -= mouse_motion.x * MOUSE_SENSITIVITY
+	var sensitivity := MOUSE_SENSITIVITY * camera_rig.look_scale()
+	camera_pitch.rotation.x = clampf(camera_pitch.rotation.x - mouse_motion.y * sensitivity, MIN_PITCH, MAX_PITCH)
+	camera_rig.rotation.y -= mouse_motion.x * sensitivity
 
 
 func _toggle_nearest_door() -> void:

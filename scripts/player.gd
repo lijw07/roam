@@ -33,6 +33,7 @@ const CHAIN_BLEND := 0.2
 const COMBO_GRACE := 0.4
 const LUNGE_DURATION := 0.7
 const THROW_ANIMATION := &"general/Throw"
+const STRIKE_SIGHT_HEIGHT := 1.1
 const USE_ITEM_ANIMATION := &"general/Use_Item"
 const SPAWN_GROUND_ANIMATION := &"general/Spawn_Ground"
 const SPAWN_AIR_ANIMATION := &"general/Spawn_Air"
@@ -196,12 +197,20 @@ func is_acting() -> bool:
 	return _action != &""
 
 
+func is_aiming() -> bool:
+	return _is_aiming()
+
+
 func is_attacking() -> bool:
 	return _attacking and not dead
 
 
 func current_animation() -> StringName:
 	return StringName(animation_player.assigned_animation)
+
+
+func is_performing(animation: StringName) -> bool:
+	return _action == animation
 
 
 func interact() -> void:
@@ -443,9 +452,13 @@ func _strike_with_limbs(damage: float) -> void:
 
 func _strike_all(areas: Array, damage: float, origin: Vector3) -> void:
 	for area in areas:
-		if area is Hurtbox and area not in _struck:
+		if area is Hurtbox and area not in _struck and _can_reach(area as Hurtbox):
 			_struck.append(area)
 			area.receive(Hit.new(damage, self, origin))
+
+
+func _can_reach(target: Hurtbox) -> bool:
+	return target.is_exposed_to(global_position + Vector3.UP * STRIKE_SIGHT_HEIGHT, self)
 
 
 func _center_of(striker: Area3D) -> Vector3:
@@ -568,6 +581,8 @@ func _action_allows_movement() -> bool:
 		return true
 	var weapon := _ranged_weapon()
 	if weapon != null and _action == weapon.aim_animation:
+		return true
+	if _action in [INTERACT_ANIMATION, THROW_ANIMATION]:
 		return true
 	return shield != null and _action in [shield.raise_animation, shield.hit_animation, shield.bash_animation]
 

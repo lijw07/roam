@@ -8,7 +8,7 @@ const CONTROLS := "WASD move   Tab inventory   F pick up   drag out of the inven
 
 @onready var player: CharacterBody3D = $Player
 @onready var item_collector: ItemCollector = $Player/ItemCollector
-@onready var camera_rig: Node3D = $CameraRig
+@onready var camera_rig: ShoulderCamera = $CameraRig
 @onready var camera_pitch: Node3D = $CameraRig/Pitch
 @onready var info: Label = $HUD/Info
 @onready var inventory_ui: Control = $HUD/Inventory
@@ -40,8 +40,9 @@ func _on_inventory_toggled() -> void:
 
 
 func _look(mouse_motion: Vector2) -> void:
-	camera_pitch.rotation.x = clampf(camera_pitch.rotation.x - mouse_motion.y * MOUSE_SENSITIVITY, MIN_PITCH, MAX_PITCH)
-	camera_rig.rotation.y -= mouse_motion.x * MOUSE_SENSITIVITY
+	var sensitivity := MOUSE_SENSITIVITY * camera_rig.look_scale()
+	camera_pitch.rotation.x = clampf(camera_pitch.rotation.x - mouse_motion.y * sensitivity, MIN_PITCH, MAX_PITCH)
+	camera_rig.rotation.y -= mouse_motion.x * sensitivity
 
 
 func _pick_up_prompt() -> String:

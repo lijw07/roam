@@ -28,6 +28,9 @@ max_value = 100.0
 health = NodePath("../Health")
 hurtbox = NodePath("../Hurtbox")
 
+[node name="Hurtbox" parent="."]
+padding = 0.3
+
 [node name="Brain" type="Node3D" parent="."]
 script = ExtResource("80_brain")
 attack_range = 1.3

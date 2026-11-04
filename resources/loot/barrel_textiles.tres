@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/loot_table.gd" id="1_loot_table"]
+[ext_resource type="Script" path="res://scripts/loot_tier.gd" id="2_loot_tier"]
+[ext_resource type="PackedScene" path="res://scenes/resources/textiles_a.tscn" id="scene_textiles_a"]
+[ext_resource type="PackedScene" path="res://scenes/resources/textiles_b.tscn" id="scene_textiles_b"]
+[ext_resource type="PackedScene" path="res://scenes/resources/textiles_c.tscn" id="scene_textiles_c"]
+
+[sub_resource type="Resource" id="tier_textiles"]
+script = ExtResource("2_loot_tier")
+items = Array[PackedScene]([ExtResource("scene_textiles_a"), ExtResource("scene_textiles_b"), ExtResource("scene_textiles_c")])
+
+[resource]
+script = ExtResource("1_loot_table")
+tiers = Array[ExtResource("2_loot_tier")]([SubResource("tier_textiles")])
+chance = 0.1

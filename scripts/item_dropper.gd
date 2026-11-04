@@ -12,21 +12,26 @@ const HEALTH_PATH := ^"Health"
 
 func _ready() -> void:
 	var health := body.get_node(HEALTH_PATH) as Health
-	health.died.connect(_drop_loot, CONNECT_DEFERRED)
+	health.died.connect(_on_died)
 
 
-func _drop_loot() -> void:
+func _on_died() -> void:
+	_drop_loot.call_deferred(body.global_position, body.get_parent())
+
+
+func _drop_loot(origin: Vector3, container: Node) -> void:
 	for loot_table in loot_tables:
-		_drop_item(loot_table.roll())
+		if loot_table.drops():
+			_drop_item(loot_table.roll(), origin, container)
 
 
-func _drop_item(scene: PackedScene) -> void:
+func _drop_item(scene: PackedScene, origin: Vector3, container: Node) -> void:
 	var pickup := scene.instantiate() as ItemPickup
-	body.get_parent().add_child(pickup)
-	pickup.launch(body.global_position + Vector3.UP * release_height, _scattered_landing())
+	container.add_child(pickup)
+	pickup.launch(origin + Vector3.UP * release_height, _scattered_landing(origin))
 
 
-func _scattered_landing() -> Vector3:
+func _scattered_landing(origin: Vector3) -> Vector3:
 	var angle := randf() * TAU
 	var distance := sqrt(randf()) * scatter_radius
-	return body.global_position + Vector3(cos(angle), 0.0, sin(angle)) * distance
+	return origin + Vector3(cos(angle), 0.0, sin(angle)) * distance

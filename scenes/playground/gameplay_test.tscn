@@ -22,12 +22,15 @@
 [ext_resource type="Script" path="res://scripts/inventory_ui.gd" id="20_inventory_ui"]
 [ext_resource type="Script" path="res://scripts/amount_popup.gd" id="21_amount_popup"]
 [ext_resource type="Script" path="res://scripts/loading_cover.gd" id="22_loading_cover"]
+[ext_resource type="Script" path="res://scripts/aim_targeting.gd" id="92_aim_targeting"]
+[ext_resource type="Script" path="res://scripts/crosshair.gd" id="93_crosshair"]
+[ext_resource type="Script" path="res://scripts/shoulder_camera.gd" id="94_shoulder_camera"]
 
 [sub_resource type="Environment" id="Environment_dungeon"]
 background_mode = 1
-background_color = Color(0.08, 0.08, 0.1, 1)
+background_color = Color(0, 0, 0, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.32, 0.32, 0.4, 1)
+ambient_light_color = Color(0.12, 0.12, 0.16, 1)
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_dungeon"]
 geometry_parsed_geometry_type = 1
@@ -39,10 +42,6 @@ script = ExtResource("1_gameplay_test")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_dungeon")
-
-[node name="Sun" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.8660254, -0.43301272, 0.24999999, 0, 0.49999997, 0.86602545, -0.5, -0.75, 0.43301266, 0, 0, 0)
-light_energy = 0.25
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_dungeon")
@@ -80,9 +79,10 @@ difficulty = ExtResource("11_normal")
 script = ExtResource("12_damage_numbers")
 player = NodePath("../Player")
 
-[node name="HitOutlines" type="Node3D" parent="." node_paths=PackedStringArray("player")]
+[node name="HitOutlines" type="Node3D" parent="." node_paths=PackedStringArray("player", "targeting")]
 script = ExtResource("13_hit_outlines")
 player = NodePath("../Player")
+targeting = NodePath("../AimTargeting")
 
 [node name="HitEffects" type="Node3D" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("14_hit_effects")
@@ -96,20 +96,46 @@ player = NodePath("../Player")
 script = ExtResource("16_projectile_warm_up")
 player = NodePath("../Player")
 
-[node name="CameraRig" type="Node3D" parent="."]
+[node name="AimTargeting" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("92_aim_targeting")
+player = NodePath("../Player")
+
+[node name="CameraRig" type="Node3D" parent="." node_paths=PackedStringArray("player", "shoulder_boom", "camera_boom", "camera")]
+script = ExtResource("94_shoulder_camera")
+player = NodePath("../Player")
+shoulder_boom = NodePath("Pitch/ShoulderBoom")
+camera_boom = NodePath("Pitch/ShoulderBoom/CameraBoom")
+camera = NodePath("Pitch/ShoulderBoom/CameraBoom/Camera3D")
 
 [node name="Pitch" type="Node3D" parent="CameraRig"]
 transform = Transform3D(1, 0, 0, 0, 0.9393727, 0.3428978, 0, -0.3428978, 0.9393727, 0, 0, 0)
 
-[node name="CameraBoom" type="SpringArm3D" parent="CameraRig/Pitch"]
+[node name="ShoulderBoom" type="SpringArm3D" parent="CameraRig/Pitch"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0.25, 0)
+script = ExtResource("17_camera_boom")
+spring_length = 0.6
+margin = 0.1
+
+[node name="CameraBoom" type="SpringArm3D" parent="CameraRig/Pitch/ShoulderBoom"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0, 0)
 spring_length = 6.0
 margin = 0.2
 script = ExtResource("17_camera_boom")
 
-[node name="Camera3D" type="Camera3D" parent="CameraRig/Pitch/CameraBoom"]
+[node name="Camera3D" type="Camera3D" parent="CameraRig/Pitch/ShoulderBoom/CameraBoom"]
 fov = 60.0
 
 [node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Crosshair" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+mouse_filter = 2
+script = ExtResource("93_crosshair")
 
 [node name="Info" type="Label" parent="HUD"]
 offset_left = 16.0

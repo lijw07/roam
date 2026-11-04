@@ -1,6 +1,8 @@
 shader_type spatial;
 render_mode unshaded, blend_add;
 
+#include "res://shaders/vfx_occlusion.gdshaderinc"
+
 #include "util/blend_util.gdshaderinc"
 
 group_uniforms Color;
@@ -37,6 +39,9 @@ void vertex() {
 }
 
 void fragment() {
+	if (vfx_covers_player(VERTEX)) {
+		discard;
+	}
 	vec2 centered_uv = UV - 0.5;
 	float angle = (atan(centered_uv.x, centered_uv.y));
 	float radius = length(centered_uv) * 2.0;

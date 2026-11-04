@@ -4,6 +4,7 @@ class_name Enemy
 signal guard_broken
 
 const BLEND_TIME := 0.15
+const CHAIN_BLEND := 0.2
 const AIRBORNE_DELAY := 0.15
 const REACTION_BLEND_IN := 0.06
 const DEATH_BLEND_IN := 0.2
@@ -28,6 +29,8 @@ const FORWARD_ARC := deg_to_rad(50.0)
 const BACKWARD_ARC := deg_to_rad(130.0)
 const AIM_HEIGHT := 1.1
 const UNARMED_PROJECTILE_ORIGIN := Vector3(0.0, 1.4, 0.5)
+const CORPSE_SINK_DEPTH := 1.5
+const CORPSE_SINK_TIME := 2.0
 
 @export var threat := 2
 @export var walk_speed := 3.0
@@ -36,6 +39,7 @@ const UNARMED_PROJECTILE_ORIGIN := Vector3(0.0, 1.4, 0.5)
 @export var turn_speed := 8.0
 @export var attack_turn_speed := 5.0
 @export var gravity_multiplier := 2.0
+@export var corpse_lifetime := 20.0
 
 @export_group("Animations")
 @export var idle_animation: StringName = &"general/Idle_A"
@@ -68,12 +72,12 @@ var running := false
 var dead := false
 var focus: Node3D = null
 var rest_facing := Vector3.ZERO
+var heading := Vector3.ZERO
 
 var _air_time := 0.0
 var _reaction: StringName = &""
 var _attack_step: AttackStep = null
-var _queued_step: AttackStep = null
-var _windup_speed := 1.0
+var _queued_steps: Array[AttackStep] = []
 var _projectile_fired := false
 var _struck: Array[Hurtbox] = []
 var _guarding := false
@@ -129,22 +133,29 @@ func is_ranged() -> bool:
 	return projectile != null
 
 
-func attack(step: AttackStep, windup_speed := 1.0) -> bool:
-	if not can_act() or step == null:
+func attack(steps: Array[AttackStep]) -> bool:
+	if not can_act() or steps.is_empty():
 		return false
 	lower_guard()
-	_windup_speed = windup_speed
-	_queued_step = step if lead_in != null else null
-	_begin_step(lead_in if lead_in != null else step)
+	_queued_steps = _with_lead_in(steps)
+	_begin_step(_queued_steps.pop_front(), 0.0, BLEND_TIME)
 	return true
 
 
-func _begin_step(step: AttackStep) -> void:
+func _with_lead_in(steps: Array[AttackStep]) -> Array[AttackStep]:
+	var sequence: Array[AttackStep] = []
+	if lead_in != null:
+		sequence.append(lead_in)
+	sequence.append_array(steps)
+	return sequence
+
+
+func _begin_step(step: AttackStep, from: float, blend: float) -> void:
 	_attack_step = step
 	_projectile_fired = false
 	_struck.clear()
-	animation_player.play(step.animation, BLEND_TIME)
-	animation_player.speed_scale = _windup_speed
+	animation_player.play(step.animation, blend)
+	animation_player.seek(from, true)
 
 
 func raise_guard() -> bool:
@@ -225,6 +236,14 @@ func _play_death() -> void:
 	collision_layer = 0
 	_interrupt()
 	_react(DEATH_POSES.keys().pick_random(), DEATH_BLEND_IN)
+	_despawn_later()
+
+
+func _despawn_later() -> void:
+	var tween := create_tween()
+	tween.tween_interval(corpse_lifetime)
+	tween.tween_property(self, "position:y", -CORPSE_SINK_DEPTH, CORPSE_SINK_TIME).as_relative()
+	tween.tween_callback(queue_free)
 
 
 func _interrupt() -> void:
@@ -234,17 +253,12 @@ func _interrupt() -> void:
 
 func _end_attack() -> void:
 	_attack_step = null
-	_queued_step = null
-	animation_player.speed_scale = 1.0
+	_queued_steps.clear()
 
 
-func _advance_attack() -> void:
-	if _queued_step == null:
-		_finish_attack()
-		return
-	var next := _queued_step
-	_queued_step = null
-	_begin_step(next)
+func _chain_next_step() -> void:
+	var next: AttackStep = _queued_steps.pop_front()
+	_begin_step(next, next.chain_start, CHAIN_BLEND)
 
 
 func _finish_attack() -> void:
@@ -256,12 +270,10 @@ func _update_attack(delta: float) -> void:
 	var time := animation_player.current_animation_position
 	if time < _strike_start():
 		_turn_toward_focus(delta, attack_turn_speed)
-	else:
-		animation_player.speed_scale = 1.0
 	_strike_targets(time)
 	_fire_projectile_when_due(time)
-	if _attack_step != null and time >= _attack_step.window_end:
-		_advance_attack()
+	if _attack_step != null and not _queued_steps.is_empty() and time >= _attack_step.combo_time:
+		_chain_next_step()
 
 
 func _strike_start() -> float:
@@ -287,7 +299,7 @@ func _prepare_strikes() -> void:
 
 
 func reaches(target: Hurtbox) -> bool:
-	return target != null and target in _hurtboxes_in_reach()
+	return target != null and target in _hurtboxes_in_reach() and target.is_exposed_to(_strike_center(), self)
 
 
 func _hurtboxes_in_reach() -> Array[Hurtbox]:
@@ -315,7 +327,9 @@ func _strike_targets(time: float) -> void:
 
 
 func _can_strike(target: Hurtbox) -> bool:
-	return target != hurtbox and target not in _struck and not (target.get_parent() is Enemy) and _in_strike_arc(target)
+	if target == hurtbox or target in _struck or target.get_parent() is Enemy:
+		return false
+	return _in_strike_arc(target) and target.is_exposed_to(_strike_center(), self)
 
 
 func _in_strike_arc(target: Hurtbox) -> bool:
@@ -396,8 +410,10 @@ func _travel(delta: float) -> void:
 	_apply_gravity(delta)
 	_step_up_if_blocked(Vector3(velocity.x, 0.0, velocity.z) * delta)
 	move_and_slide()
-	var motion := _actual_motion(direction)
-	_face(_facing_direction(motion), delta, turn_speed)
+	var intended := heading
+	heading = Vector3.ZERO
+	var motion := _actual_motion(direction, intended)
+	_face(_facing_direction(motion, intended), delta, turn_speed)
 	var clip := _locomotion_animation(motion)
 	_play(clip, BLEND_TIME, strafe_animation_speed if clip in [STRAFE_LEFT_ANIMATION, STRAFE_RIGHT_ANIMATION] else 1.0)
 
@@ -428,9 +444,9 @@ func _hold_guard(delta: float) -> void:
 		_play(guard_hold_animation)
 
 
-func _actual_motion(direction: Vector3) -> Vector3:
+func _actual_motion(direction: Vector3, intended: Vector3) -> Vector3:
 	var moved := _flat(get_real_velocity())
-	if moved.length() < BLOCKED_SPEED:
+	if moved.length() < BLOCKED_SPEED or moved.dot(intended) < 0.0:
 		return Vector3.ZERO
 	return moved.normalized() * direction.length()
 
@@ -449,12 +465,12 @@ func _faces_focus(direction: Vector3) -> bool:
 	return is_instance_valid(focus) and (not running or direction.is_zero_approx())
 
 
-func _facing_direction(direction: Vector3) -> Vector3:
+func _facing_direction(direction: Vector3, intended: Vector3) -> Vector3:
 	if _faces_focus(direction):
 		return _flat(focus.global_position - global_position)
-	if direction.is_zero_approx():
-		return rest_facing
-	return direction
+	if not direction.is_zero_approx():
+		return direction
+	return rest_facing if not rest_facing.is_zero_approx() else intended
 
 
 func _turn_toward_focus(delta: float, speed: float) -> void:
@@ -540,7 +556,10 @@ func _recover_from_reaction_when_due() -> void:
 
 func _on_animation_finished(animation: StringName) -> void:
 	if _attack_step != null and animation == _attack_step.animation:
-		_advance_attack()
+		if _queued_steps.is_empty():
+			_finish_attack()
+		else:
+			_chain_next_step()
 		return
 	if _guarding and animation == guard_raise_animation:
 		_guard_ready = true
@@ -594,7 +613,7 @@ func _face(direction: Vector3, delta: float, speed: float) -> void:
 	if direction.is_zero_approx():
 		return
 	var target_yaw := atan2(direction.x, direction.z)
-	rotation.y = lerp_angle(rotation.y, target_yaw, 1.0 - exp(-speed * delta))
+	global_rotation.y = lerp_angle(global_rotation.y, target_yaw, 1.0 - exp(-speed * delta))
 
 
 func _locomotion_animation(direction: Vector3) -> StringName:

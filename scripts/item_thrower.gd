@@ -23,7 +23,7 @@ func _ready() -> void:
 
 func _on_thrown(scene_path: String, count: int) -> void:
 	body.throw()
-	if body.current_animation() == THROW_ANIMATION:
+	if body.is_performing(THROW_ANIMATION):
 		await get_tree().create_timer(RELEASE_TIME, false, true).timeout
 	_release(scene_path, count)
 
@@ -44,7 +44,7 @@ func _create_pickup(scene_path: String, count: int) -> ItemPickup:
 func _single_or_pile(scene_path: String, count: int) -> ItemPickup:
 	var item := _instantiate(scene_path)
 	item.count = count
-	if count < inventory.max_stack or item.full_stack_scene.is_empty():
+	if count < item.max_stack or item.full_stack_scene.is_empty():
 		return item
 	var pile := _instantiate(item.full_stack_scene)
 	pile.item_name = item.item_name

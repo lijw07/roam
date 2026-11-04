@@ -13,6 +13,7 @@ const CATCH_DISTANCE := 0.3
 @export var item_name := ""
 @export var auto_pick_up := true
 @export var count := 1
+@export var max_stack := 6
 @export_file("*.tscn") var full_stack_scene := ""
 @export_file("*.tscn") var single_item_scene := ""
 

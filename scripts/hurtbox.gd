@@ -6,9 +6,12 @@ signal blocked(hit: Hit)
 
 const LAYER := 2
 const GROUP := &"hurtboxes"
+const WORLD_LAYER := 1
+const SIGHT_PASSES := 4
 
 @export var health: Health
 @export var body: CollisionObject3D
+@export var padding := 0.0
 
 var block_check := Callable()
 
@@ -38,6 +41,23 @@ func receive(hit: Hit) -> void:
 		blocked.emit(hit)
 		return
 	hit_taken.emit(hit, health.take_damage(hit.amount, hit.attacker))
+
+
+func is_exposed_to(origin: Vector3, attacker: CollisionObject3D) -> bool:
+	var query := PhysicsRayQueryParameters3D.create(origin, bounds().get_center(), 1 << (WORLD_LAYER - 1))
+	var excluded: Array[RID] = [attacker.get_rid()]
+	if is_instance_valid(body):
+		excluded.append(body.get_rid())
+	var space := get_world_3d().direct_space_state
+	for _pass in SIGHT_PASSES:
+		query.exclude = excluded
+		var hit := space.intersect_ray(query)
+		if hit.is_empty():
+			return true
+		if hit.collider is StaticBody3D:
+			return false
+		excluded.append(hit.rid)
+	return true
 
 
 func top() -> Vector3:
@@ -71,6 +91,27 @@ func _copy_shapes_of(source: CollisionObject3D) -> void:
 		if source_shape.disabled or source_shape.shape == null:
 			continue
 		var copy := CollisionShape3D.new()
-		copy.shape = source_shape.shape
+		copy.shape = _padded(source_shape.shape)
 		add_child(copy)
 		copy.global_transform = source_shape.global_transform
+
+
+func _padded(shape: Shape3D) -> Shape3D:
+	if padding <= 0.0:
+		return shape
+	var padded: Shape3D = shape.duplicate()
+	if padded is CapsuleShape3D:
+		var capsule := padded as CapsuleShape3D
+		capsule.radius += padding
+		capsule.height += padding * 2.0
+	elif padded is CylinderShape3D:
+		var cylinder := padded as CylinderShape3D
+		cylinder.radius += padding
+		cylinder.height += padding * 2.0
+	elif padded is SphereShape3D:
+		var sphere := padded as SphereShape3D
+		sphere.radius += padding
+	elif padded is BoxShape3D:
+		var box := padded as BoxShape3D
+		box.size += Vector3.ONE * padding * 2.0
+	return padded
