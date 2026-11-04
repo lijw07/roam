@@ -11,6 +11,8 @@ script = ExtResource("2_item_pickup")
 item_name = "Stone Chunks Small"
 
 [node name="Model" parent="." unique_id=828241392 instance=ExtResource("1_vm405")]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1121068427]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 shape = SubResource("ConvexPolygonShape3D_t011h")

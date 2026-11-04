@@ -143,11 +143,6 @@ func get_pieces() -> Array[DungeonPiece]:
 	return _pieces
 
 
-## The piece on the other side of an exit, or null if nothing connects there.
-func get_linked_piece(exit: Marker3D) -> DungeonPiece:
-	return _owner(_links[exit]) if _links.has(exit) else null
-
-
 ## Where the player should start: the start room's SpawnPoint.
 func get_spawn_position() -> Vector3:
 	if start_room == null:

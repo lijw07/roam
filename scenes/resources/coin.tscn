@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/dungeon/loot/coin.gltf" id="1_model"]
+[ext_resource type="Script" path="res://scripts/item_pickup.gd" id="2_item_pickup"]
+
+[sub_resource type="CylinderShape3D" id="Shape_coin"]
+height = 0.12501
+radius = 0.18001
+
+[node name="Coin" type="Area3D"]
+script = ExtResource("2_item_pickup")
+item_name = "Coin"
+max_stack = 25
+full_stack_scene = "res://scenes/resources/coin_stack_small.tscn"
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
+shape = SubResource("Shape_coin")

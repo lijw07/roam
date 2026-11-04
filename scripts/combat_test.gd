@@ -15,10 +15,10 @@ const POTIONS := {
 	KEY_3: preload("res://resources/potions/stamina_potion.tres"),
 	KEY_4: preload("res://resources/potions/regeneration_potion.tres"),
 }
-const CONTROLS := "WASD move   Shift run   Space jump   Alt dodge   LMB attack   RMB block / aim / cast   F pick up   R reset arena   Esc free mouse\n1 health potion   2 mana potion   3 stamina potion   4 regeneration potion   5 take %d damage   6 spend %d mana   7 spend %d stamina"
+const CONTROLS := "WASD move   Shift run   Space jump   LMB attack   RMB block / aim / cast   F pick up   R reset arena   Esc free mouse\n1 health potion   2 mana potion   3 stamina potion   4 regeneration potion   5 take %d damage   6 spend %d mana   7 spend %d stamina"
 
 @onready var player: CharacterBody3D = $Player
-@onready var camera_rig: Node3D = $CameraRig
+@onready var camera_rig: ShoulderCamera = $CameraRig
 @onready var camera_pitch: Node3D = $CameraRig/Pitch
 @onready var info: Label = $HUD/Info
 @onready var weapons: Node3D = $Weapons
@@ -64,8 +64,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _look(mouse_motion: Vector2) -> void:
-	camera_pitch.rotation.x = clampf(camera_pitch.rotation.x - mouse_motion.y * MOUSE_SENSITIVITY, MIN_PITCH, MAX_PITCH)
-	camera_rig.rotation.y -= mouse_motion.x * MOUSE_SENSITIVITY
+	var sensitivity := MOUSE_SENSITIVITY * camera_rig.look_scale()
+	camera_pitch.rotation.x = clampf(camera_pitch.rotation.x - mouse_motion.y * sensitivity, MIN_PITCH, MAX_PITCH)
+	camera_rig.rotation.y -= mouse_motion.x * sensitivity
 
 
 func _take_test_hit() -> void:

@@ -7,6 +7,10 @@
 [ext_resource type="Script" path="res://scripts/attack_step.gd" id="81_attack_step"]
 [ext_resource type="Resource" path="res://resources/attacks/unarmed/punch.tres" id="82_punch"]
 [ext_resource type="Resource" path="res://resources/attacks/unarmed/kick.tres" id="83_kick"]
+[ext_resource type="Script" path="res://scripts/item_dropper.gd" id="95_item_dropper"]
+[ext_resource type="Script" path="res://scripts/loot_table.gd" id="96_loot_table"]
+[ext_resource type="Resource" path="res://resources/loot/enemy_resources.tres" id="97_enemy_resources"]
+[ext_resource type="Resource" path="res://resources/loot/enemy_coins.tres" id="98_enemy_coins"]
 
 [node name="SkeletonMinion" instance=ExtResource("1_base")]
 script = ExtResource("2_enemy")
@@ -24,11 +28,18 @@ max_value = 100.0
 health = NodePath("../Health")
 hurtbox = NodePath("../Hurtbox")
 
+[node name="Hurtbox" parent="."]
+padding = 0.3
+
 [node name="Brain" type="Node3D" parent="."]
 script = ExtResource("80_brain")
 attack_range = 1.3
 circle_distance = 3.0
 attack_cooldown = 1.2
 block_skill = 0.6
+
+[node name="ItemDropper" type="Node" parent="."]
+script = ExtResource("95_item_dropper")
+loot_tables = Array[ExtResource("96_loot_table")]([ExtResource("97_enemy_resources"), ExtResource("98_enemy_coins")])
 
 [editable path="Model"]

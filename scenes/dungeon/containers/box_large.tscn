@@ -4,6 +4,9 @@
 [ext_resource type="Script" path="res://scripts/breakable.gd" id="90_breakable"]
 [ext_resource type="Script" path="res://scripts/health.gd" id="91_health"]
 [ext_resource type="Script" path="res://scripts/hurtbox.gd" id="92_hurtbox"]
+[ext_resource type="Script" path="res://scripts/item_dropper.gd" id="93_item_dropper"]
+[ext_resource type="Script" path="res://scripts/loot_table.gd" id="94_loot_table"]
+[ext_resource type="Resource" path="res://resources/loot/breakable_planks.tres" id="95_breakable_planks"]
 
 [node name="BoxLarge" instance=ExtResource("1_model")]
 script = ExtResource("90_breakable")
@@ -15,3 +18,7 @@ max_value = 35.0
 [node name="Hurtbox" type="Area3D" parent="." node_paths=PackedStringArray("health")]
 script = ExtResource("92_hurtbox")
 health = NodePath("../Health")
+
+[node name="ItemDropper" type="Node" parent="."]
+script = ExtResource("93_item_dropper")
+loot_tables = Array[ExtResource("94_loot_table")]([ExtResource("95_breakable_planks")])

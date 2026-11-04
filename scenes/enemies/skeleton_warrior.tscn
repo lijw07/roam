@@ -10,6 +10,10 @@
 [ext_resource type="Resource" path="res://resources/attacks/one_handed/slice_horizontal.tres" id="82_slice_horizontal"]
 [ext_resource type="Resource" path="res://resources/attacks/one_handed/stab.tres" id="83_stab"]
 [ext_resource type="Resource" path="res://resources/attacks/one_handed/chop.tres" id="84_chop"]
+[ext_resource type="Script" path="res://scripts/item_dropper.gd" id="95_item_dropper"]
+[ext_resource type="Script" path="res://scripts/loot_table.gd" id="96_loot_table"]
+[ext_resource type="Resource" path="res://resources/loot/enemy_resources.tres" id="97_enemy_resources"]
+[ext_resource type="Resource" path="res://resources/loot/enemy_coins.tres" id="98_enemy_coins"]
 
 [node name="SkeletonWarrior" instance=ExtResource("1_base")]
 script = ExtResource("2_enemy")
@@ -18,7 +22,6 @@ idle_animation = &"general/Idle_A"
 attacks = Array[ExtResource("81_attack_step")]([ExtResource("82_slice_horizontal"), ExtResource("83_stab"), ExtResource("84_chop")])
 attack_reach = 2.1
 attack_damage = 14.0
-block_stamina_per_damage = 0.6
 
 [node name="HandslotRSkeletonBlade" type="BoneAttachment3D" parent="Model/Rig_Medium/Skeleton3D"]
 bone_name = "handslot.r"
@@ -38,11 +41,18 @@ max_value = 200.0
 health = NodePath("../Health")
 hurtbox = NodePath("../Hurtbox")
 
+[node name="Hurtbox" parent="."]
+padding = 0.3
+
 [node name="Brain" type="Node3D" parent="."]
 script = ExtResource("80_brain")
 attack_range = 1.8
 circle_distance = 3.0
 attack_cooldown = 1.8
 block_skill = 1.5
+
+[node name="ItemDropper" type="Node" parent="."]
+script = ExtResource("95_item_dropper")
+loot_tables = Array[ExtResource("96_loot_table")]([ExtResource("97_enemy_resources"), ExtResource("98_enemy_coins")])
 
 [editable path="Model"]

@@ -73,6 +73,10 @@
 [ext_resource type="Script" path="res://scripts/projectile_warm_up.gd" id="71_projectile_warm_up"]
 [ext_resource type="Script" path="res://scripts/loading_cover.gd" id="72_loading_cover"]
 [ext_resource type="Script" path="res://scripts/camera_boom.gd" id="90_camera_boom"]
+[ext_resource type="Script" path="res://scripts/aim_targeting.gd" id="92_aim_targeting"]
+[ext_resource type="Script" path="res://scripts/crosshair.gd" id="93_crosshair"]
+[ext_resource type="Script" path="res://scripts/shoulder_camera.gd" id="94_shoulder_camera"]
+[ext_resource type="Script" path="res://scripts/render_warm_up.gd" id="90_render_warm_up"]
 
 [sub_resource type="Environment" id="Environment_arena"]
 background_mode = 1
@@ -807,9 +811,10 @@ modulate = Color(1, 0.88, 0.6, 1)
 script = ExtResource("3_damage_numbers")
 player = NodePath("../Player")
 
-[node name="HitOutlines" type="Node3D" parent="." node_paths=PackedStringArray("player")]
+[node name="HitOutlines" type="Node3D" parent="." node_paths=PackedStringArray("player", "targeting")]
 script = ExtResource("4_hit_outlines")
 player = NodePath("../Player")
+targeting = NodePath("../AimTargeting")
 
 [node name="HitEffects" type="Node3D" parent="." node_paths=PackedStringArray("player")]
 script = ExtResource("69_hit_effects")
@@ -823,21 +828,47 @@ player = NodePath("../Player")
 script = ExtResource("71_projectile_warm_up")
 player = NodePath("../Player")
 
-[node name="CameraRig" type="Node3D" parent="."]
+[node name="AimTargeting" type="Node" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("92_aim_targeting")
+player = NodePath("../Player")
+
+[node name="CameraRig" type="Node3D" parent="." node_paths=PackedStringArray("player", "shoulder_boom", "camera_boom", "camera")]
+script = ExtResource("94_shoulder_camera")
+player = NodePath("../Player")
+shoulder_boom = NodePath("Pitch/ShoulderBoom")
+camera_boom = NodePath("Pitch/ShoulderBoom/CameraBoom")
+camera = NodePath("Pitch/ShoulderBoom/CameraBoom/Camera3D")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
 
 [node name="Pitch" type="Node3D" parent="CameraRig"]
 transform = Transform3D(1, 0, 0, 0, 0.9393727, 0.3428978, 0, -0.3428978, 0.9393727, 0, 0, 0)
 
-[node name="CameraBoom" type="SpringArm3D" parent="CameraRig/Pitch"]
+[node name="ShoulderBoom" type="SpringArm3D" parent="CameraRig/Pitch"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0.25, 0)
+script = ExtResource("90_camera_boom")
+spring_length = 0.6
+margin = 0.1
+
+[node name="CameraBoom" type="SpringArm3D" parent="CameraRig/Pitch/ShoulderBoom"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 0, 0)
 script = ExtResource("90_camera_boom")
 spring_length = 6.0
 margin = 0.2
 
-[node name="Camera3D" type="Camera3D" parent="CameraRig/Pitch/CameraBoom"]
+[node name="Camera3D" type="Camera3D" parent="CameraRig/Pitch/ShoulderBoom/CameraBoom"]
 fov = 60.0
 
 [node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Crosshair" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+mouse_filter = 2
+script = ExtResource("93_crosshair")
 
 [node name="Info" type="Label" parent="HUD"]
 offset_left = 16.0
@@ -849,6 +880,9 @@ theme_override_constants/outline_size = 6
 health = NodePath("../../Player/Health")
 mana = NodePath("../../Player/Mana")
 stamina = NodePath("../../Player/Stamina")
+
+[node name="RenderWarmUp" type="Node3D" parent="."]
+script = ExtResource("90_render_warm_up")
 
 [node name="LoadingCover" type="CanvasLayer" parent="."]
 layer = 100

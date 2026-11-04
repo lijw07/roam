@@ -35,6 +35,9 @@ const PRESSURE_GUARD_BONUS := 0.25
 const PRESSURE_RETREAT_HITS := 2
 const SIDESTEP_DISTANCE := 2.0
 const ROAM_POINT_TIMEOUT := 8.0
+const ATTACK_FACING_TOLERANCE := deg_to_rad(20.0)
+const REACHABLE_TOLERANCE := 0.75
+const REACHABLE_HEIGHT := 0.6
 const REPATH_INTERVAL := 0.5
 const MAX_SNAP_DISTANCE := 2.0
 const PATH_LOOK_AHEAD := 0.8
@@ -42,6 +45,11 @@ const FREE_LOOK_AHEAD := 1.4
 const STUCK_CHECK_INTERVAL := 0.5
 const STUCK_PROGRESS := 0.2
 const DETOUR_TIME := 0.6
+const REACH_SETTLE_TIME := 0.4
+const REACHABILITY_CHECK_INTERVAL := 0.3
+const QUEUE_DISTANCE := 1.8
+const QUEUE_ARC := deg_to_rad(40.0)
+const QUEUE_RECHECK_TIME := 0.4
 
 @export var sight_range := 9.0
 @export_range(0.0, 360.0) var sight_arc_degrees := 140.0
@@ -69,7 +77,6 @@ var _cooldown := 0.0
 var _guard_cooldown := 0.0
 var _guard_delay := -1.0
 var _sight_timer := 0.0
-var _combo_count := 0
 var _last_threat_time := -INF
 var _threat_animation: StringName = &""
 var _recent_hits: Array[float] = []
@@ -90,6 +97,10 @@ var _unseen_time := 0.0
 var _pursuit_timer := 0.0
 var _circling := false
 var _last_move_time := -INF
+var _reachable_time := 0.0
+var _reachability_checked_at := -INF
+var _target_was_reachable := true
+var _queued_until := -INF
 var _sight_ray := PhysicsRayQueryParameters3D.new()
 var _shot_ray := PhysicsRayQueryParameters3D.new()
 
@@ -127,6 +138,7 @@ func _physics_process(delta: float) -> void:
 	_watch_target_attacks(delta)
 	if state in [State.ENGAGE, State.APPROACH, State.RECOVER]:
 		_keep_track_of_target(delta)
+		_track_reachability(delta)
 	match state:
 		State.IDLE:
 			_roam(delta)
@@ -147,6 +159,7 @@ func _physics_process(delta: float) -> void:
 func engage() -> void:
 	if state in [State.IDLE, State.RETURN] and not enemy.dead:
 		_unseen_time = 0.0
+		_reachable_time = REACH_SETTLE_TIME
 		_enter(State.ENGAGE)
 
 
@@ -159,7 +172,11 @@ func is_ranged() -> bool:
 
 
 func wants_token() -> bool:
-	return state == State.ENGAGE and _cooldown <= 0.0 and _guard_delay < 0.0 and enemy.can_act() and _distance_to_target() <= circle_distance + attack_range
+	if state != State.ENGAGE or _cooldown > 0.0 or _guard_delay >= 0.0:
+		return false
+	if not enemy.can_act() or not enemy.has_attack_stamina():
+		return false
+	return _distance_to_target() <= circle_distance + attack_range and (is_ranged() or _can_get_at_target())
 
 
 func waiting_time() -> float:
@@ -301,13 +318,29 @@ func _watch_for_target(delta: float) -> void:
 		_director.alert(self)
 
 
+func _track_reachability(delta: float) -> void:
+	_reachable_time = _reachable_time + delta if _can_get_at_target() else 0.0
+
+
+func _waits_for_opening() -> bool:
+	return not is_ranged() and _reachable_time < REACH_SETTLE_TIME
+
+
+func _watch_from_here() -> void:
+	enemy.focus = _target()
+	enemy.running = false
+	enemy.move_direction = Vector3.ZERO
+
+
 func _hold_position_in_ring() -> void:
+	if _waits_for_opening():
+		_watch_from_here()
+		return
 	var slot := _director.slot_for(self)
 	_update_ring_pace(_flat(slot - enemy.global_position).length())
 	enemy.focus = _target() if _circling and _distance_to_target() <= FOCUS_DISTANCE else null
 	_move_to(slot, _running_to_slot)
 	if _director.holds_token(self):
-		_combo_count = 0
 		_enter(State.APPROACH)
 
 
@@ -324,15 +357,46 @@ func _update_ring_pace(distance: float) -> void:
 
 func _close_in() -> void:
 	enemy.focus = _target()
-	if _state_time > APPROACH_TIMEOUT:
+	if _state_time > APPROACH_TIMEOUT or not enemy.has_attack_stamina():
 		_enter(State.ENGAGE)
 		return
 	if is_ranged():
 		_find_a_shot()
-	elif _distance_to_target() <= attack_range:
+	elif _distance_to_target() <= attack_range or enemy.reaches(_target_hurtbox()):
 		_start_attack()
+	elif not _target_reachable():
+		_enter(State.ENGAGE)
 	else:
 		_move_to(_target().global_position, true, false)
+
+
+func _can_get_at_target() -> bool:
+	return _target_reachable() or enemy.reaches(_target_hurtbox())
+
+
+func _target_reachable() -> bool:
+	if _clock - _reachability_checked_at >= REACHABILITY_CHECK_INTERVAL:
+		_reachability_checked_at = _clock
+		_target_was_reachable = _has_path_to(_target().global_position)
+	return _target_was_reachable
+
+
+func _has_path_to(target: Vector3) -> bool:
+	if not _navigation_ready():
+		return true
+	var map := _agent.get_navigation_map()
+	var closest := NavigationServer3D.map_get_closest_point(map, target)
+	var gap := _flat(closest - target).length()
+	if gap > MAX_SNAP_DISTANCE:
+		return true
+	if gap > REACHABLE_TOLERANCE or absf(closest.y - target.y) > REACHABLE_HEIGHT:
+		return false
+	var path := NavigationServer3D.map_get_path(map, enemy.global_position, closest, true)
+	return not path.is_empty() and path[path.size() - 1].distance_to(closest) <= REACHABLE_TOLERANCE
+
+
+func _target_hurtbox() -> Hurtbox:
+	return _target().get("hurtbox") as Hurtbox
 
 
 func _find_a_shot() -> void:
@@ -346,29 +410,42 @@ func _find_a_shot() -> void:
 
 func _start_attack() -> void:
 	enemy.move_direction = Vector3.ZERO
-	if enemy.attack(enemy.attacks.pick_random(), _director.difficulty.windup_speed):
+	enemy.running = false
+	if not _faces_target():
+		return
+	if enemy.attack(_attack_sequence()):
 		_enter(State.ATTACK)
+
+
+func _attack_sequence() -> Array[AttackStep]:
+	var first := randi() % enemy.attacks.size()
+	var sequence: Array[AttackStep] = [enemy.attacks[first]]
+	while not is_ranged() and sequence.size() <= MAX_COMBO and randf() < _director.difficulty.combo_chance:
+		sequence.append(enemy.attacks[(first + sequence.size()) % enemy.attacks.size()])
+	return sequence
+
+
+func _faces_target() -> bool:
+	var to_target := _flat(_target().global_position - enemy.global_position)
+	var facing := _flat(enemy.global_basis.z)
+	return to_target.is_zero_approx() or facing.angle_to(to_target) <= ATTACK_FACING_TOLERANCE
 
 
 func _follow_through() -> void:
 	enemy.move_direction = Vector3.ZERO
 	if enemy.is_attacking():
 		return
-	if _wants_combo() and enemy.attack(enemy.attacks.pick_random(), _director.difficulty.windup_speed):
-		_combo_count += 1
-		return
 	_cooldown = attack_cooldown
 	_enter(State.RECOVER)
 
 
-func _wants_combo() -> bool:
-	return not is_ranged() and enemy.can_act() and _combo_count < MAX_COMBO and _distance_to_target() <= attack_range and randf() < _director.difficulty.combo_chance
-
-
 func _back_off() -> void:
 	enemy.focus = _target()
-	var away := _flat(enemy.global_position - _target().global_position).normalized()
-	_move_to(_target().global_position + away * circle_distance, false)
+	if _waits_for_opening():
+		_watch_from_here()
+	else:
+		var away := _flat(enemy.global_position - _target().global_position).normalized()
+		_move_to(_target().global_position + away * circle_distance, false)
 	if _state_time >= _director.difficulty.recover_time:
 		_enter(State.ENGAGE)
 
@@ -468,6 +545,10 @@ func _move_to(goal: Vector3, run: bool, arrive := true) -> void:
 		return
 	var waypoint := _next_waypoint(reachable)
 	var desired := _flat(waypoint - enemy.global_position).normalized()
+	if _waits_in_queue(desired):
+		_watch_from_here()
+		return
+	enemy.heading = desired
 	if arrive:
 		desired *= clampf(distance / SLOW_DISTANCE, MIN_THROTTLE, 1.0)
 	_steering.look_ahead = FREE_LOOK_AHEAD if waypoint.is_equal_approx(reachable) else PATH_LOOK_AHEAD
@@ -475,10 +556,16 @@ func _move_to(goal: Vector3, run: bool, arrive := true) -> void:
 
 
 func _reachable(goal: Vector3) -> Vector3:
+	if not _navigation_ready():
+		return goal
 	var closest := NavigationServer3D.map_get_closest_point(_agent.get_navigation_map(), goal)
 	if _flat(closest - goal).length() > MAX_SNAP_DISTANCE:
 		return goal
 	return Vector3(closest.x, goal.y, closest.z)
+
+
+func _navigation_ready() -> bool:
+	return NavigationServer3D.map_get_iteration_id(_agent.get_navigation_map()) > 0
 
 
 func _detoured(desired: Vector3) -> Vector3:
@@ -497,10 +584,35 @@ func _track_progress(desired: Vector3) -> void:
 	if _clock - _stuck_check_time < STUCK_CHECK_INTERVAL:
 		return
 	if _flat(enemy.global_position - _stuck_check_position).length() < STUCK_PROGRESS and _detour_time <= 0.0:
-		_detour_time = DETOUR_TIME
-		_detour_sign = -_detour_sign
-		_last_repath_time = -INF
+		_get_unstuck(desired)
 	_restart_progress_check()
+
+
+func _get_unstuck(desired: Vector3) -> void:
+	if _ally_blocks_way(desired):
+		_queued_until = _clock + QUEUE_RECHECK_TIME
+		return
+	_detour_time = DETOUR_TIME
+	_detour_sign = -_detour_sign
+	_last_repath_time = -INF
+
+
+func _waits_in_queue(desired: Vector3) -> bool:
+	if _clock >= _queued_until:
+		return false
+	if not _ally_blocks_way(desired):
+		_queued_until = -INF
+		return false
+	_queued_until = maxf(_queued_until, _clock + QUEUE_RECHECK_TIME)
+	return true
+
+
+func _ally_blocks_way(desired: Vector3) -> bool:
+	for ally in _director.allies_near(self, QUEUE_DISTANCE):
+		var offset := _flat(ally.global_position - enemy.global_position)
+		if not offset.is_zero_approx() and offset.angle_to(desired) <= QUEUE_ARC:
+			return true
+	return false
 
 
 func _restart_progress_check() -> void:
