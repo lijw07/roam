@@ -17,6 +17,9 @@ const DEATH_POSES := {
 const MAIN_HAND := &"handslot.r"
 const STRIKE_HEIGHT := 1.1
 const BLOCKED_SPEED := 0.4
+const STEP_HEIGHT := 0.35
+const STEP_PROBE := 0.15
+const STEP_SNAP_MARGIN := 0.05
 const STRIKE_ORIGIN_OFFSET := 0.5
 const STRAFE_LEFT_ANIMATION := &"movement_advanced/Running_Strafe_Left"
 const STRAFE_RIGHT_ANIMATION := &"movement_advanced/Running_Strafe_Right"
@@ -82,6 +85,7 @@ var _strike_query := PhysicsShapeQueryParameters3D.new()
 
 func _ready() -> void:
 	_main_hand = _find_main_hand()
+	floor_snap_length = STEP_HEIGHT + STEP_SNAP_MARGIN
 	_disable_held_collision()
 	_prepare_strikes()
 	_prepare_flinches()
@@ -282,17 +286,32 @@ func _prepare_strikes() -> void:
 	_strike_query.shape = _strike_sphere
 
 
+func reaches(target: Hurtbox) -> bool:
+	return target != null and target in _hurtboxes_in_reach()
+
+
+func _hurtboxes_in_reach() -> Array[Hurtbox]:
+	_strike_sphere.radius = attack_reach
+	_strike_query.transform = Transform3D(Basis.IDENTITY, _strike_center())
+	var found: Array[Hurtbox] = []
+	for contact in get_world_3d().direct_space_state.intersect_shape(_strike_query):
+		var target := contact.collider as Hurtbox
+		if target != null:
+			found.append(target)
+	return found
+
+
+func _strike_center() -> Vector3:
+	return global_position + Vector3.UP * STRIKE_HEIGHT
+
+
 func _strike_targets(time: float) -> void:
 	if _attack_step == null or not _attack_step.is_striking_at(time):
 		return
-	var center := global_position + Vector3.UP * STRIKE_HEIGHT
-	_strike_sphere.radius = attack_reach
-	_strike_query.transform = Transform3D(Basis.IDENTITY, center)
-	for contact in get_world_3d().direct_space_state.intersect_shape(_strike_query):
-		var target := contact.collider as Hurtbox
-		if target != null and _can_strike(target):
+	for target in _hurtboxes_in_reach():
+		if _can_strike(target):
 			_struck.append(target)
-			target.receive(Hit.new(attack_damage, self, center + _forward() * STRIKE_ORIGIN_OFFSET))
+			target.receive(Hit.new(attack_damage, self, _strike_center() + _forward() * STRIKE_ORIGIN_OFFSET))
 
 
 func _can_strike(target: Hurtbox) -> bool:
@@ -375,11 +394,29 @@ func _travel(delta: float) -> void:
 	velocity.x = direction.x * speed
 	velocity.z = direction.z * speed
 	_apply_gravity(delta)
+	_step_up_if_blocked(Vector3(velocity.x, 0.0, velocity.z) * delta)
 	move_and_slide()
 	var motion := _actual_motion(direction)
 	_face(_facing_direction(motion), delta, turn_speed)
 	var clip := _locomotion_animation(motion)
 	_play(clip, BLEND_TIME, strafe_animation_speed if clip in [STRAFE_LEFT_ANIMATION, STRAFE_RIGHT_ANIMATION] else 1.0)
+
+
+func _step_up_if_blocked(motion: Vector3) -> void:
+	if not is_on_floor() or motion.is_zero_approx():
+		return
+	var probe := motion.normalized() * maxf(motion.length(), STEP_PROBE)
+	var collision := KinematicCollision3D.new()
+	if not test_move(global_transform, probe, collision) or _is_walkable(collision.get_normal()):
+		return
+	var lift := Vector3.UP * STEP_HEIGHT
+	if test_move(global_transform, lift) or test_move(global_transform.translated(lift), probe):
+		return
+	global_position += lift
+
+
+func _is_walkable(normal: Vector3) -> bool:
+	return normal.angle_to(Vector3.UP) <= floor_max_angle
 
 
 func _hold_guard(delta: float) -> void:

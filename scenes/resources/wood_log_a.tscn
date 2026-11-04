@@ -12,6 +12,8 @@ item_name = "Wood Log A"
 full_stack_scene = "res://scenes/resources/wood_log_stack.tscn"
 
 [node name="Model" parent="." unique_id=1185992892 instance=ExtResource("1_q10di")]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1929780477]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0)
 shape = SubResource("ConvexPolygonShape3D_bwjhu")

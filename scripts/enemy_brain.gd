@@ -35,6 +35,9 @@ const PRESSURE_GUARD_BONUS := 0.25
 const PRESSURE_RETREAT_HITS := 2
 const SIDESTEP_DISTANCE := 2.0
 const ROAM_POINT_TIMEOUT := 8.0
+const ATTACK_FACING_TOLERANCE := deg_to_rad(20.0)
+const REACHABLE_TOLERANCE := 0.75
+const REACHABLE_HEIGHT := 0.6
 const REPATH_INTERVAL := 0.5
 const MAX_SNAP_DISTANCE := 2.0
 const PATH_LOOK_AHEAD := 0.8
@@ -159,7 +162,7 @@ func is_ranged() -> bool:
 
 
 func wants_token() -> bool:
-	return state == State.ENGAGE and _cooldown <= 0.0 and _guard_delay < 0.0 and enemy.can_act() and _distance_to_target() <= circle_distance + attack_range
+	return state == State.ENGAGE and _cooldown <= 0.0 and _guard_delay < 0.0 and enemy.can_act() and _distance_to_target() <= circle_distance + attack_range and (is_ranged() or _can_get_at_target())
 
 
 func waiting_time() -> float:
@@ -329,10 +332,29 @@ func _close_in() -> void:
 		return
 	if is_ranged():
 		_find_a_shot()
-	elif _distance_to_target() <= attack_range:
+	elif _distance_to_target() <= attack_range or enemy.reaches(_target_hurtbox()):
 		_start_attack()
+	elif not _target_reachable():
+		_enter(State.ENGAGE)
 	else:
 		_move_to(_target().global_position, true, false)
+
+
+func _can_get_at_target() -> bool:
+	return _target_reachable() or enemy.reaches(_target_hurtbox())
+
+
+func _target_reachable() -> bool:
+	var target := _target().global_position
+	var closest := NavigationServer3D.map_get_closest_point(_agent.get_navigation_map(), target)
+	var gap := _flat(closest - target).length()
+	if gap > MAX_SNAP_DISTANCE:
+		return true
+	return gap <= REACHABLE_TOLERANCE and absf(closest.y - target.y) <= REACHABLE_HEIGHT
+
+
+func _target_hurtbox() -> Hurtbox:
+	return _target().get("hurtbox") as Hurtbox
 
 
 func _find_a_shot() -> void:
@@ -346,8 +368,17 @@ func _find_a_shot() -> void:
 
 func _start_attack() -> void:
 	enemy.move_direction = Vector3.ZERO
+	enemy.running = false
+	if not _faces_target():
+		return
 	if enemy.attack(enemy.attacks.pick_random(), _director.difficulty.windup_speed):
 		_enter(State.ATTACK)
+
+
+func _faces_target() -> bool:
+	var to_target := _flat(_target().global_position - enemy.global_position)
+	var facing := _flat(enemy.global_basis.z)
+	return to_target.is_zero_approx() or facing.angle_to(to_target) <= ATTACK_FACING_TOLERANCE
 
 
 func _follow_through() -> void:

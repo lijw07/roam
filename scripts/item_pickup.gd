@@ -96,5 +96,7 @@ func _land() -> void:
 
 
 func _rest_height() -> float:
-	var shape := (get_node(SHAPE_PATH) as CollisionShape3D).shape
-	return maxf(-shape.get_debug_mesh().get_aabb().position.y, 0.0)
+	var shape_node := get_node(SHAPE_PATH) as CollisionShape3D
+	var bounds := shape_node.shape.get_debug_mesh().get_aabb()
+	var placed := Transform3D(global_basis, Vector3.ZERO) * shape_node.transform * bounds
+	return maxf(-placed.position.y, 0.0)

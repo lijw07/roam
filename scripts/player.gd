@@ -212,6 +212,10 @@ func pick_up(item: Node3D = null) -> void:
 	_reach_for(item, _hold.bind(item))
 
 
+func equip(item: Node3D) -> void:
+	_hold(item)
+
+
 func collect(item: Node3D, on_grab: Callable) -> void:
 	_reach_for(item, on_grab)
 
