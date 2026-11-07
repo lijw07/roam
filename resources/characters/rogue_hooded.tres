@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CharacterClass" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_class.gd" id="1_character_class"]
+[ext_resource type="PackedScene" path="res://scenes/characters/adventurers/rogue_hooded.tscn" id="2_character"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/dagger.tscn" id="3_dagger"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/crossbow_1handed.tscn" id="4_crossbow_1handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/dagger_a.tscn" id="5_dagger_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/dagger_b.tscn" id="6_dagger_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/fistweapon_a.tscn" id="7_fistweapon_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/fistweapon_b.tscn" id="8_fistweapon_b"]
+
+[resource]
+script = ExtResource("1_character_class")
+description = "A dagger close at hand. A crossbow held in reserve."
+lore = "The rogue once earned a living opening doors for people who owned too many keys. These days, abandoned vaults offer better company and fewer questions."
+display_name = "Rogue"
+character_scene = ExtResource("2_character")
+weapons_text = "Daggers, fist weapons and one-handed crossbows"
+starting_weapon = ExtResource("4_crossbow_1handed")
+equipment = Array[PackedScene]([ExtResource("3_dagger"), ExtResource("4_crossbow_1handed"), ExtResource("5_dagger_a"), ExtResource("6_dagger_b"), ExtResource("7_fistweapon_a"), ExtResource("8_fistweapon_b")])

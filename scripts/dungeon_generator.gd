@@ -76,6 +76,7 @@ const MAX_SPAWN_FLOOR_BUMP := 0.12
 var last_seed := 0
 var start_room: DungeonPiece
 var boss_room: DungeonPiece
+var boss: Enemy
 ## The boss room's onward doorway.
 var level_exit: Node3D
 
@@ -136,6 +137,7 @@ func clear() -> void:
 	_failures.clear()
 	start_room = null
 	boss_room = null
+	boss = null
 	level_exit = null
 
 
@@ -461,7 +463,7 @@ func _populate(piece: DungeonPiece, depth: float) -> void:
 		var roomy := _spawn_spots(piece, 1.6)
 		if not roomy.is_empty():
 			roomy.sort_custom(func(a, b): return a.length() < b.length())
-			_place_enemy(piece, _pick(_bosses), roomy[0], facing)
+			boss = _place_enemy(piece, _pick(_bosses), roomy[0], facing)
 			placed.append(roomy[0])
 	var count := 0
 	while budget > 0 and count < max_enemies_per_room:
@@ -478,7 +480,7 @@ func _populate(piece: DungeonPiece, depth: float) -> void:
 		count += 1
 
 
-func _place_enemy(piece: DungeonPiece, scene: PackedScene, spot: Vector3, facing: Vector3) -> void:
+func _place_enemy(piece: DungeonPiece, scene: PackedScene, spot: Vector3, facing: Vector3) -> Enemy:
 	var group := piece.get_node_or_null("Enemies")
 	if group == null:
 		group = Node3D.new()
@@ -489,6 +491,7 @@ func _place_enemy(piece: DungeonPiece, scene: PackedScene, spot: Vector3, facing
 	enemy.position = spot
 	enemy.rotation.y = atan2(look.x, look.z) + _rng.randf_range(-0.4, 0.4)
 	group.add_child(enemy, true)
+	return enemy as Enemy
 
 
 ## A random spot at least enemy_spacing from those already taken (spots are used up), or INF.

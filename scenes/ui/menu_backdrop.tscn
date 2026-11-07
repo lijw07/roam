@@ -1,0 +1,357 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/menu_backdrop.gd" id="script"]
+[ext_resource type="PackedScene" path="res://assets/dungeon/floors/floor_tile_large.gltf" id="floor"]
+[ext_resource type="PackedScene" path="res://assets/dungeon/walls/wall.gltf" id="wall"]
+[ext_resource type="PackedScene" path="res://assets/dungeon/walls/wall_doorway.gltf" id="arch"]
+[ext_resource type="PackedScene" path="res://assets/dungeon/structure/pillar.gltf" id="pillar"]
+[ext_resource type="PackedScene" path="res://assets/dungeon/banners/banner_blue.gltf" id="banner"]
+[ext_resource type="PackedScene" path="res://assets/dungeon/containers/crates_stacked.gltf" id="crates"]
+[ext_resource type="PackedScene" path="res://assets/dungeon/containers/barrel_large.gltf" id="barrel"]
+[ext_resource type="PackedScene" path="res://assets/dungeon/containers/chest.gltf" id="chest"]
+[ext_resource type="PackedScene" path="res://scenes/dungeon/lighting/torch_mounted.tscn" id="torch"]
+
+[ext_resource type="Script" path="res://scripts/character_showcase.gd" id="showcase_script"]
+
+[sub_resource type="Environment" id="environment"]
+background_mode = 1
+background_color = Color(0.08, 0.1, 0.13, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.6, 0.68, 0.8, 1)
+ambient_light_energy = 0.35
+tonemap_mode = 0
+
+[node name="MenuBackdrop" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("script")
+
+[node name="ViewportContainer" type="SubViewportContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch = true
+stretch_shrink = 1
+
+[node name="Viewport" type="SubViewport" parent="ViewportContainer"]
+handle_input_locally = false
+own_world_3d = true
+size = Vector2i(1280, 720)
+msaa_3d = 1
+render_target_update_mode = 2
+
+[node name="Room" type="Node3D" parent="ViewportContainer/Viewport"]
+
+[node name="Environment" type="WorldEnvironment" parent="ViewportContainer/Viewport/Room"]
+environment = SubResource("environment")
+
+[node name="Fill" type="DirectionalLight3D" parent="ViewportContainer/Viewport/Room"]
+rotation_degrees = Vector3(-35, -20, 0)
+light_color = Color(0.68, 0.77, 1, 1)
+light_energy = 0.28
+shadow_enabled = false
+
+[node name="Camera" type="Camera3D" parent="ViewportContainer/Viewport/Room"]
+current = true
+fov = 58.0
+far = 60.0
+
+[node name="Showcase" type="Node3D" parent="ViewportContainer/Viewport/Room"]
+position = Vector3(-0.5, 0.06, 1.6)
+script = ExtResource("showcase_script")
+
+[node name="PortraitLight" type="OmniLight3D" parent="ViewportContainer/Viewport/Room/Showcase"]
+position = Vector3(-0.6, 3.0, 2.0)
+light_color = Color(0.9, 0.94, 1, 1)
+light_energy = 1.8
+shadow_enabled = true
+omni_range = 5.0
+omni_attenuation = 1.5
+
+[node name="Set" type="Node3D" parent="ViewportContainer/Viewport/Room"]
+
+[node name="Floor1" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-8, 0, -16)
+
+[node name="Floor2" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-8, 0, -12)
+
+[node name="Floor3" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-8, 0, -8)
+
+[node name="Floor4" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-8, 0, -4)
+
+[node name="Floor5" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-8, 0, 0)
+
+[node name="Floor6" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-8, 0, 4)
+
+[node name="Floor7" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-8, 0, 8)
+
+[node name="Floor8" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-8, 0, 12)
+
+[node name="Floor9" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-4, 0, -16)
+
+[node name="Floor10" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-4, 0, -12)
+
+[node name="Floor11" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-4, 0, -8)
+
+[node name="Floor12" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-4, 0, -4)
+
+[node name="Floor13" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-4, 0, 0)
+
+[node name="Floor14" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-4, 0, 4)
+
+[node name="Floor15" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-4, 0, 8)
+
+[node name="Floor16" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-4, 0, 12)
+
+[node name="Floor17" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(0, 0, -16)
+
+[node name="Floor18" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(0, 0, -12)
+
+[node name="Floor19" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(0, 0, -8)
+
+[node name="Floor20" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(0, 0, -4)
+
+[node name="Floor21" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(0, 0, 0)
+
+[node name="Floor22" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(0, 0, 4)
+
+[node name="Floor23" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(0, 0, 8)
+
+[node name="Floor24" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(0, 0, 12)
+
+[node name="Floor25" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(4, 0, -16)
+
+[node name="Floor26" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(4, 0, -12)
+
+[node name="Floor27" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(4, 0, -8)
+
+[node name="Floor28" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(4, 0, -4)
+
+[node name="Floor29" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(4, 0, 0)
+
+[node name="Floor30" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(4, 0, 4)
+
+[node name="Floor31" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(4, 0, 8)
+
+[node name="Floor32" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(4, 0, 12)
+
+[node name="Floor33" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(8, 0, -16)
+
+[node name="Floor34" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(8, 0, -12)
+
+[node name="Floor35" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(8, 0, -8)
+
+[node name="Floor36" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(8, 0, -4)
+
+[node name="Floor37" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(8, 0, 0)
+
+[node name="Floor38" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(8, 0, 4)
+
+[node name="Floor39" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(8, 0, 8)
+
+[node name="Floor40" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(8, 0, 12)
+
+[node name="Wall41" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(-8, 0, -6)
+
+[node name="Wall42" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(-4, 0, -6)
+
+[node name="Arch43" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("arch")]
+position = Vector3(0, 0, -6)
+
+[node name="Wall44" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(4, 0, -6)
+
+[node name="Wall45" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(8, 0, -6)
+
+[node name="Wall46" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(-6, 0, -4)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Wall47" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(-6, 0, 0)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Wall48" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(-6, 0, 4)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Wall49" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(-6, 0, 8)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Wall50" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(-2, 0, -8)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Wall51" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(-2, 0, -12)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Wall52" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(-2, 0, -16)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Banner53" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("banner")]
+position = Vector3(-4, 0, -5.45)
+
+[node name="Torch54" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("torch")]
+position = Vector3(-2.8, 1.8, -5.45)
+
+[node name="Wall55" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(6, 0, -4)
+rotation_degrees = Vector3(0, -90, 0)
+
+[node name="Wall56" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(6, 0, 0)
+rotation_degrees = Vector3(0, -90, 0)
+
+[node name="Wall57" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(6, 0, 4)
+rotation_degrees = Vector3(0, -90, 0)
+
+[node name="Wall58" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(6, 0, 8)
+rotation_degrees = Vector3(0, -90, 0)
+
+[node name="Wall59" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(2, 0, -8)
+rotation_degrees = Vector3(0, -90, 0)
+
+[node name="Wall60" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(2, 0, -12)
+rotation_degrees = Vector3(0, -90, 0)
+
+[node name="Wall61" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(2, 0, -16)
+rotation_degrees = Vector3(0, -90, 0)
+
+[node name="Banner62" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("banner")]
+position = Vector3(4, 0, -5.45)
+
+[node name="Torch63" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("torch")]
+position = Vector3(2.8, 1.8, -5.45)
+
+[node name="Torch64" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("torch")]
+position = Vector3(0, 1.7, -16)
+
+[node name="Wall65" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("wall")]
+position = Vector3(0, 0, -18)
+
+[node name="Crates66" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("crates")]
+position = Vector3(-4.6, 0, -4.3)
+
+[node name="Barrel67" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("barrel")]
+position = Vector3(4.6, 0, -4.4)
+
+[node name="Chest68" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("chest")]
+position = Vector3(4.3, 0, 0.3)
+rotation_degrees = Vector3(0, -18, 0)
+
+[node name="Ceiling00" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-4, 4.05, -4)
+rotation_degrees = Vector3(180, 0, 0)
+
+[node name="Ceiling01" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-4, 4.05, 0)
+rotation_degrees = Vector3(180, 0, 0)
+
+[node name="Ceiling02" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-4, 4.05, 4)
+rotation_degrees = Vector3(180, 0, 0)
+
+[node name="Ceiling03" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(-4, 4.05, 8)
+rotation_degrees = Vector3(180, 0, 0)
+
+[node name="Ceiling10" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(0, 4.05, -4)
+rotation_degrees = Vector3(180, 0, 0)
+
+[node name="Ceiling11" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(0, 4.05, 0)
+rotation_degrees = Vector3(180, 0, 0)
+
+[node name="Ceiling12" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(0, 4.05, 4)
+rotation_degrees = Vector3(180, 0, 0)
+
+[node name="Ceiling13" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(0, 4.05, 8)
+rotation_degrees = Vector3(180, 0, 0)
+
+[node name="Ceiling20" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(4, 4.05, -4)
+rotation_degrees = Vector3(180, 0, 0)
+
+[node name="Ceiling21" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(4, 4.05, 0)
+rotation_degrees = Vector3(180, 0, 0)
+
+[node name="Ceiling22" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(4, 4.05, 4)
+rotation_degrees = Vector3(180, 0, 0)
+
+[node name="Ceiling23" parent="ViewportContainer/Viewport/Room/Set" instance=ExtResource("floor")]
+position = Vector3(4, 4.05, 8)
+rotation_degrees = Vector3(180, 0, 0)
+
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.035, 0.04, 0.05, 0.38)

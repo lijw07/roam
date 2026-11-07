@@ -240,7 +240,7 @@ stamina = NodePath("../../Player/Stamina")
 [node name="ItemIcons" type="Node" parent="HUD"]
 script = ExtResource("10_item_icon_renderer")
 
-[node name="Inventory" type="GridContainer" parent="HUD" node_paths=PackedStringArray("inventory", "icon_renderer", "amount_popup", "drinker")]
+[node name="Inventory" type="Control" parent="HUD" node_paths=PackedStringArray("inventory", "icon_renderer", "amount_popup", "drinker")]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5

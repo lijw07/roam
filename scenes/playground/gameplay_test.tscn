@@ -1,14 +1,15 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/gameplay_test.gd" id="1_gameplay_test"]
+[ext_resource type="PackedScene" path="res://scenes/ui/control_hints.tscn" id="97_control_hints"]
+[ext_resource type="Resource" path="res://resources/characters/knight.tres" id="95_knight_class"]
+[ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="96_pause_menu"]
 [ext_resource type="Script" path="res://scripts/dungeon_generator.gd" id="2_dungeon_generator"]
 [ext_resource type="PackedScene" path="res://scenes/characters/adventurers/knight.tscn" id="3_knight"]
 [ext_resource type="Script" path="res://scripts/dungeon_explorer.gd" id="4_dungeon_explorer"]
 [ext_resource type="Script" path="res://scripts/inventory.gd" id="5_inventory"]
 [ext_resource type="Script" path="res://scripts/item_collector.gd" id="6_item_collector"]
 [ext_resource type="Script" path="res://scripts/item_thrower.gd" id="7_item_thrower"]
-[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/sword_1handed.tscn" id="8_sword_1handed"]
-[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_round.tscn" id="9_shield_round"]
 [ext_resource type="Script" path="res://scripts/combat_director.gd" id="10_combat_director"]
 [ext_resource type="Resource" path="res://resources/difficulty/normal.tres" id="11_normal"]
 [ext_resource type="Script" path="res://scripts/damage_numbers.gd" id="12_damage_numbers"]
@@ -40,6 +41,7 @@ agent_max_climb = 0.25
 
 [node name="GameplayTest" type="Node3D"]
 script = ExtResource("1_gameplay_test")
+default_class = ExtResource("95_knight_class")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_dungeon")
@@ -66,10 +68,6 @@ inventory = NodePath("../Inventory")
 
 [node name="StartingGear" type="Node3D" parent="."]
 visible = false
-
-[node name="Sword1Handed" parent="StartingGear" instance=ExtResource("8_sword_1handed")]
-
-[node name="ShieldRound" parent="StartingGear" instance=ExtResource("9_shield_round")]
 
 [node name="CombatDirector" type="Node" parent="." node_paths=PackedStringArray("target")]
 script = ExtResource("10_combat_director")
@@ -138,11 +136,7 @@ anchor_bottom = 0.5
 mouse_filter = 2
 script = ExtResource("93_crosshair")
 
-[node name="Info" type="Label" parent="HUD"]
-offset_left = 16.0
-offset_top = 16.0
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 6
+[node name="ControlHints" parent="HUD" instance=ExtResource("97_control_hints")]
 
 [node name="VitalsHUD" parent="HUD" node_paths=PackedStringArray("health", "mana", "stamina") instance=ExtResource("18_vitals_hud")]
 health = NodePath("../../Player/Health")
@@ -152,7 +146,7 @@ stamina = NodePath("../../Player/Stamina")
 [node name="ItemIcons" type="Node" parent="HUD"]
 script = ExtResource("19_item_icon_renderer")
 
-[node name="Inventory" type="GridContainer" parent="HUD" node_paths=PackedStringArray("inventory", "icon_renderer", "amount_popup", "drinker")]
+[node name="Inventory" type="Control" parent="HUD" node_paths=PackedStringArray("inventory", "icon_renderer", "amount_popup", "drinker")]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -186,3 +180,5 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 1)
 script = ExtResource("22_loading_cover")
+
+[node name="PauseMenu" parent="HUD" instance=ExtResource("96_pause_menu")]

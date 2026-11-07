@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="CharacterClass" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_class.gd" id="1_character_class"]
+[ext_resource type="PackedScene" path="res://scenes/characters/adventurers/knight.tscn" id="2_character"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/sword_1handed.tscn" id="3_sword_1handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/sword_2handed.tscn" id="4_sword_2handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/sword_2handed_color.tscn" id="5_sword_2handed_color"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_badge.tscn" id="6_shield_badge"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_badge_color.tscn" id="7_shield_badge_color"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_round.tscn" id="8_shield_round"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_round_color.tscn" id="9_shield_round_color"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_square.tscn" id="10_shield_square"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_square_color.tscn" id="11_shield_square_color"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_a.tscn" id="12_sword_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_b.tscn" id="13_sword_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_c.tscn" id="14_sword_c"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_d.tscn" id="15_sword_d"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_e.tscn" id="16_sword_e"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/halberd.tscn" id="17_halberd"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/spear_a.tscn" id="18_spear_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/shield_a.tscn" id="19_shield_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/shield_b.tscn" id="20_shield_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/shield_c.tscn" id="21_shield_c"]
+
+[resource]
+script = ExtResource("1_character_class")
+description = "A steady hand with sword and shield."
+lore = "The old border keep stands empty now. Its last knight still carries the battered shield issued there, taking work along the road and keeping watch while the camp sleeps."
+display_name = "Knight"
+character_scene = ExtResource("2_character")
+weapons_text = "Swords, polearms and shields"
+starting_weapon = ExtResource("3_sword_1handed")
+starting_off_hand = ExtResource("8_shield_round")
+equipment = Array[PackedScene]([ExtResource("3_sword_1handed"), ExtResource("4_sword_2handed"), ExtResource("5_sword_2handed_color"), ExtResource("6_shield_badge"), ExtResource("7_shield_badge_color"), ExtResource("8_shield_round"), ExtResource("9_shield_round_color"), ExtResource("10_shield_square"), ExtResource("11_shield_square_color"), ExtResource("12_sword_a"), ExtResource("13_sword_b"), ExtResource("14_sword_c"), ExtResource("15_sword_d"), ExtResource("16_sword_e"), ExtResource("17_halberd"), ExtResource("18_spear_a"), ExtResource("19_shield_a"), ExtResource("20_shield_b"), ExtResource("21_shield_c")])

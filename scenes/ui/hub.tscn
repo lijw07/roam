@@ -1,0 +1,232 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/hub.gd" id="1_hub"]
+[ext_resource type="Script" path="res://scripts/item_grid.gd" id="2_item_grid"]
+[ext_resource type="Script" path="res://scripts/crafting_list.gd" id="3_crafting_list"]
+[ext_resource type="Script" path="res://scripts/shop_rotation.gd" id="12_shop_rotation"]
+[ext_resource type="Resource" path="res://resources/crafting/weapon_recipes.tres" id="4_weapon_recipes"]
+[ext_resource type="Resource" path="res://resources/crafting/material_shop.tres" id="5_material_shop"]
+[ext_resource type="Script" path="res://scripts/item_icon_renderer.gd" id="6_item_icon_renderer"]
+[ext_resource type="Script" path="res://scripts/item_tooltip.gd" id="13_item_tooltip"]
+
+[ext_resource type="PackedScene" path="res://scenes/ui/menu_backdrop.tscn" id="ui_backdrop"]
+[ext_resource type="Theme" path="res://resources/ui/minimal_theme.tres" id="ui_theme"]
+
+[node name="Hub" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("ui_theme")
+script = ExtResource("1_hub")
+
+[node name="Background" parent="." instance=ExtResource("ui_backdrop")]
+layout_mode = 1
+view = 2
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="Content" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 24
+
+[node name="Header" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="CharacterName" type="Label" parent="Margin/Content/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 32
+
+[node name="Body" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+theme_override_constants/separation = 32
+
+[node name="Loadout" type="VBoxContainer" parent="Margin/Content/Body"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="LoadoutLabel" type="Label" parent="Margin/Content/Body/Loadout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Loadout"
+
+[node name="Hands" type="HBoxContainer" parent="Margin/Content/Body/Loadout"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 16
+
+[node name="Weapon" type="VBoxContainer" parent="Margin/Content/Body/Loadout/Hands"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="WeaponLabel" type="Label" parent="Margin/Content/Body/Loadout/Hands/Weapon"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Weapon"
+
+[node name="WeaponGrid" type="GridContainer" parent="Margin/Content/Body/Loadout/Hands/Weapon" node_paths=PackedStringArray("icon_renderer")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+script = ExtResource("2_item_grid")
+icon_renderer = NodePath("../../../../../../../IconRenderer")
+
+[node name="OffHand" type="VBoxContainer" parent="Margin/Content/Body/Loadout/Hands"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="OffHandLabel" type="Label" parent="Margin/Content/Body/Loadout/Hands/OffHand"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Off-hand"
+
+[node name="OffHandGrid" type="GridContainer" parent="Margin/Content/Body/Loadout/Hands/OffHand" node_paths=PackedStringArray("icon_renderer")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+script = ExtResource("2_item_grid")
+icon_renderer = NodePath("../../../../../../../IconRenderer")
+
+[node name="BackpackLabel" type="Label" parent="Margin/Content/Body/Loadout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Backpack"
+
+[node name="BackpackGrid" type="GridContainer" parent="Margin/Content/Body/Loadout" node_paths=PackedStringArray("icon_renderer")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+script = ExtResource("2_item_grid")
+icon_renderer = NodePath("../../../../../IconRenderer")
+
+[node name="Stash" type="VBoxContainer" parent="Margin/Content/Body"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="StashLabel" type="Label" parent="Margin/Content/Body/Stash"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Stash"
+
+[node name="StashGrid" type="GridContainer" parent="Margin/Content/Body/Stash" node_paths=PackedStringArray("icon_renderer")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+script = ExtResource("2_item_grid")
+icon_renderer = NodePath("../../../../../IconRenderer")
+
+[node name="Shop" type="VBoxContainer" parent="Margin/Content/Body"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Tabs" type="TabContainer" parent="Margin/Content/Body/Shop"]
+layout_mode = 2
+size_flags_vertical = 3
+use_hidden_tabs_for_min_size = true
+tab_focus_mode = 2
+current_tab = 0
+
+[node name="Crafting" type="ScrollContainer" parent="Margin/Content/Body/Shop/Tabs"]
+layout_mode = 2
+follow_focus = true
+horizontal_scroll_mode = 3
+
+[node name="Inset" type="MarginContainer" parent="Margin/Content/Body/Shop/Tabs/Crafting"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/margin_right = 10
+
+[node name="List" type="VBoxContainer" parent="Margin/Content/Body/Shop/Tabs/Crafting/Inset" node_paths=PackedStringArray("icon_renderer")]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+script = ExtResource("3_crafting_list")
+book = ExtResource("4_weapon_recipes")
+materials = ExtResource("5_material_shop")
+icon_renderer = NodePath("../../../../../../../../IconRenderer")
+
+[node name="Shop" type="ScrollContainer" parent="Margin/Content/Body/Shop/Tabs"]
+layout_mode = 2
+follow_focus = true
+horizontal_scroll_mode = 3
+
+[node name="Inset" type="MarginContainer" parent="Margin/Content/Body/Shop/Tabs/Shop"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/margin_right = 10
+
+[node name="List" type="VBoxContainer" parent="Margin/Content/Body/Shop/Tabs/Shop/Inset" node_paths=PackedStringArray("icon_renderer")]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+script = ExtResource("12_shop_rotation")
+pool = ExtResource("5_material_shop")
+icon_renderer = NodePath("../../../../../../../../IconRenderer")
+
+[node name="Footer" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+alignment = 2
+
+[node name="MainMenuButton" type="Button" parent="Margin/Content/Footer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 44)
+layout_mode = 2
+text = "Main Menu"
+
+[node name="ChangeCharacterButton" type="Button" parent="Margin/Content/Footer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 44)
+layout_mode = 2
+text = "Change Character"
+
+[node name="EnterDungeonButton" type="Button" parent="Margin/Content/Footer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 52)
+layout_mode = 2
+text = "Enter Dungeon"
+
+[node name="IconRenderer" type="Node" parent="."]
+script = ExtResource("6_item_icon_renderer")
+
+[node name="ItemTooltip" type="PanelContainer" parent="." node_paths=PackedStringArray("icon_renderer")]
+unique_name_in_owner = true
+layout_mode = 0
+script = ExtResource("13_item_tooltip")
+icon_renderer = NodePath("../IconRenderer")

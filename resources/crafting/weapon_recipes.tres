@@ -1,0 +1,278 @@
+[gd_resource type="Resource" script_class="RecipeBook" format=3]
+
+[ext_resource type="Script" path="res://scripts/recipe_book.gd" id="1_recipe_book"]
+[ext_resource type="Script" path="res://scripts/recipe.gd" id="2_recipe"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/sword_1handed.tscn" id="3_sword_1handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_a.tscn" id="4_sword_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_b.tscn" id="5_sword_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_c.tscn" id="6_sword_c"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_d.tscn" id="7_sword_d"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/sword_2handed.tscn" id="8_sword_2handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/sword_e.tscn" id="9_sword_e"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/sword_2handed_color.tscn" id="10_sword_2handed_color"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/dagger.tscn" id="11_dagger"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/dagger_a.tscn" id="12_dagger_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/dagger_b.tscn" id="13_dagger_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/axe_1handed.tscn" id="14_axe_1handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/axe_a.tscn" id="15_axe_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/axe_c.tscn" id="16_axe_c"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/hammer_a.tscn" id="17_hammer_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/hammer_b.tscn" id="18_hammer_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/hammer_c.tscn" id="19_hammer_c"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/axe_2handed.tscn" id="20_axe_2handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/axe_b.tscn" id="21_axe_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/halberd.tscn" id="22_halberd"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/spear_a.tscn" id="23_spear_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_badge.tscn" id="24_shield_badge"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_round.tscn" id="25_shield_round"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_square.tscn" id="26_shield_square"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_round_barbarian.tscn" id="27_shield_round_barbarian"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_spikes.tscn" id="28_shield_spikes"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/shield_a.tscn" id="29_shield_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/shield_b.tscn" id="30_shield_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/shield_c.tscn" id="31_shield_c"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_badge_color.tscn" id="32_shield_badge_color"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_round_color.tscn" id="33_shield_round_color"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_square_color.tscn" id="34_shield_square_color"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_spikes_color.tscn" id="35_shield_spikes_color"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/staff.tscn" id="36_staff"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/staff_a.tscn" id="37_staff_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/staff_b.tscn" id="38_staff_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/wand.tscn" id="39_wand"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/wand_a.tscn" id="40_wand_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/bow_withstring.tscn" id="41_bow_withstring"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/bow_a_withstring.tscn" id="42_bow_a_withstring"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/bow_b_withstring.tscn" id="43_bow_b_withstring"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/crossbow_1handed.tscn" id="44_crossbow_1handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/crossbow_2handed.tscn" id="45_crossbow_2handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/fistweapon_a.tscn" id="46_fistweapon_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/fistweapon_b.tscn" id="47_fistweapon_b"]
+
+[sub_resource type="Resource" id="Recipe_sword_1handed"]
+script = ExtResource("2_recipe")
+item = ExtResource("3_sword_1handed")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Wood Plank A": 1})
+
+[sub_resource type="Resource" id="Recipe_sword_a"]
+script = ExtResource("2_recipe")
+item = ExtResource("4_sword_a")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Wood Plank A": 1})
+
+[sub_resource type="Resource" id="Recipe_sword_b"]
+script = ExtResource("2_recipe")
+item = ExtResource("5_sword_b")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Wood Plank A": 1})
+
+[sub_resource type="Resource" id="Recipe_sword_c"]
+script = ExtResource("2_recipe")
+item = ExtResource("6_sword_c")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Wood Plank A": 1})
+
+[sub_resource type="Resource" id="Recipe_sword_d"]
+script = ExtResource("2_recipe")
+item = ExtResource("7_sword_d")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Wood Plank A": 1})
+
+[sub_resource type="Resource" id="Recipe_sword_2handed"]
+script = ExtResource("2_recipe")
+item = ExtResource("8_sword_2handed")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 5, "Wood Plank A": 2})
+
+[sub_resource type="Resource" id="Recipe_sword_e"]
+script = ExtResource("2_recipe")
+item = ExtResource("9_sword_e")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 5, "Wood Plank A": 2})
+
+[sub_resource type="Resource" id="Recipe_sword_2handed_color"]
+script = ExtResource("2_recipe")
+item = ExtResource("10_sword_2handed_color")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 5, "Wood Plank A": 2, "Gold Nugget Small": 1})
+
+[sub_resource type="Resource" id="Recipe_dagger"]
+script = ExtResource("2_recipe")
+item = ExtResource("11_dagger")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 2})
+
+[sub_resource type="Resource" id="Recipe_dagger_a"]
+script = ExtResource("2_recipe")
+item = ExtResource("12_dagger_a")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 2})
+
+[sub_resource type="Resource" id="Recipe_dagger_b"]
+script = ExtResource("2_recipe")
+item = ExtResource("13_dagger_b")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 2})
+
+[sub_resource type="Resource" id="Recipe_axe_1handed"]
+script = ExtResource("2_recipe")
+item = ExtResource("14_axe_1handed")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Wood Log A": 1})
+
+[sub_resource type="Resource" id="Recipe_axe_a"]
+script = ExtResource("2_recipe")
+item = ExtResource("15_axe_a")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Wood Log A": 1})
+
+[sub_resource type="Resource" id="Recipe_axe_c"]
+script = ExtResource("2_recipe")
+item = ExtResource("16_axe_c")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Wood Log A": 1})
+
+[sub_resource type="Resource" id="Recipe_hammer_a"]
+script = ExtResource("2_recipe")
+item = ExtResource("17_hammer_a")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Wood Log A": 1})
+
+[sub_resource type="Resource" id="Recipe_hammer_b"]
+script = ExtResource("2_recipe")
+item = ExtResource("18_hammer_b")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Wood Log A": 1})
+
+[sub_resource type="Resource" id="Recipe_hammer_c"]
+script = ExtResource("2_recipe")
+item = ExtResource("19_hammer_c")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Wood Log A": 1})
+
+[sub_resource type="Resource" id="Recipe_axe_2handed"]
+script = ExtResource("2_recipe")
+item = ExtResource("20_axe_2handed")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 5, "Wood Log A": 2})
+
+[sub_resource type="Resource" id="Recipe_axe_b"]
+script = ExtResource("2_recipe")
+item = ExtResource("21_axe_b")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 5, "Wood Log A": 2})
+
+[sub_resource type="Resource" id="Recipe_halberd"]
+script = ExtResource("2_recipe")
+item = ExtResource("22_halberd")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Wood Log A": 2})
+
+[sub_resource type="Resource" id="Recipe_spear_a"]
+script = ExtResource("2_recipe")
+item = ExtResource("23_spear_a")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Wood Log A": 2})
+
+[sub_resource type="Resource" id="Recipe_shield_badge"]
+script = ExtResource("2_recipe")
+item = ExtResource("24_shield_badge")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Iron Nugget Medium": 1})
+
+[sub_resource type="Resource" id="Recipe_shield_round"]
+script = ExtResource("2_recipe")
+item = ExtResource("25_shield_round")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Iron Nugget Medium": 1})
+
+[sub_resource type="Resource" id="Recipe_shield_square"]
+script = ExtResource("2_recipe")
+item = ExtResource("26_shield_square")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Iron Nugget Medium": 1})
+
+[sub_resource type="Resource" id="Recipe_shield_round_barbarian"]
+script = ExtResource("2_recipe")
+item = ExtResource("27_shield_round_barbarian")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Iron Nugget Medium": 1})
+
+[sub_resource type="Resource" id="Recipe_shield_spikes"]
+script = ExtResource("2_recipe")
+item = ExtResource("28_shield_spikes")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Iron Nugget Medium": 1})
+
+[sub_resource type="Resource" id="Recipe_shield_a"]
+script = ExtResource("2_recipe")
+item = ExtResource("29_shield_a")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Iron Nugget Medium": 1})
+
+[sub_resource type="Resource" id="Recipe_shield_b"]
+script = ExtResource("2_recipe")
+item = ExtResource("30_shield_b")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Iron Nugget Medium": 1})
+
+[sub_resource type="Resource" id="Recipe_shield_c"]
+script = ExtResource("2_recipe")
+item = ExtResource("31_shield_c")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Iron Nugget Medium": 1})
+
+[sub_resource type="Resource" id="Recipe_shield_badge_color"]
+script = ExtResource("2_recipe")
+item = ExtResource("32_shield_badge_color")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Iron Nugget Medium": 1, "Gold Nugget Small": 1})
+
+[sub_resource type="Resource" id="Recipe_shield_round_color"]
+script = ExtResource("2_recipe")
+item = ExtResource("33_shield_round_color")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Iron Nugget Medium": 1, "Gold Nugget Small": 1})
+
+[sub_resource type="Resource" id="Recipe_shield_square_color"]
+script = ExtResource("2_recipe")
+item = ExtResource("34_shield_square_color")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Iron Nugget Medium": 1, "Gold Nugget Small": 1})
+
+[sub_resource type="Resource" id="Recipe_shield_spikes_color"]
+script = ExtResource("2_recipe")
+item = ExtResource("35_shield_spikes_color")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Iron Nugget Medium": 1, "Gold Nugget Small": 1})
+
+[sub_resource type="Resource" id="Recipe_staff"]
+script = ExtResource("2_recipe")
+item = ExtResource("36_staff")
+cost = Dictionary[String, int]({"Wood Log A": 2, "Silver Nugget Medium": 2})
+
+[sub_resource type="Resource" id="Recipe_staff_a"]
+script = ExtResource("2_recipe")
+item = ExtResource("37_staff_a")
+cost = Dictionary[String, int]({"Wood Log A": 2, "Silver Nugget Medium": 2})
+
+[sub_resource type="Resource" id="Recipe_staff_b"]
+script = ExtResource("2_recipe")
+item = ExtResource("38_staff_b")
+cost = Dictionary[String, int]({"Wood Log A": 2, "Silver Nugget Medium": 2})
+
+[sub_resource type="Resource" id="Recipe_wand"]
+script = ExtResource("2_recipe")
+item = ExtResource("39_wand")
+cost = Dictionary[String, int]({"Wood Plank A": 1, "Silver Nugget Medium": 2})
+
+[sub_resource type="Resource" id="Recipe_wand_a"]
+script = ExtResource("2_recipe")
+item = ExtResource("40_wand_a")
+cost = Dictionary[String, int]({"Wood Plank A": 1, "Silver Nugget Medium": 2})
+
+[sub_resource type="Resource" id="Recipe_bow_withstring"]
+script = ExtResource("2_recipe")
+item = ExtResource("41_bow_withstring")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Textiles A": 2})
+
+[sub_resource type="Resource" id="Recipe_bow_a_withstring"]
+script = ExtResource("2_recipe")
+item = ExtResource("42_bow_a_withstring")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Textiles A": 2})
+
+[sub_resource type="Resource" id="Recipe_bow_b_withstring"]
+script = ExtResource("2_recipe")
+item = ExtResource("43_bow_b_withstring")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Textiles A": 2})
+
+[sub_resource type="Resource" id="Recipe_crossbow_1handed"]
+script = ExtResource("2_recipe")
+item = ExtResource("44_crossbow_1handed")
+cost = Dictionary[String, int]({"Wood Plank A": 2, "Iron Nugget Medium": 2, "Textiles A": 1})
+
+[sub_resource type="Resource" id="Recipe_crossbow_2handed"]
+script = ExtResource("2_recipe")
+item = ExtResource("45_crossbow_2handed")
+cost = Dictionary[String, int]({"Wood Plank A": 3, "Iron Nugget Medium": 3, "Textiles A": 1})
+
+[sub_resource type="Resource" id="Recipe_fistweapon_a"]
+script = ExtResource("2_recipe")
+item = ExtResource("46_fistweapon_a")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Textiles A": 1})
+
+[sub_resource type="Resource" id="Recipe_fistweapon_b"]
+script = ExtResource("2_recipe")
+item = ExtResource("47_fistweapon_b")
+cost = Dictionary[String, int]({"Iron Nugget Medium": 3, "Textiles A": 1})
+
+[resource]
+script = ExtResource("1_recipe_book")
+recipes = Array[ExtResource("2_recipe")]([SubResource("Recipe_sword_1handed"), SubResource("Recipe_sword_a"), SubResource("Recipe_sword_b"), SubResource("Recipe_sword_c"), SubResource("Recipe_sword_d"), SubResource("Recipe_sword_2handed"), SubResource("Recipe_sword_e"), SubResource("Recipe_sword_2handed_color"), SubResource("Recipe_dagger"), SubResource("Recipe_dagger_a"), SubResource("Recipe_dagger_b"), SubResource("Recipe_axe_1handed"), SubResource("Recipe_axe_a"), SubResource("Recipe_axe_c"), SubResource("Recipe_hammer_a"), SubResource("Recipe_hammer_b"), SubResource("Recipe_hammer_c"), SubResource("Recipe_axe_2handed"), SubResource("Recipe_axe_b"), SubResource("Recipe_halberd"), SubResource("Recipe_spear_a"), SubResource("Recipe_shield_badge"), SubResource("Recipe_shield_round"), SubResource("Recipe_shield_square"), SubResource("Recipe_shield_round_barbarian"), SubResource("Recipe_shield_spikes"), SubResource("Recipe_shield_a"), SubResource("Recipe_shield_b"), SubResource("Recipe_shield_c"), SubResource("Recipe_shield_badge_color"), SubResource("Recipe_shield_round_color"), SubResource("Recipe_shield_square_color"), SubResource("Recipe_shield_spikes_color"), SubResource("Recipe_staff"), SubResource("Recipe_staff_a"), SubResource("Recipe_staff_b"), SubResource("Recipe_wand"), SubResource("Recipe_wand_a"), SubResource("Recipe_bow_withstring"), SubResource("Recipe_bow_a_withstring"), SubResource("Recipe_bow_b_withstring"), SubResource("Recipe_crossbow_1handed"), SubResource("Recipe_crossbow_2handed"), SubResource("Recipe_fistweapon_a"), SubResource("Recipe_fistweapon_b")])

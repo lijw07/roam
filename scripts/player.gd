@@ -56,6 +56,7 @@ const COMBAT_ACTIONS: Array[StringName] = [&"attack", &"secondary"]
 const LIMB_BONES: Array[StringName] = [&"hand.l", &"hand.r", &"foot.l", &"foot.r"]
 const LIMB_STRIKE_RADIUS := 0.16
 
+@export var character_class: CharacterClass
 @export var walk_speed := 3.0
 @export var run_speed := 6.5
 @export var backwards_speed := 2.5
@@ -99,6 +100,7 @@ const LIMB_STRIKE_RADIUS := 0.16
 
 var dead := false
 var combat_input_enabled := true
+var movement_input_enabled := true
 var held_item: Node3D = null
 var shield: Shield = null
 var off_hand_weapon: Weapon = null
@@ -162,7 +164,7 @@ func _physics_process(delta: float) -> void:
 	_update_pick_up()
 	_update_winded()
 	_combo_grace = maxf(_combo_grace - delta, 0.0)
-	var direction := _input_direction()
+	var direction := _input_direction() if movement_input_enabled else Vector3.ZERO
 	_update_attack()
 	_release_projectile_when_due()
 	_strike_targets()
@@ -212,11 +214,18 @@ func interact() -> void:
 
 
 func pick_up(item: Node3D = null) -> void:
+	if item != null and not can_hold(item):
+		return
 	_reach_for(item, _hold.bind(item))
 
 
 func equip(item: Node3D) -> void:
-	_hold(item)
+	if can_hold(item):
+		_hold(item)
+
+
+func can_hold(item: Node3D) -> bool:
+	return character_class == null or character_class.allows(item)
 
 
 func collect(item: Node3D, on_grab: Callable) -> void:
@@ -506,7 +515,7 @@ func _held(action: StringName) -> bool:
 
 
 func _accepts_input(action: StringName) -> bool:
-	return combat_input_enabled or action not in COMBAT_ACTIONS
+	return movement_input_enabled and (combat_input_enabled or action not in COMBAT_ACTIONS)
 
 
 func _camera_yaw() -> float:

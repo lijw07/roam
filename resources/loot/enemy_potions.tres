@@ -1,11 +1,11 @@
-[gd_resource type="Resource" script_class="LootTable" format=3]
+[gd_resource type="Resource" script_class="LootTable" format=3 uid="uid://bspnffgnly5md"]
 
-[ext_resource type="Script" path="res://scripts/loot_table.gd" id="1_loot_table"]
-[ext_resource type="Script" path="res://scripts/loot_tier.gd" id="2_loot_tier"]
+[ext_resource type="Script" uid="uid://bde73iuggieit" path="res://scripts/loot_table.gd" id="1_loot_table"]
+[ext_resource type="Script" uid="uid://pe6gcg0d4qaj" path="res://scripts/loot_tier.gd" id="2_loot_tier"]
 [ext_resource type="PackedScene" path="res://scenes/potions/health_potion.tscn" id="scene_health_potion"]
 [ext_resource type="PackedScene" path="res://scenes/potions/mana_potion.tscn" id="scene_mana_potion"]
-[ext_resource type="PackedScene" path="res://scenes/potions/stamina_potion.tscn" id="scene_stamina_potion"]
 [ext_resource type="PackedScene" path="res://scenes/potions/regeneration_potion.tscn" id="scene_regeneration_potion"]
+[ext_resource type="PackedScene" path="res://scenes/potions/stamina_potion.tscn" id="scene_stamina_potion"]
 
 [sub_resource type="Resource" id="tier_potions"]
 script = ExtResource("2_loot_tier")

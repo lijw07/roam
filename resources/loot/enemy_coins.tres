@@ -1,11 +1,11 @@
-[gd_resource type="Resource" script_class="LootTable" format=3]
+[gd_resource type="Resource" script_class="LootTable" format=3 uid="uid://dxnf1ap4e1tk8"]
 
-[ext_resource type="Script" path="res://scripts/loot_table.gd" id="1_loot_table"]
-[ext_resource type="Script" path="res://scripts/loot_tier.gd" id="2_loot_tier"]
+[ext_resource type="Script" uid="uid://bde73iuggieit" path="res://scripts/loot_table.gd" id="1_loot_table"]
+[ext_resource type="Script" uid="uid://pe6gcg0d4qaj" path="res://scripts/loot_tier.gd" id="2_loot_tier"]
 [ext_resource type="PackedScene" path="res://scenes/resources/coin.tscn" id="scene_coin"]
-[ext_resource type="PackedScene" path="res://scenes/resources/coin_stack_small.tscn" id="scene_coin_stack_small"]
-[ext_resource type="PackedScene" path="res://scenes/resources/coin_stack_medium.tscn" id="scene_coin_stack_medium"]
 [ext_resource type="PackedScene" path="res://scenes/resources/coin_stack_large.tscn" id="scene_coin_stack_large"]
+[ext_resource type="PackedScene" path="res://scenes/resources/coin_stack_medium.tscn" id="scene_coin_stack_medium"]
+[ext_resource type="PackedScene" path="res://scenes/resources/coin_stack_small.tscn" id="scene_coin_stack_small"]
 
 [sub_resource type="Resource" id="tier_common"]
 script = ExtResource("2_loot_tier")

@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="CharacterClass" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_class.gd" id="1_character_class"]
+[ext_resource type="PackedScene" path="res://scenes/characters/adventurers/barbarian.tscn" id="2_character"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/axe_1handed.tscn" id="3_axe_1handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/axe_2handed.tscn" id="4_axe_2handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_round_barbarian.tscn" id="5_shield_round_barbarian"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_spikes.tscn" id="6_shield_spikes"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/shield_spikes_color.tscn" id="7_shield_spikes_color"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/axe_a.tscn" id="8_axe_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/axe_b.tscn" id="9_axe_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/axe_c.tscn" id="10_axe_c"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/hammer_a.tscn" id="11_hammer_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/hammer_b.tscn" id="12_hammer_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/hammer_c.tscn" id="13_hammer_c"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/shield_a.tscn" id="14_shield_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/shield_b.tscn" id="15_shield_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/shield_c.tscn" id="16_shield_c"]
+
+[resource]
+script = ExtResource("1_character_class")
+description = "An axe for the fight. A shield for the way home."
+lore = "Winter drove the clan from the high passes. Far from home, this wanderer trades a strong arm for supplies, saving a share of every haul for the journey back."
+display_name = "Barbarian"
+character_scene = ExtResource("2_character")
+weapons_text = "Axes, hammers and shields"
+starting_weapon = ExtResource("3_axe_1handed")
+starting_off_hand = ExtResource("5_shield_round_barbarian")
+equipment = Array[PackedScene]([ExtResource("3_axe_1handed"), ExtResource("4_axe_2handed"), ExtResource("5_shield_round_barbarian"), ExtResource("6_shield_spikes"), ExtResource("7_shield_spikes_color"), ExtResource("8_axe_a"), ExtResource("9_axe_b"), ExtResource("10_axe_c"), ExtResource("11_hammer_a"), ExtResource("12_hammer_b"), ExtResource("13_hammer_c"), ExtResource("14_shield_a"), ExtResource("15_shield_b"), ExtResource("16_shield_c")])

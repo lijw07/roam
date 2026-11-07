@@ -20,11 +20,14 @@ scenes/
   equipment/    One scene per item, each with its own collision
   effects/      Arrow, magic bolt and melee impact effects
   playground/   Movement, animation, inventory and combat test scenes
-  ui/           The health, mana and stamina bars, and the bar over each enemy
+  ui/           The main menu, character select and hub screens, the health, mana and stamina bars,
+                and the bar over each enemy
 shaders/        The enemy health bar's billboard fill and the hit outline
 resources/
   attacks/      AttackStep resources: one per attack clip, shared by every weapon that uses it
   potions/      Potion resources: what each potion restores and over how long
+  characters/   CharacterClass resources: one per playable adventurer, with its weapons and starting gear
+  crafting/     RecipeBook resources: weapon crafting and the coin shop for materials
 scripts/
   player.gd               Player movement and animation: locomotion, stances, dodge and actions
   animation_test.gd       Animation test scene: camera, HUD, action keys and animation browser
@@ -51,7 +54,71 @@ scripts/
   warm_up_spot.gd         The point under the floor where warm-ups draw: on screen to the renderer, hidden by the floor
   loading_cover.gd        Black cover that hides the arena while the warm-ups compile, then fades out
   combat_test.gd          Combat test scene: camera, weapon pickups and stat test keys
+  main_menu.gd            Main menu: Play, Settings and Quit (Quit is hidden in web builds)
+  settings.gd             Autoload holding mouse sensitivity, music volume and key bindings, saved to user://settings.cfg
+  settings_menu.gd        Settings screen: sensitivity and volume sliders and two rebindable slots per action
+  item_tooltip.gd          Details panel beside the selected hub slot: name, type, damage, potion effects, quantity, and whether the character can use it
+  hover_focus.gd          Autoload that gives a button or inventory slot keyboard focus when the mouse moves onto it, so only one is ever highlighted
+  pause_menu.gd           In-dungeon pause menu: Resume, Settings (opened over the game), Return to Camp, Quit
+  character_class.gd      A playable character: its model, the weapons it may hold and its starting gear
+  character_select.gd     Character select screen built from the CharacterClass list
+  profile.gd              Autoload holding the chosen character, stash and loadout, saved to user://profile.json
+  item_info.gd            What a scene is as an item: name, stack size, potion, weapon or shield
+  recipe.gd               An item and the materials (or coins) it costs
+  recipe_book.gd          A list of recipes
+  hub.gd                  Hub screen: loadout, stash, shop and Enter Dungeon
+  item_grid.gd            A grid of inventory slots bound to one Inventory, for dragging between grids
+  crafting_list.gd        Crafting tab: one row per weapon the character can use; clicking a row drops down its materials and Craft button
+  shop_rotation.gd        Shop tab: a 15 minute rotation of random items with limited stock and a quantity picker
 ```
+
+## Game flow
+Main menu → character select → hub → dungeon (`gameplay_test.tscn`) → hub.
+
+- **Characters**: five adventurers (Knight, Barbarian, Mage, Ranger, Rogue — the hooded model). Each can only hold the weapons and shields listed in its
+  `resources/characters/*.tres`; `player.gd` refuses anything else.
+- **Hub**: drag items between the stash (8x7), the weapon and off-hand slots and the 3x3 backpack.
+  The backpack takes no weapons or shields, the off-hand only takes what pairs with the weapon,
+  and gear the current character can't use goes back to the stash on a character change. A
+  character's starting gear is given once, the first time it is played.
+- **Crafting**: lists the current character's weapons; clicking one drops down the materials it needs
+  (icon, have / need) and a Craft button, which spends them from the stash. Costs live in
+  `resources/crafting/weapon_recipes.tres`.
+- **Shop**: every 15 minutes (real time, so it keeps rotating while the game is closed) five random
+  items from `resources/crafting/material_shop.tres` go on sale for coins, each with 3-12 in stock.
+  Pick a quantity with - / + and Buy; what was bought this rotation is saved, so stock doesn't refill
+  on restart.
+- **Slot details**: weapon and shield slots carry a 1H / 2H / SH tag (two-handed = fist weapons and
+  weapons with 2H or bow stances/shots); gear the current character can't use is tinted red. The
+  selected slot shows a details panel beside it.
+- **Hub keyboard / controller**: move between slots with WASD, the arrows or the stick and press
+  Enter / Space / A to send the item across: stash to backpack, weapons from the stash swap places with
+  the equipped weapon and shields with the equipped off-hand (same as dragging onto the slot), and
+  backpack or hand slots go back to the stash. Hovering a slot with the mouse selects it.
+- **Runs**: the player starts with the loadout and the backpack's items. Killing the boss unlocks
+  the boss room's exit door; leaving through it puts the run inventory into the stash. Dying and
+  pressing R returns to the hub and loses the backpack. In the inventory, Enter / Space / A (or
+  right-click) on a potion drinks it. While the inventory is open the player
+  stands still (no moving, sprinting, jumping or attacking), so WASD and the stick only move between slots.
+- **Screen size**: every screen is laid out for a 1280x720 base and scaled to the window (`canvas_items`
+  stretch, `expand` aspect): smaller or larger screens scale the whole UI, and other aspect ratios add
+  room around the anchored layouts instead of cropping them.
+- **Pause**: Esc or Start in the dungeon pauses the game. Return to Camp asks first, then ends the run
+  like dying (the backpack is lost); Quit is hidden in web builds.
+- **Settings**: mouse X/Y sensitivity (multipliers on the dungeon camera), music volume (the `Music`
+  bus in `default_bus_layout.tres`) and key bindings for movement, sprint, jump, attack, block,
+  interact and inventory. Click a binding and press a key or mouse button; Esc cancels. Binding an
+  input already used by another action moves it. Reset Controls restores the defaults.
+- **Menu navigation**: `ui_up/down/left/right` take the arrow keys, WASD, the D-pad and the left stick;
+  Enter/Space/A confirm and Esc/B go back on the character select and settings screens. Every
+  screen focuses a button when it opens, and scroll lists follow the focus. Only the focused button is
+  highlighted (white); hovering a button with the mouse focuses it.
+- **Test items**: in debug builds (running from the editor) an empty stash is filled with 24 random
+  weapons, materials, coins and potions. The first debug launch with a
+  save also adds 12 of each crafting material and 50 coins once. Delete `user://profile.json` to start
+  over with a fresh set.
+- **Saving**: everything is saved to `user://profile.json`. In the web build that is the browser's
+  IndexedDB, so it survives closing the tab on itch.io but not clearing site data or switching browsers.
 
 ## Player controls
 `player.gd` drives the player in the playground, the animation test scene and the dungeon
@@ -495,7 +562,7 @@ Stamina doesn't regenerate while the shield is up. A blocked hit that costs more
 breaks the guard: the bar empties and the full hit lands. Dodging is free.
 
 ### UI
-`scenes/ui/vitals_hud.tscn` is three plain bars (health, mana, stamina) with their values, bound to
+`scenes/ui/vitals_hud.tscn` uses three thin, muted-color bars (health, mana, stamina), with small labels and current/maximum values above each bar. The compact HUD sits at the bottom left, bound to
 the pools set on its `health`, `mana` and `stamina` exports. `damage_numbers.gd` watches every hurtbox
 in the scene and pops a number over the top of whatever was hit: yellow for damage dealt, red for
 damage the player takes, and "Blocked" in grey.
@@ -627,3 +694,23 @@ character: `combat_melee`, `combat_ranged`, `general`, `movement_advanced`, `mov
 ## Credits
 3D models and animations by Kay Lousberg ([KayKit](https://www.kaylousberg.com)), CC0:
 Adventurers 2.0, Skeletons 1.1, Dungeon Pack 1.1 and Character Animations 1.1.
+
+### Minimal menus and animated backgrounds
+
+`scenes/ui/menu_backdrop.tscn` is a reusable, visual-only dungeon room made from the existing KayKit meshes and mounted torch effects. The main menu, character selection, and hub instance it behind their controls. `scripts/menu_backdrop.gd` selects each camera view and dimming level and moves the camera through a gentle 48-second loop. Set `motion_enabled` to false to hold the camera still; the original torch particles and flicker remain active. Its viewport ignores input and is freed with the owning menu.
+
+`resources/ui/minimal_theme.tres` supplies plain text controls, a white primary action, and neutral selection/focus states. Character selection places the actual chosen character in the same 3D room. `scripts/character_showcase.gd` attaches original equipment meshes to the rig using the weapon grip metadata and cycles idle, attack/cast/aim, shield-block and weapon-swap clips. This visual actor has no player input, hit detection, projectiles or save changes.
+
+### Dungeon backpack panel
+
+`scenes/ui/dungeon_inventory.tscn` is the presentation used by `scripts/inventory_ui.gd`. The HUD Inventory node is a full-screen Control containing a lightly dimmed overlay and compact centered backpack panel; its inventory, icon renderer, player, and amount popup bindings are unchanged. The panel contains only a title, small close button, and 64-pixel item slots with stack counts. The grid follows the inventory's columns and slot count. Item icons come from the original models.
+
+Tab, Escape, and the close button dismiss the panel. Right-click a potion to use it, drag between slots to move, and hold Shift while dragging to choose the amount. Dropping outside the panel uses the existing world item-throwing behavior. Closing during a drag or amount selection cancels that pending action. The dungeon remains live, as before; opening the panel does not pause gameplay.
+
+Run `tests/inventory_ui_check.gd` with Godot's `--headless --script` options for UI checks covering opening/closing, compact layout, item icons and counts, accepted/rejected potion use, moving/splitting stacks, cancellation, and dropping. The screenshots and reproducible capture script are in `art-review/ui-live-backgrounds/`; the capture script adds sample loot only to its temporary dungeon instance.
+
+On character selection, drag over the character with the left mouse button to rotate it. `scripts/character_turntable.gd` captures the drag even outside the preview region. The character animation, showcase timer and camera drift pause during the grab, then resume on release. Escape, focus loss, changing class and leaving the scene all cancel the grab. New character selections reset the viewing angle. `tests/character_showcase_check.gd` verifies all five class demos and `tests/character_turntable_check.gd` covers rotation and cancellation.
+
+Character selection keeps the actor clear of captions: the class list identifies the selection, while a short description and backstory appear on the right. These are authored in each `CharacterClass` resource's `description` and `lore` fields. Dragging the actor still rotates it.
+
+The dungeon uses `scenes/ui/control_hints.tscn` for a bottom-right row of keycaps and mouse-button symbols, drawn by `scripts/control_glyph.gd`. The row wraps beside the vitals on narrower windows, switches to item actions when the inventory opens, and shows return-to-camp controls on death. Nearby door/pickup prompts appear above it during play.
