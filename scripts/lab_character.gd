@@ -205,6 +205,7 @@ func _interact() -> void:
 
 
 func _enter_station(target: Node) -> void:
+	AudioManager.play("ui_confirm", global_position)
 	station = target
 	_locked = true
 	var anchor: Node3D = target.anchor
@@ -220,6 +221,7 @@ func _enter_station(target: Node) -> void:
 
 
 func _leave_station() -> void:
+	AudioManager.play("ui_back", global_position)
 	var leaving := station
 	station = null
 	if leaving.exit_point:

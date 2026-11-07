@@ -88,6 +88,9 @@ var _winded := false
 var _main_hand: BoneAttachment3D = null
 var _strike_sphere := SphereShape3D.new()
 var _strike_query := PhysicsShapeQueryParameters3D.new()
+var _footstep_distance := 0.0
+var _world_struck: Array[CollisionObject3D] = []
+var _was_airborne := false
 
 
 func _ready() -> void:
@@ -171,6 +174,8 @@ func _begin_step(step: AttackStep, from: float, blend: float) -> void:
 	if stamina != null:
 		stamina.drain(attack_stamina_cost)
 	_attack_step = step
+	_world_struck.clear()
+	AudioManager.play_swing(self, _weapon_in_hand(), true)
 	_projectile_fired = false
 	_struck.clear()
 	animation_player.play(step.animation, blend)
@@ -182,6 +187,7 @@ func raise_guard() -> bool:
 		return false
 	_guarding = true
 	_guard_ready = false
+	AudioManager.play("equipment_equip", global_position, Vector2(0.9, 1.0), -9.0)
 	_play(guard_raise_animation)
 	return true
 
@@ -251,6 +257,7 @@ func _faces(point: Vector3) -> bool:
 func _play_death() -> void:
 	if dead:
 		return
+	AudioManager.play_death(global_position)
 	dead = true
 	collision_layer = 0
 	_interrupt()
@@ -347,6 +354,7 @@ func _strike_center() -> Vector3:
 func _strike_targets(time: float) -> void:
 	if _attack_step == null or not _attack_step.is_striking_at(time):
 		return
+	AudioManager.check_weapon_environment(self, _weapon_in_hand(), _world_struck)
 	for target in _hurtboxes_in_reach():
 		if _can_strike(target):
 			_struck.append(target)
@@ -378,6 +386,7 @@ func _fire_projectile_when_due(time: float) -> void:
 	get_parent().add_child(bolt)
 	var origin := _projectile_origin()
 	bolt.global_transform = Transform3D(_aim_basis(_aim_point(origin, bolt.speed, bolt.max_range) - origin), origin)
+	AudioManager.play("projectile_launch", origin, Vector2(0.94, 1.06), -5.0)
 
 
 func _ally_hurtbox_rids() -> Array[RID]:
@@ -430,6 +439,7 @@ func _aim_basis(aim: Vector3) -> Basis:
 
 
 func _travel(delta: float) -> void:
+	var previous_position := global_position
 	var direction := _flat(move_direction).limit_length()
 	var speed := _speed_for(direction)
 	velocity.x = direction.x * speed
@@ -437,12 +447,39 @@ func _travel(delta: float) -> void:
 	_apply_gravity(delta)
 	_step_up_if_blocked(Vector3(velocity.x, 0.0, velocity.z) * delta)
 	move_and_slide()
+	_update_landing()
+	_update_footsteps(previous_position, running)
 	var intended := heading
 	heading = Vector3.ZERO
 	var motion := _actual_motion(direction, intended)
 	_face(_facing_direction(motion, intended), delta, turn_speed)
 	var clip := _locomotion_animation(motion)
 	_play(clip, BLEND_TIME, strafe_animation_speed if clip in [STRAFE_LEFT_ANIMATION, STRAFE_RIGHT_ANIMATION] else 1.0)
+
+
+func _update_footsteps(previous_position: Vector3, is_running: bool) -> void:
+	if not is_on_floor():
+		return
+	var travelled := Vector2(global_position.x - previous_position.x, global_position.z - previous_position.z).length()
+	_footstep_distance += travelled
+	var threshold := 1.12 if is_running else 1.55
+	while _footstep_distance >= threshold:
+		AudioManager.play_footstep_at(global_position, is_running, self)
+		_footstep_distance -= threshold
+
+
+func _update_landing() -> void:
+	if _was_airborne and is_on_floor():
+		AudioManager.play_landing_at(global_position, self, -4.5)
+	_was_airborne = not is_on_floor()
+
+
+func _weapon_in_hand() -> Weapon:
+	if _main_hand == null:
+		return null
+	for child in _main_hand.find_children("*", "Weapon", true, false):
+		return child as Weapon
+	return null
 
 
 func _step_up_if_blocked(motion: Vector3) -> void:
@@ -616,6 +653,7 @@ func _hold_still(delta: float) -> void:
 	velocity.z = 0.0
 	_apply_gravity(delta)
 	move_and_slide()
+	_update_landing()
 
 
 func _disable_held_collision() -> void:

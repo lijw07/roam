@@ -38,9 +38,13 @@ func receive(hit: Hit) -> void:
 	if hit.attacker == get_parent() or not is_active():
 		return
 	if block_check.is_valid() and block_check.call(hit):
+		AudioManager.play("block_metal", global_position, Vector2(0.92, 1.08), -3.0)
 		blocked.emit(hit)
 		return
-	hit_taken.emit(hit, health.take_damage(hit.amount, hit.attacker))
+	var damage := health.take_damage(hit.amount, hit.attacker)
+	if damage > 0.0:
+		AudioManager.play("impact_flesh" if damage < 25.0 else "impact_heavy", global_position, Vector2(0.9, 1.08), -3.5)
+	hit_taken.emit(hit, damage)
 
 
 func is_exposed_to(origin: Vector3, attacker: CollisionObject3D) -> bool:

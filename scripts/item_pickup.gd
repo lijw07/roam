@@ -76,7 +76,10 @@ func _physics_process(delta: float) -> void:
 
 func _arrive() -> void:
 	var feet := _puller.global_position
-	collect_into(_pull_inventory)
+	var dropped_count := count
+	var collected := collect_into(_pull_inventory)
+	if collected:
+		AudioManager.play_item_pickup(item_name, potion != null, global_position, dropped_count)
 	_stop_pull()
 	if not is_queued_for_deletion():
 		launch(global_position, feet)
@@ -95,6 +98,7 @@ func _fly(progress: float, from: Vector3, landing: Vector3) -> void:
 
 func _land() -> void:
 	_landed = true
+	AudioManager.play_item_landing(item_name, potion != null, global_position)
 
 
 func _rest_height() -> float:

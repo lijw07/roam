@@ -72,10 +72,15 @@ func _on_slot_dropped(source: Inventory, from_index: int, target: Inventory, to_
 	var moving := source.slots[from_index]
 	if not _fits(target, moving):
 		return
+	var changed := false
 	if target.movable_amount_from(source, from_index, to_index) > 0:
 		target.move_from(source, from_index, to_index, moving.count)
+		changed = true
 	elif _fits(source, target.slots[to_index]):
 		target.swap_from(source, from_index, to_index)
+		changed = true
+	if changed and target in [Profile.weapon, Profile.off_hand]:
+		AudioManager.play_ui("equipment_equip")
 	_stash_unpaired_off_hand()
 
 
@@ -99,6 +104,7 @@ func _equip_from_stash(index: int) -> void:
 	var hand := Profile.weapon if ItemInfo.of(slot.scene_path).is_weapon else Profile.off_hand
 	if _fits(hand, slot):
 		hand.swap_from(Profile.stash, index, 0)
+		AudioManager.play_ui("equipment_equip")
 
 
 func _fits(inventory: Inventory, slot: Inventory.Slot) -> bool:

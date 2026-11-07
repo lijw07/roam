@@ -136,6 +136,9 @@ var _limb_bones: Array[int] = []
 var _limb_query := PhysicsShapeQueryParameters3D.new()
 var _struck: Array[Hurtbox] = []
 var _winded := false
+var _footstep_distance := 0.0
+var _world_struck: Array[CollisionObject3D] = []
+var _was_airborne := false
 
 
 class Gait:
@@ -187,6 +190,9 @@ func _physics_process(delta: float) -> void:
 		_shield_raised = false
 	if not _is_aiming():
 		_aim_raised = false
+	if _was_airborne and is_on_floor():
+		AudioManager.play_landing_at(global_position, self, -3.5)
+	_was_airborne = not is_on_floor()
 
 
 func is_acting() -> bool:
@@ -210,7 +216,8 @@ func is_performing(animation: StringName) -> bool:
 
 
 func interact() -> void:
-	_perform(INTERACT_ANIMATION)
+	if _perform(INTERACT_ANIMATION):
+		AudioManager.play("ui_confirm", global_position)
 
 
 func pick_up(item: Node3D = null) -> void:
@@ -253,6 +260,7 @@ func release_held_item() -> void:
 	var item := held_item
 	held_item = null
 	_held_weapon = null
+	AudioManager.play("equipment_unequip" if item is Weapon or item is Shield else "item_drop", item.global_position, Vector2(0.94, 1.06), -8.0)
 	item.reparent(get_parent())
 	item_released.emit(item)
 
@@ -262,6 +270,7 @@ func release_off_hand_weapon() -> void:
 		return
 	var item := off_hand_weapon
 	off_hand_weapon = null
+	AudioManager.play("equipment_unequip", item.global_position, Vector2(0.94, 1.06), -8.0)
 	item.reparent(get_parent())
 	item_released.emit(item)
 
@@ -271,6 +280,7 @@ func release_shield() -> void:
 		return
 	var item := shield
 	shield = null
+	AudioManager.play("equipment_unequip", item.global_position, Vector2(0.94, 1.06), -8.0)
 	item.reparent(get_parent())
 	item_released.emit(item)
 
@@ -310,6 +320,7 @@ func spawn(from_air := false) -> void:
 func drink(potion: Potion) -> bool:
 	if not _perform(USE_ITEM_ANIMATION):
 		return false
+	AudioManager.play("potion_drink", global_position, Vector2(0.96, 1.04), -5.5)
 	potion.apply_to(self)
 	return true
 
@@ -323,6 +334,7 @@ func preview(animation: StringName) -> void:
 func _play_death() -> void:
 	if dead:
 		return
+	AudioManager.play_death(global_position, true)
 	dead = true
 	_start_action(DEATH_POSES.keys().pick_random())
 
@@ -431,6 +443,7 @@ func _prepare_limb_strikes() -> void:
 func _strike_targets() -> void:
 	if not _is_striking():
 		return
+	AudioManager.check_weapon_environment(self, _held_weapon, _world_struck)
 	if _is_bashing():
 		_strike_with(shield, shield.bash_damage)
 		return
@@ -531,6 +544,7 @@ func _move_with_input(direction: Vector3, delta: float) -> void:
 	if is_on_floor():
 		if _is_blocking() and not _shield_raised:
 			_shield_raised = true
+			AudioManager.play("equipment_equip", global_position, Vector2(0.88, 0.96), -8.0)
 			_start_action(shield.raise_animation, true)
 			return
 		if _just_pressed("attack") and _is_blocking():
@@ -566,12 +580,25 @@ func _move_while_acting(direction: Vector3, delta: float) -> void:
 
 
 func _travel(direction: Vector3, gait: Gait, delta: float) -> void:
+	var previous_position := global_position
 	_spend_sprint_stamina(direction, gait, delta)
 	velocity.x = direction.x * gait.speed
 	velocity.z = direction.z * gait.speed
 	move_and_slide()
+	_update_footsteps(previous_position, gait.sprinting)
 	if not direction.is_zero_approx():
 		_turn_toward(atan2(direction.x, direction.z) + gait.facing_offset, delta)
+
+
+func _update_footsteps(previous_position: Vector3, running: bool) -> void:
+	if dead or not is_on_floor():
+		return
+	var travelled := Vector2(global_position.x - previous_position.x, global_position.z - previous_position.z).length()
+	_footstep_distance += travelled
+	var threshold := 1.12 if running else 1.55
+	while _footstep_distance >= threshold:
+		AudioManager.play_footstep_at(global_position, running, self)
+		_footstep_distance -= threshold
 
 
 func _action_allows_movement() -> bool:
@@ -675,6 +702,7 @@ func _apply_vertical_motion(delta: float) -> void:
 	elif not _is_guarding() and _just_pressed("jump") and _pay_stamina(jump_stamina_cost):
 		velocity.y = jump_velocity
 		_air_time = AIRBORNE_DELAY
+		AudioManager.play_takeoff_at(global_position, self)
 		_play(_stanced(JUMP_START_ANIMATION), BLEND_TIME, JUMP_TAKEOFF_TIME)
 
 
@@ -774,6 +802,8 @@ func _start_running_attack(direction: Vector3) -> void:
 	_attacking = true
 	_attack_queued = false
 	_attack_step = null
+	_world_struck.clear()
+	AudioManager.play_swing(self, _held_weapon)
 
 
 func _start_attack_step(step: AttackStep, from: float, blend: float) -> void:
@@ -782,6 +812,8 @@ func _start_attack_step(step: AttackStep, from: float, blend: float) -> void:
 	_attack_queued = false
 	_attack_step = step
 	_projectile_released = false
+	_world_struck.clear()
+	AudioManager.play_swing(self, _held_weapon)
 
 
 func _update_attack() -> void:
@@ -829,6 +861,7 @@ func _launch_projectile(scene: PackedScene, weapon: Weapon) -> void:
 	get_parent().add_child(projectile)
 	projectile.global_transform = Transform3D(Basis(Vector3.UP, _view_yaw()), weapon.global_transform * weapon.projectile_origin)
 	projectile_launched.emit(projectile)
+	AudioManager.play("projectile_launch", global_position, Vector2(0.94, 1.06), -5.0)
 
 
 func _has_next_attack_step() -> bool:
@@ -954,6 +987,10 @@ func _update_pick_up() -> void:
 
 
 func _hold(item: Node3D) -> void:
+	if item is Weapon or item is Shield:
+		AudioManager.play("equipment_equip", global_position, Vector2(0.94, 1.06), -7.0)
+	else:
+		AudioManager.play_item_pickup(str(item.name), false, global_position)
 	if item is Shield:
 		_take_shield(item)
 	elif _fits_off_hand(item):

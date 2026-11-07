@@ -20,9 +20,13 @@ func _on_died() -> void:
 
 
 func _drop_loot(origin: Vector3, container: Node) -> void:
+	var dropped := 0
 	for loot_table in loot_tables:
 		if loot_table.drops():
 			_drop_item(loot_table.roll(), origin, container)
+			dropped += 1
+	if dropped > 0:
+		AudioManager.play("loot_drop", origin, Vector2(0.94, 1.06), -8.0)
 
 
 func _drop_item(scene: PackedScene, origin: Vector3, container: Node) -> void:

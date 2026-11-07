@@ -32,6 +32,8 @@ func _ready() -> void:
 	_body.add_to_group(LEAF_GROUP)
 	_solid_layer = _body.collision_layer
 	_closed_yaw = _leaf.rotation.y
+	opened.connect(func() -> void: AudioManager.play("door_open", global_position, Vector2(0.96, 1.04), -4.0))
+	closed.connect(func() -> void: AudioManager.play("door_close", global_position, Vector2(0.96, 1.04), -4.0))
 	set_physics_process(false)
 	if start_open:
 		is_open = true

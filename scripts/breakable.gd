@@ -4,4 +4,10 @@ extends Node3D
 
 
 func _ready() -> void:
-	health.died.connect(queue_free)
+	health.died.connect(_break)
+
+
+func _break() -> void:
+	AudioManager.play_surface_impact(AudioManager.surface_for(self), global_position, 1.0)
+	AudioManager.play("breakable_crack", global_position, Vector2(0.92, 1.08), -3.5)
+	queue_free()

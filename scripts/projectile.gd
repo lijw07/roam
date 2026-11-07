@@ -69,8 +69,10 @@ func _fly(motion: Vector3) -> bool:
 	var world_hit := _cast(from, to, false)
 	if not hurtbox_hit.is_empty() and (world_hit.is_empty() or _distance(from, hurtbox_hit) <= _distance(from, world_hit) + PREFER_HURTBOX_MARGIN):
 		(hurtbox_hit.collider as Hurtbox).receive(Hit.new(damage, shooter, hurtbox_hit.position))
+		AudioManager.play("projectile_impact", hurtbox_hit.position, Vector2(0.92, 1.08), -6.0)
 		return true
 	if not world_hit.is_empty():
+		AudioManager.play_surface_impact(AudioManager.surface_for(world_hit.collider), world_hit.position, clampf(damage / 35.0, 0.35, 1.0))
 		return true
 	global_position = to
 	_travelled += motion.length()
