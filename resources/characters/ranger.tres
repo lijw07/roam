@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CharacterClass" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_class.gd" id="1_character_class"]
+[ext_resource type="PackedScene" path="res://scenes/characters/adventurers/ranger.tscn" id="2_character"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/bow_withstring.tscn" id="3_bow_withstring"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/crossbow_1handed.tscn" id="4_crossbow_1handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/crossbow_2handed.tscn" id="5_crossbow_2handed"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/bow_a_withstring.tscn" id="6_bow_a_withstring"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/bow_b_withstring.tscn" id="7_bow_b_withstring"]
+
+[resource]
+script = ExtResource("1_character_class")
+description = "A patient shot with bow or crossbow."
+lore = "For years, the ranger guided travelers through the woods above these halls. When tracks began leading underground, following them became a different kind of work."
+display_name = "Ranger"
+character_scene = ExtResource("2_character")
+weapons_text = "Bows and crossbows"
+starting_weapon = ExtResource("3_bow_withstring")
+equipment = Array[PackedScene]([ExtResource("3_bow_withstring"), ExtResource("4_crossbow_1handed"), ExtResource("5_crossbow_2handed"), ExtResource("6_bow_a_withstring"), ExtResource("7_bow_b_withstring")])

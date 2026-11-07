@@ -3,32 +3,62 @@
 [ext_resource type="Script" path="res://scripts/vitals_hud.gd" id="1_hud"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_background"]
-bg_color = Color(0, 0, 0, 0.55)
+bg_color = Color(0.1, 0.11, 0.12, 0.9)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health"]
-bg_color = Color(0.72, 0.14, 0.14, 1)
+bg_color = Color(0.78, 0.34, 0.32, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mana"]
-bg_color = Color(0.2, 0.38, 0.85, 1)
+bg_color = Color(0.4, 0.61, 0.8, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stamina"]
-bg_color = Color(0.3, 0.68, 0.25, 1)
+bg_color = Color(0.55, 0.7, 0.43, 1)
+
+[sub_resource type="Theme" id="Theme_vitals"]
+default_font_size = 13
+Label/colors/font_color = Color(0.9, 0.91, 0.92, 1)
+Label/colors/font_shadow_color = Color(0, 0, 0, 0.8)
+Label/constants/shadow_offset_x = 0
+Label/constants/shadow_offset_y = 1
 
 [node name="VitalsHUD" type="VBoxContainer"]
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = -98.0
-offset_right = 276.0
-offset_bottom = -16.0
+offset_left = 24.0
+offset_top = -109.0
+offset_right = 244.0
+offset_bottom = -24.0
 grow_vertical = 0
 mouse_filter = 2
-theme_override_constants/separation = 6
+theme = SubResource("Theme_vitals")
+theme_override_constants/separation = 8
 script = ExtResource("1_hud")
 
-[node name="Health" type="ProgressBar" parent="."]
-custom_minimum_size = Vector2(260, 22)
+[node name="Health" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
+
+[node name="Header" type="HBoxContainer" parent="Health"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Name" type="Label" parent="Health/Header"]
+layout_mode = 2
+mouse_filter = 2
+size_flags_horizontal = 3
+text = "Health"
+
+[node name="Value" type="Label" parent="Health/Header"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.72, 0.74, 0.76, 1)
+text = "100 / 100"
+horizontal_alignment = 2
+
+[node name="Bar" type="ProgressBar" parent="Health"]
+custom_minimum_size = Vector2(220, 4)
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/background = SubResource("StyleBoxFlat_background")
@@ -36,22 +66,30 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_health")
 value = 100.0
 show_percentage = false
 
-[node name="Value" type="Label" parent="Health"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Health"
-horizontal_alignment = 1
-vertical_alignment = 1
+[node name="Mana" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
 
-[node name="Mana" type="ProgressBar" parent="."]
-custom_minimum_size = Vector2(260, 22)
+[node name="Header" type="HBoxContainer" parent="Mana"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Name" type="Label" parent="Mana/Header"]
+layout_mode = 2
+mouse_filter = 2
+size_flags_horizontal = 3
+text = "Mana"
+
+[node name="Value" type="Label" parent="Mana/Header"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.72, 0.74, 0.76, 1)
+text = "100 / 100"
+horizontal_alignment = 2
+
+[node name="Bar" type="ProgressBar" parent="Mana"]
+custom_minimum_size = Vector2(220, 4)
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/background = SubResource("StyleBoxFlat_background")
@@ -59,39 +97,33 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_mana")
 value = 100.0
 show_percentage = false
 
-[node name="Value" type="Label" parent="Mana"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Mana"
-horizontal_alignment = 1
-vertical_alignment = 1
+[node name="Stamina" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
 
-[node name="Stamina" type="ProgressBar" parent="."]
-custom_minimum_size = Vector2(260, 22)
+[node name="Header" type="HBoxContainer" parent="Stamina"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Name" type="Label" parent="Stamina/Header"]
+layout_mode = 2
+mouse_filter = 2
+size_flags_horizontal = 3
+text = "Stamina"
+
+[node name="Value" type="Label" parent="Stamina/Header"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.72, 0.74, 0.76, 1)
+text = "100 / 100"
+horizontal_alignment = 2
+
+[node name="Bar" type="ProgressBar" parent="Stamina"]
+custom_minimum_size = Vector2(220, 4)
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/background = SubResource("StyleBoxFlat_background")
 theme_override_styles/fill = SubResource("StyleBoxFlat_stamina")
 value = 100.0
 show_percentage = false
-
-[node name="Value" type="Label" parent="Stamina"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Stamina"
-horizontal_alignment = 1
-vertical_alignment = 1

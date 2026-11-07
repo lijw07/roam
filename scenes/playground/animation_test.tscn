@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bbp51i165ba13"]
 
 [ext_resource type="Script" uid="uid://cgc4hvxx3qqqf" path="res://scripts/animation_test.gd" id="1_test"]
-[ext_resource type="PackedScene" uid="uid://r4kxi28gpfit" path="res://scenes/dungeon/floors/floor_tile_large.tscn" id="2_floor"]
+[ext_resource type="PackedScene" uid="uid://ddk0lqowyqjy3" path="res://scenes/dungeon/floors/floor_tile_large.tscn" id="2_floor"]
 [ext_resource type="PackedScene" uid="uid://dfofpcqw5hsoy" path="res://scenes/characters/adventurers/knight.tscn" id="3_knight"]
 [ext_resource type="Script" uid="uid://b4x3gwfy0ernd" path="res://scripts/dungeon_explorer.gd" id="4_explorer"]
 [ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/sword_1handed.tscn" id="10_sword_1handed"]

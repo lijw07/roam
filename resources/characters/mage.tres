@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CharacterClass" format=3]
+
+[ext_resource type="Script" path="res://scripts/character_class.gd" id="1_character_class"]
+[ext_resource type="PackedScene" path="res://scenes/characters/adventurers/mage.tscn" id="2_character"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/staff.tscn" id="3_staff"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/adventurers/wand.tscn" id="4_wand"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/staff_a.tscn" id="5_staff_a"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/staff_b.tscn" id="6_staff_b"]
+[ext_resource type="PackedScene" path="res://scenes/equipment/weapons/wand_a.tscn" id="7_wand_a"]
+
+[resource]
+script = ExtResource("1_character_class")
+description = "Arcane craft, carried in staff and wand."
+lore = "A damaged map brought the mage to these ruins. Somewhere below lies the library mentioned in its margins, and perhaps the missing pages of a teacher's final work."
+display_name = "Mage"
+character_scene = ExtResource("2_character")
+weapons_text = "Staves and wands"
+starting_weapon = ExtResource("3_staff")
+equipment = Array[PackedScene]([ExtResource("3_staff"), ExtResource("4_wand"), ExtResource("5_staff_a"), ExtResource("6_staff_b"), ExtResource("7_wand_a")])

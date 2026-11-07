@@ -1,0 +1,171 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/settings_menu.gd" id="1_settings_menu"]
+[ext_resource type="Theme" path="res://resources/ui/minimal_theme.tres" id="2_ui_theme"]
+
+[node name="SettingsMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_ui_theme")
+script = ExtResource("1_settings_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.08, 0.08, 0.09, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 64
+theme_override_constants/margin_top = 48
+theme_override_constants/margin_right = 64
+theme_override_constants/margin_bottom = 48
+
+[node name="Content" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 24
+
+[node name="Heading" type="Label" parent="Margin/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "Settings"
+
+[node name="Scroll" type="ScrollContainer" parent="Margin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+follow_focus = true
+horizontal_scroll_mode = 3
+
+[node name="Rows" type="VBoxContainer" parent="Margin/Content/Scroll"]
+custom_minimum_size = Vector2(640, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+theme_override_constants/separation = 12
+
+[node name="MouseHeading" type="Label" parent="Margin/Content/Scroll/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Mouse"
+
+[node name="SensitivityXRow" type="HBoxContainer" parent="Margin/Content/Scroll/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SensitivityXLabel" type="Label" parent="Margin/Content/Scroll/Rows/SensitivityXRow"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Sensitivity X"
+
+[node name="SensitivityXSlider" type="HSlider" parent="Margin/Content/Scroll/Rows/SensitivityXRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 0.1
+max_value = 3.0
+step = 0.05
+
+[node name="SensitivityXValue" type="Label" parent="Margin/Content/Scroll/Rows/SensitivityXRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+text = ""
+
+[node name="SensitivityYRow" type="HBoxContainer" parent="Margin/Content/Scroll/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SensitivityYLabel" type="Label" parent="Margin/Content/Scroll/Rows/SensitivityYRow"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Sensitivity Y"
+
+[node name="SensitivityYSlider" type="HSlider" parent="Margin/Content/Scroll/Rows/SensitivityYRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 0.1
+max_value = 3.0
+step = 0.05
+
+[node name="SensitivityYValue" type="Label" parent="Margin/Content/Scroll/Rows/SensitivityYRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+text = ""
+
+[node name="AudioHeading" type="Label" parent="Margin/Content/Scroll/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Audio"
+
+[node name="MusicRow" type="HBoxContainer" parent="Margin/Content/Scroll/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="MusicLabel" type="Label" parent="Margin/Content/Scroll/Rows/MusicRow"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Music volume"
+
+[node name="MusicSlider" type="HSlider" parent="Margin/Content/Scroll/Rows/MusicRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+
+[node name="MusicValue" type="Label" parent="Margin/Content/Scroll/Rows/MusicRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+text = ""
+
+[node name="ControlsHeading" type="Label" parent="Margin/Content/Scroll/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Controls"
+
+[node name="Bindings" type="GridContainer" parent="Margin/Content/Scroll/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 6
+columns = 3
+
+[node name="ResetBindingsButton" type="Button" parent="Margin/Content/Scroll/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Reset Controls"
+
+[node name="Footer" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+mouse_filter = 2
+alignment = 1
+
+[node name="BackButton" type="Button" parent="Margin/Content/Footer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 44)
+layout_mode = 2
+text = "Back"

@@ -1,0 +1,119 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/character_select.gd" id="1_character_select"]
+[ext_resource type="Script" path="res://scripts/character_class.gd" id="8_character_class"]
+[ext_resource type="Resource" path="res://resources/characters/knight.tres" id="2_knight"]
+[ext_resource type="Resource" path="res://resources/characters/barbarian.tres" id="3_barbarian"]
+[ext_resource type="Resource" path="res://resources/characters/mage.tres" id="4_mage"]
+[ext_resource type="Resource" path="res://resources/characters/ranger.tres" id="5_ranger"]
+[ext_resource type="Resource" path="res://resources/characters/rogue_hooded.tres" id="7_rogue_hooded"]
+
+[ext_resource type="PackedScene" path="res://scenes/ui/menu_backdrop.tscn" id="ui_backdrop"]
+[ext_resource type="Theme" path="res://resources/ui/minimal_theme.tres" id="ui_theme"]
+
+
+[ext_resource type="Script" path="res://scripts/character_turntable.gd" id="turntable"]
+
+[node name="CharacterSelect" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("ui_theme")
+script = ExtResource("1_character_select")
+classes = Array[ExtResource("8_character_class")]([ExtResource("2_knight"), ExtResource("3_barbarian"), ExtResource("4_mage"), ExtResource("5_ranger"), ExtResource("7_rogue_hooded")])
+
+[node name="Background" parent="." instance=ExtResource("ui_backdrop")]
+layout_mode = 1
+view = 1
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 64
+theme_override_constants/margin_top = 64
+theme_override_constants/margin_right = 64
+theme_override_constants/margin_bottom = 64
+
+[node name="Content" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 32
+
+[node name="Heading" type="Label" parent="Margin/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Choose your character"
+horizontal_alignment = 1
+
+[node name="Body" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+theme_override_constants/separation = 32
+alignment = 1
+
+[node name="CharacterList" type="VBoxContainer" parent="Margin/Content/Body"]
+alignment = 1
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PreviewSpace" type="Control" parent="Margin/Content/Body" node_paths=PackedStringArray("backdrop")]
+script = ExtResource("turntable")
+backdrop = NodePath("../../../../Background")
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 260)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="Story" type="VBoxContainer" parent="Margin/Content/Body"]
+custom_minimum_size = Vector2(288, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="CharacterDescription" type="Label" parent="Margin/Content/Body/Story"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 20
+autowrap_mode = 3
+
+[node name="CharacterLore" type="Label" parent="Margin/Content/Body/Story"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.73, 0.75, 0.77, 1)
+theme_override_constants/line_spacing = 5
+autowrap_mode = 3
+
+[node name="Footer" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="BackButton" type="Button" parent="Margin/Content/Footer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+text = "Back"
+
+[node name="ContinueButton" type="Button" parent="Margin/Content/Footer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+disabled = true
+text = "Continue"

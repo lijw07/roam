@@ -1,0 +1,69 @@
+[gd_scene format=3]
+
+[ext_resource type="Theme" path="res://resources/ui/minimal_theme.tres" id="theme"]
+
+[sub_resource type="StyleBoxFlat" id="panel"]
+bg_color = Color(0.1, 0.11, 0.12, 0.96)
+content_margin_left = 16.0
+content_margin_right = 16.0
+content_margin_top = 12.0
+content_margin_bottom = 16.0
+
+[node name="DungeonInventory" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("theme")
+mouse_filter = 2
+
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.02, 0.025, 0.03, 0.18)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("panel")
+
+[node name="Content" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="Center/Panel/Content"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="Center/Panel/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+text = "Backpack"
+
+[node name="Close" type="Button" parent="Center/Panel/Content/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "×"
+custom_minimum_size = Vector2(32, 32)
+theme_override_font_sizes/font_size = 20
+
+[node name="SlotGrid" type="GridContainer" parent="Center/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+columns = 3

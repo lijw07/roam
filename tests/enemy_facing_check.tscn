@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cvs1y4aornrhe"]
+
+[ext_resource type="Script" path="res://tests/enemy_facing_check.gd" id="1_check"]
+
+[node name="EnemyFacingCheck" type="Node3D" unique_id=417303270]
+script = ExtResource("1_check")
