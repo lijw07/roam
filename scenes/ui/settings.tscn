@@ -3,6 +3,22 @@
 [ext_resource type="Script" path="res://scripts/settings_menu.gd" id="1_settings_menu"]
 [ext_resource type="Theme" path="res://resources/ui/minimal_theme.tres" id="2_ui_theme"]
 
+[sub_resource type="StyleBoxFlat" id="setting_row"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 10.0
+bg_color = Color(0.1, 0.11, 0.12, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.38, 0.41, 0.44, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
 [node name="SettingsMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -47,13 +63,14 @@ theme_override_font_sizes/font_size = 40
 text = "Settings"
 
 [node name="Scroll" type="ScrollContainer" parent="Margin/Content"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 follow_focus = true
 horizontal_scroll_mode = 3
 
 [node name="Rows" type="VBoxContainer" parent="Margin/Content/Scroll"]
-custom_minimum_size = Vector2(640, 0)
+custom_minimum_size = Vector2(720, 0)
 layout_mode = 2
 size_flags_horizontal = 6
 theme_override_constants/separation = 12
@@ -63,17 +80,29 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "Mouse"
 
-[node name="SensitivityXRow" type="HBoxContainer" parent="Margin/Content/Scroll/Rows"]
+[node name="SensitivityXRow" type="PanelContainer" parent="Margin/Content/Scroll/Rows"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_styles/panel = SubResource("setting_row")
 
-[node name="SensitivityXLabel" type="Label" parent="Margin/Content/Scroll/Rows/SensitivityXRow"]
-custom_minimum_size = Vector2(200, 0)
+[node name="Fields" type="HBoxContainer" parent="Margin/Content/Scroll/Rows/SensitivityXRow"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SensitivityXLabel" type="Label" parent="Margin/Content/Scroll/Rows/SensitivityXRow/Fields"]
+custom_minimum_size = Vector2(156, 0)
 layout_mode = 2
 text = "Sensitivity X"
 
-[node name="SensitivityXSlider" type="HSlider" parent="Margin/Content/Scroll/Rows/SensitivityXRow"]
+[node name="SensitivityXDecrease" type="Button" parent="Margin/Content/Scroll/Rows/SensitivityXRow/Fields"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(40, 36)
+layout_mode = 2
+text = "−"
+tooltip_text = "Decrease sensitivity x"
+
+[node name="SensitivityXSlider" type="HSlider" parent="Margin/Content/Scroll/Rows/SensitivityXRow/Fields"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 36)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -81,23 +110,43 @@ min_value = 0.1
 max_value = 3.0
 step = 0.05
 
-[node name="SensitivityXValue" type="Label" parent="Margin/Content/Scroll/Rows/SensitivityXRow"]
+[node name="SensitivityXIncrease" type="Button" parent="Margin/Content/Scroll/Rows/SensitivityXRow/Fields"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(70, 0)
+custom_minimum_size = Vector2(40, 36)
 layout_mode = 2
+text = "+"
+tooltip_text = "Increase sensitivity x"
+
+[node name="SensitivityXValue" type="Label" parent="Margin/Content/Scroll/Rows/SensitivityXRow/Fields"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+horizontal_alignment = 2
 text = ""
 
-[node name="SensitivityYRow" type="HBoxContainer" parent="Margin/Content/Scroll/Rows"]
+[node name="SensitivityYRow" type="PanelContainer" parent="Margin/Content/Scroll/Rows"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_styles/panel = SubResource("setting_row")
 
-[node name="SensitivityYLabel" type="Label" parent="Margin/Content/Scroll/Rows/SensitivityYRow"]
-custom_minimum_size = Vector2(200, 0)
+[node name="Fields" type="HBoxContainer" parent="Margin/Content/Scroll/Rows/SensitivityYRow"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SensitivityYLabel" type="Label" parent="Margin/Content/Scroll/Rows/SensitivityYRow/Fields"]
+custom_minimum_size = Vector2(156, 0)
 layout_mode = 2
 text = "Sensitivity Y"
 
-[node name="SensitivityYSlider" type="HSlider" parent="Margin/Content/Scroll/Rows/SensitivityYRow"]
+[node name="SensitivityYDecrease" type="Button" parent="Margin/Content/Scroll/Rows/SensitivityYRow/Fields"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(40, 36)
+layout_mode = 2
+text = "−"
+tooltip_text = "Decrease sensitivity y"
+
+[node name="SensitivityYSlider" type="HSlider" parent="Margin/Content/Scroll/Rows/SensitivityYRow/Fields"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 36)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -105,10 +154,18 @@ min_value = 0.1
 max_value = 3.0
 step = 0.05
 
-[node name="SensitivityYValue" type="Label" parent="Margin/Content/Scroll/Rows/SensitivityYRow"]
+[node name="SensitivityYIncrease" type="Button" parent="Margin/Content/Scroll/Rows/SensitivityYRow/Fields"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(70, 0)
+custom_minimum_size = Vector2(40, 36)
 layout_mode = 2
+text = "+"
+tooltip_text = "Increase sensitivity y"
+
+[node name="SensitivityYValue" type="Label" parent="Margin/Content/Scroll/Rows/SensitivityYRow/Fields"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+horizontal_alignment = 2
 text = ""
 
 [node name="AudioHeading" type="Label" parent="Margin/Content/Scroll/Rows"]
@@ -116,17 +173,29 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "Audio"
 
-[node name="MusicRow" type="HBoxContainer" parent="Margin/Content/Scroll/Rows"]
+[node name="MusicRow" type="PanelContainer" parent="Margin/Content/Scroll/Rows"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_styles/panel = SubResource("setting_row")
 
-[node name="MusicLabel" type="Label" parent="Margin/Content/Scroll/Rows/MusicRow"]
-custom_minimum_size = Vector2(200, 0)
+[node name="Fields" type="HBoxContainer" parent="Margin/Content/Scroll/Rows/MusicRow"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="MusicLabel" type="Label" parent="Margin/Content/Scroll/Rows/MusicRow/Fields"]
+custom_minimum_size = Vector2(156, 0)
 layout_mode = 2
 text = "Music volume"
 
-[node name="MusicSlider" type="HSlider" parent="Margin/Content/Scroll/Rows/MusicRow"]
+[node name="MusicDecrease" type="Button" parent="Margin/Content/Scroll/Rows/MusicRow/Fields"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(40, 36)
+layout_mode = 2
+text = "−"
+tooltip_text = "Decrease music volume"
+
+[node name="MusicSlider" type="HSlider" parent="Margin/Content/Scroll/Rows/MusicRow/Fields"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 36)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -134,10 +203,18 @@ min_value = 0.0
 max_value = 1.0
 step = 0.01
 
-[node name="MusicValue" type="Label" parent="Margin/Content/Scroll/Rows/MusicRow"]
+[node name="MusicIncrease" type="Button" parent="Margin/Content/Scroll/Rows/MusicRow/Fields"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(70, 0)
+custom_minimum_size = Vector2(40, 36)
 layout_mode = 2
+text = "+"
+tooltip_text = "Increase music volume"
+
+[node name="MusicValue" type="Label" parent="Margin/Content/Scroll/Rows/MusicRow/Fields"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+horizontal_alignment = 2
 text = ""
 
 [node name="ControlsHeading" type="Label" parent="Margin/Content/Scroll/Rows"]

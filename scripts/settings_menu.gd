@@ -16,7 +16,10 @@ const NO_ACTION := &""
 var _binding_buttons: Dictionary[StringName, Array] = {}
 var _rebinding_action := NO_ACTION
 var _rebinding_slot := 0
+var _opening_generation := 0
+var _adjustment_rows: Array[Array] = []
 
+@onready var scroll: ScrollContainer = %Scroll
 @onready var sensitivity_x_slider: HSlider = %SensitivityXSlider
 @onready var sensitivity_x_value: Label = %SensitivityXValue
 @onready var sensitivity_y_slider: HSlider = %SensitivityYSlider
@@ -32,6 +35,9 @@ func _ready() -> void:
 	_bind_slider(sensitivity_x_slider, sensitivity_x_value, Settings.mouse_sensitivity_x, Settings.set_mouse_sensitivity_x, _multiplier_text)
 	_bind_slider(sensitivity_y_slider, sensitivity_y_value, Settings.mouse_sensitivity_y, Settings.set_mouse_sensitivity_y, _multiplier_text)
 	_bind_slider(music_slider, music_value, Settings.music_volume, Settings.set_music_volume, _percent_text)
+	_bind_steps(sensitivity_x_slider, %SensitivityXDecrease, %SensitivityXIncrease)
+	_bind_steps(sensitivity_y_slider, %SensitivityYDecrease, %SensitivityYIncrease)
+	_bind_steps(music_slider, %MusicDecrease, %MusicIncrease)
 	for action in Settings.ACTION_NAMES:
 		_add_binding_row(action)
 	reset_bindings_button.pressed.connect(_on_reset_bindings_pressed)
@@ -86,8 +92,18 @@ func _add_binding_row(action: StringName) -> void:
 	_binding_buttons[action] = buttons
 
 
+func _bind_steps(slider: HSlider, decrease: Button, increase: Button) -> void:
+	decrease.pressed.connect(func() -> void: slider.value -= slider.step)
+	increase.pressed.connect(func() -> void: slider.value += slider.step)
+	_adjustment_rows.append([decrease, slider, increase])
+	decrease.focus_neighbor_right = decrease.get_path_to(slider)
+	slider.focus_neighbor_left = slider.get_path_to(decrease)
+	slider.focus_neighbor_right = slider.get_path_to(increase)
+	increase.focus_neighbor_left = increase.get_path_to(slider)
+
+
 func _link_focus_rows() -> void:
-	var rows: Array[Array] = [[sensitivity_x_slider], [sensitivity_y_slider], [music_slider]]
+	var rows: Array[Array] = _adjustment_rows.duplicate()
 	for action in _binding_buttons:
 		rows.append(_binding_buttons[action])
 	rows.append([reset_bindings_button])
@@ -156,8 +172,19 @@ func _on_reset_bindings_pressed() -> void:
 
 
 func _focus_first_setting() -> void:
-	if is_visible_in_tree():
-		sensitivity_x_slider.grab_focus()
+	_opening_generation += 1
+	var generation := _opening_generation
+	if not is_visible_in_tree():
+		return
+	# Initial focus must not scroll the first section's heading out of view.
+	scroll.follow_focus = false
+	sensitivity_x_slider.grab_focus()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if generation != _opening_generation or not is_visible_in_tree():
+		return
+	scroll.scroll_vertical = 0
+	scroll.follow_focus = true
 
 
 func _on_back_pressed() -> void:
