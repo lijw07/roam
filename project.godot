@@ -15,16 +15,16 @@ run/main_scene="res://scenes/ui/main_menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[audio]
+
+default_bus_layout="res://default_bus_layout.tres"
+
 [autoload]
 
 Profile="*res://scripts/profile.gd"
 Settings="*res://scripts/settings.gd"
 HoverFocus="*res://scripts/hover_focus.gd"
 AudioManager="*res://scripts/audio_manager.gd"
-
-[audio]
-
-default_bus_layout="res://default_bus_layout.tres"
 
 [display]
 

@@ -55,6 +55,7 @@ const CANCEL_ACTIONS: Array[StringName] = [&"jump", &"attack"]
 const COMBAT_ACTIONS: Array[StringName] = [&"attack", &"secondary"]
 const LIMB_BONES: Array[StringName] = [&"hand.l", &"hand.r", &"foot.l", &"foot.r"]
 const LIMB_STRIKE_RADIUS := 0.16
+const MIN_LAUNCH_AIM_DISTANCE := 1.0
 
 @export var character_class: CharacterClass
 @export var walk_speed := 3.0
@@ -661,6 +662,10 @@ func _view_yaw() -> float:
 	return _camera_yaw() + PI
 
 
+func _aim_point() -> Vector3:
+	return Vector3.INF
+
+
 func _update_upper_body_twist(direction: Vector3, delta: float) -> void:
 	var twisting := _travels(direction)
 	var target := clampf(wrapf(_view_yaw() - model.rotation.y, -PI, PI), -MAX_TWIST, MAX_TWIST) if twisting else 0.0
@@ -859,9 +864,17 @@ func _launch_projectile(scene: PackedScene, weapon: Weapon) -> void:
 	var projectile: Projectile = scene.instantiate()
 	projectile.shooter = self
 	get_parent().add_child(projectile)
-	projectile.global_transform = Transform3D(Basis(Vector3.UP, _view_yaw()), weapon.global_transform * weapon.projectile_origin)
+	var origin := weapon.global_transform * weapon.projectile_origin
+	projectile.global_transform = Transform3D(_launch_basis(origin), origin)
 	projectile_launched.emit(projectile)
 	AudioManager.play("projectile_launch", global_position, Vector2(0.94, 1.06), -5.0)
+
+
+func _launch_basis(origin: Vector3) -> Basis:
+	var to_aim := _aim_point() - origin
+	if not to_aim.is_finite() or to_aim.length() < MIN_LAUNCH_AIM_DISTANCE:
+		return Basis(Vector3.UP, _view_yaw())
+	return Basis.looking_at(to_aim, Vector3.UP, true)
 
 
 func _has_next_attack_step() -> bool:

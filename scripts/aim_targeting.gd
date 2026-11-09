@@ -46,6 +46,7 @@ func _physics_process(_delta: float) -> void:
 		looked_at = _pickup_near_ray(start, aim_point)
 	target = looked_at as Enemy
 	player.set("aim_point", aim_point)
+	player.set("aim_target", target)
 	_find_hovered_door(start, end)
 
 

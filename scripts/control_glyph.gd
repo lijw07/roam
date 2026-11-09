@@ -7,7 +7,7 @@ var mouse_button := 0
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var font := ThemeDB.fallback_font
-	custom_minimum_size = Vector2(24 if mouse_button else maxf(24, font.get_string_size(key, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x + 12), 24)
+	custom_minimum_size = Vector2(24.0 if mouse_button else maxf(24.0, font.get_string_size(key, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x + 12.0), 24.0)
 
 func _draw() -> void:
 	var box := StyleBoxFlat.new()

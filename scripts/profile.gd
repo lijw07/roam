@@ -28,6 +28,7 @@ var backpack: Inventory
 
 var _started_classes: PackedStringArray = []
 var _test_materials_given := false
+var _returned_from_run := false
 var _shop_rotation := -1
 var _shop_purchases: Dictionary[String, int] = {}
 var _save_queued := false
@@ -56,8 +57,14 @@ func choose_class(chosen: CharacterClass) -> void:
 
 func finish_run(run_inventory: Inventory) -> void:
 	backpack.load_data(run_inventory.to_data())
-	backpack.deposit_into(stash)
+	_returned_from_run = true
 	save()
+
+
+func take_run_return() -> bool:
+	var returned := _returned_from_run
+	_returned_from_run = false
+	return returned
 
 
 func lose_run() -> void:

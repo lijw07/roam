@@ -1,12 +1,11 @@
 extends "res://scripts/player.gd"
 
-## The playground player, moving relative to where the camera faces instead of along world axes.
-
 const MIN_AIM_DISTANCE := 1.5
+const MIN_TARGET_DISTANCE := 0.3
 
-## Yaw of the camera following this character, in radians.
 var camera_yaw := 0.0
 var aim_point := Vector3.INF
+var aim_target: Enemy = null
 
 
 func _input_direction() -> Vector3:
@@ -17,9 +16,26 @@ func _camera_yaw() -> float:
 	return camera_yaw
 
 
+func _aim_point() -> Vector3:
+	return aim_point
+
+
 func _view_yaw() -> float:
-	var to_aim := aim_point - global_position
-	to_aim.y = 0.0
+	if _has_live_target():
+		var to_target := _flat_offset_to(aim_target.global_position)
+		if to_target.length() >= MIN_TARGET_DISTANCE:
+			return atan2(to_target.x, to_target.z)
+	var to_aim := _flat_offset_to(aim_point)
 	if not aim_point.is_finite() or to_aim.length() < MIN_AIM_DISTANCE:
 		return super()
 	return atan2(to_aim.x, to_aim.z)
+
+
+func _has_live_target() -> bool:
+	return is_instance_valid(aim_target) and not aim_target.dead
+
+
+func _flat_offset_to(point: Vector3) -> Vector3:
+	var offset := point - global_position
+	offset.y = 0.0
+	return offset

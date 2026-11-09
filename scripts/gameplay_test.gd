@@ -19,6 +19,9 @@ const BODY_SHAPE_PATH := ^"CollisionShape3D"
 @onready var player: CharacterBody3D = $Player
 @onready var item_collector: ItemCollector = $Player/ItemCollector
 @onready var run_inventory: Inventory = $Player/Inventory
+@onready var kill_all_button: Button = $HUD/KillAllEnemies
+@onready var pause_menu: Control = $HUD/PauseMenu
+@onready var victory_screen: Control = $HUD/VictoryScreen
 @onready var navigation_region: NavigationRegion3D = $NavigationRegion3D
 @onready var generator: DungeonGenerator = $NavigationRegion3D/DungeonGenerator
 @onready var starting_gear: Node3D = $StartingGear
@@ -41,6 +44,8 @@ func _ready() -> void:
 	_stock_starting_gear()
 	run_inventory.load_data(Profile.backpack.to_data())
 	_enter_dungeon()
+	kill_all_button.visible = OS.is_debug_build()
+	kill_all_button.pressed.connect(_kill_all_enemies)
 	navigation_region.bake_finished.connect(_on_navigation_baked)
 	_rebake_navigation()
 	inventory_ui.visibility_changed.connect(_on_inventory_toggled)
@@ -56,8 +61,8 @@ func _process(_delta: float) -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact") and _door_to_use() != null:
-		_use_door()
 		get_viewport().set_input_as_handled()
+		_use_door()
 	elif event is InputEventKey and event.pressed and not event.echo:
 		_on_key_pressed(event.physical_keycode)
 
@@ -77,9 +82,10 @@ func _on_key_pressed(key: Key) -> void:
 func _restart() -> void:
 	if player.dead:
 		Profile.lose_run()
-		get_tree().change_scene_to_file(hub_scene)
+		set_process_unhandled_key_input(false)
+		get_tree().change_scene_to_file.call_deferred(hub_scene)
 	else:
-		get_tree().reload_current_scene()
+		get_tree().reload_current_scene.call_deferred()
 
 
 func _become(chosen: CharacterClass) -> void:
@@ -101,6 +107,7 @@ func _swap_child(parent: Node, source: Node, path: NodePath) -> void:
 	parent.remove_child(old)
 	old.free()
 	source.remove_child(replacement)
+	replacement.owner = null
 	parent.add_child(replacement)
 	parent.move_child(replacement, index)
 
@@ -170,6 +177,12 @@ func _look(mouse_motion: Vector2) -> void:
 	camera_rig.rotation.y -= mouse_motion.x * sensitivity * Settings.mouse_sensitivity_x
 
 
+func _kill_all_enemies() -> void:
+	for enemy in generator.get_enemies():
+		if is_instance_valid(enemy) and not enemy.dead:
+			enemy.die()
+
+
 func _watch_boss() -> void:
 	_boss_defeated = generator.boss == null
 	if not _boss_defeated:
@@ -189,6 +202,15 @@ func _leave_dungeon() -> void:
 	if not _boss_defeated:
 		return
 	Profile.finish_run(run_inventory)
+	set_process_unhandled_key_input(false)
+	pause_menu.process_mode = Node.PROCESS_MODE_DISABLED
+	get_tree().paused = true
+	victory_screen.finished.connect(_return_to_camp)
+	victory_screen.play()
+
+
+func _return_to_camp() -> void:
+	get_tree().paused = false
 	get_tree().change_scene_to_file(hub_scene)
 
 

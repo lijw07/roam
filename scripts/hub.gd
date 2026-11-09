@@ -1,5 +1,7 @@
 extends Control
 
+const FADE_IN_TIME := 0.6
+
 @export_file("*.tscn") var dungeon_scene := "res://scenes/playground/gameplay_test.tscn"
 @export_file("*.tscn") var character_select_scene := "res://scenes/ui/character_select.tscn"
 @export_file("*.tscn") var main_menu_scene := "res://scenes/ui/main_menu.tscn"
@@ -13,6 +15,7 @@ extends Control
 @onready var change_character_button: Button = %ChangeCharacterButton
 @onready var main_menu_button: Button = %MainMenuButton
 @onready var item_tooltip: ItemTooltip = %ItemTooltip
+@onready var fade_in: ColorRect = %FadeIn
 
 var _detail_inventory: Inventory
 var _detail_index := 0
@@ -33,6 +36,16 @@ func _ready() -> void:
 	change_character_button.pressed.connect(_go_to.bind(character_select_scene))
 	main_menu_button.pressed.connect(_go_to.bind(main_menu_scene))
 	enter_dungeon_button.grab_focus()
+	if Profile.take_run_return():
+		_fade_in_from_black()
+
+
+func _fade_in_from_black() -> void:
+	fade_in.modulate.a = 1.0
+	fade_in.show()
+	var fade := create_tween()
+	fade.tween_property(fade_in, "modulate:a", 0.0, FADE_IN_TIME)
+	fade.tween_callback(fade_in.hide)
 
 
 func _bind(grid: ItemGrid, inventory: Inventory) -> void:

@@ -59,6 +59,7 @@ scripts/
   settings_menu.gd        Settings screen: sensitivity and volume sliders and two rebindable slots per action
   item_tooltip.gd          Details panel beside the selected hub slot: name, type, damage, potion effects, quantity, and whether the character can use it
   hover_focus.gd          Autoload that gives a button or inventory slot keyboard focus when the mouse moves onto it, so only one is ever highlighted
+  victory_screen.gd       Victory banner after leaving through the unlocked exit, then a fade to black before the hub
   pause_menu.gd           In-dungeon pause menu: Resume, Settings (opened over the game), Return to Camp, Quit
   character_class.gd      A playable character: its model, the weapons it may hold and its starting gear
   character_select.gd     Character select screen built from the CharacterClass list
@@ -96,13 +97,16 @@ Main menu → character select → hub → dungeon (`gameplay_test.tscn`) → hu
   the equipped weapon and shields with the equipped off-hand (same as dragging onto the slot), and
   backpack or hand slots go back to the stash. Hovering a slot with the mouse selects it.
 - **Runs**: the player starts with the loadout and the backpack's items. Killing the boss unlocks
-  the boss room's exit door; leaving through it puts the run inventory into the stash. Dying and
+  the boss room's exit door; leaving through it (F) shows a Victory screen, fades to black and returns to the hub,
+  where everything collected is waiting in the backpack to move into the stash. Dying and
   pressing R returns to the hub and loses the backpack. In the inventory, Enter / Space / A (or
   right-click) on a potion drinks it. While the inventory is open the player
   stands still (no moving, sprinting, jumping or attacking), so WASD and the stick only move between slots.
 - **Screen size**: every screen is laid out for a 1280x720 base and scaled to the window (`canvas_items`
   stretch, `expand` aspect): smaller or larger screens scale the whole UI, and other aspect ratios add
   room around the anchored layouts instead of cropping them.
+- **Kill All Enemies**: debug builds only, a button at the top right of the dungeon HUD kills every enemy,
+  boss included, so the exit unlocks right away. Open the inventory (Tab) to free the mouse and click it.
 - **Pause**: Esc or Start in the dungeon pauses the game. Return to Camp asks first, then ends the run
   like dying (the backpack is lost); Quit is hidden in web builds.
 - **Settings**: mouse X/Y sensitivity (multipliers on the dungeon camera), music volume (the `Music`

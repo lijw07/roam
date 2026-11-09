@@ -27,6 +27,7 @@
 [ext_resource type="Script" path="res://scripts/crosshair.gd" id="93_crosshair"]
 [ext_resource type="Script" path="res://scripts/shoulder_camera.gd" id="94_shoulder_camera"]
 [ext_resource type="Script" path="res://scripts/render_warm_up.gd" id="90_render_warm_up"]
+[ext_resource type="PackedScene" path="res://scenes/ui/victory_screen.tscn" id="98_victory_screen"]
 
 [sub_resource type="Environment" id="Environment_dungeon"]
 background_mode = 1
@@ -181,4 +182,18 @@ mouse_filter = 2
 color = Color(0, 0, 0, 1)
 script = ExtResource("22_loading_cover")
 
+[node name="KillAllEnemies" type="Button" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -216.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 56.0
+grow_horizontal = 0
+focus_mode = 0
+text = "Kill All Enemies"
+
 [node name="PauseMenu" parent="HUD" instance=ExtResource("96_pause_menu")]
+
+[node name="VictoryScreen" parent="HUD" instance=ExtResource("98_victory_screen")]
