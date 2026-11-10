@@ -6,11 +6,11 @@ const MIN_PITCH := -1.2
 const MAX_PITCH := 0.3
 const HOVERED_DOOR_REACH := 3.5
 const REACH_HEIGHT := 1.0
-const DEATH_TEXT := "You died   R to return to camp"
 const LEAVE_TEXT := "Leave dungeon"
 const LOCKED_EXIT_TEXT := "Defeat the boss to leave"
 const MODEL_PATH := ^"Model"
 const BODY_SHAPE_PATH := ^"CollisionShape3D"
+const MELEE_CROSSHAIR_ALPHA := 0.35
 
 @export var default_class: CharacterClass
 @export_file("*.tscn") var hub_scene := "res://scenes/ui/hub.tscn"
@@ -21,6 +21,7 @@ const BODY_SHAPE_PATH := ^"CollisionShape3D"
 @onready var kill_all_button: Button = $HUD/KillAllEnemies
 @onready var pause_menu: Control = $HUD/PauseMenu
 @onready var victory_screen: Control = $HUD/VictoryScreen
+@onready var death_screen: Control = $HUD/DeathScreen
 @onready var navigation_region: NavigationRegion3D = $NavigationRegion3D
 @onready var generator: DungeonGenerator = $NavigationRegion3D/DungeonGenerator
 @onready var starting_gear: Node3D = $StartingGear
@@ -29,6 +30,7 @@ const BODY_SHAPE_PATH := ^"CollisionShape3D"
 @onready var control_hints: VBoxContainer = $HUD/ControlHints
 @onready var inventory_ui: Control = $HUD/Inventory
 @onready var aim_targeting: AimTargeting = $AimTargeting
+@onready var crosshair: Control = $HUD/Crosshair
 
 var _navigation_stale := false
 var _boss_defeated := false
@@ -47,6 +49,7 @@ func _ready() -> void:
 	navigation_region.bake_finished.connect(_on_navigation_baked)
 	_rebake_navigation()
 	inventory_ui.visibility_changed.connect(_on_inventory_toggled)
+	player.health.died.connect(_on_player_died)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_equip_starting_gear_after_spawn()
 
@@ -55,6 +58,7 @@ func _process(_delta: float) -> void:
 	camera_rig.global_position = player.global_position + Vector3.UP * RIG_HEIGHT
 	player.camera_yaw = camera_rig.rotation.y
 	item_collector.aimed_pickup = aim_targeting.looked_at as ItemPickup
+	crosshair.modulate.a = MELEE_CROSSHAIR_ALPHA if player.fights_in_melee() else 1.0
 	control_hints.show_status(_status_text(), player.dead)
 
 
@@ -79,12 +83,21 @@ func _on_key_pressed(key: Key) -> void:
 
 
 func _restart() -> void:
-	if player.dead:
-		Profile.lose_run()
-		set_process_unhandled_key_input(false)
-		get_tree().change_scene_to_file.call_deferred(hub_scene)
-	else:
-		get_tree().reload_current_scene.call_deferred()
+	get_tree().reload_current_scene.call_deferred()
+
+
+func _on_player_died() -> void:
+	set_process_unhandled_key_input(false)
+	pause_menu.process_mode = Node.PROCESS_MODE_DISABLED
+	inventory_ui.hide()
+	inventory_ui.process_mode = Node.PROCESS_MODE_DISABLED
+	death_screen.finished.connect(_return_to_camp_after_death)
+	death_screen.play()
+
+
+func _return_to_camp_after_death() -> void:
+	Profile.lose_run()
+	get_tree().change_scene_to_file(hub_scene)
 
 
 func _become(chosen: CharacterClass) -> void:
@@ -142,6 +155,13 @@ func _enter_dungeon() -> void:
 	for node in generator.find_children("*", "Node3D", true, false):
 		if node is Door:
 			_track_door(node)
+		elif node.has_signal(&"broken"):
+			node.broken.connect(_rebake_after_break)
+
+
+func _rebake_after_break() -> void:
+	await get_tree().process_frame
+	_rebake_navigation()
 
 
 func _track_door(door: Door) -> void:
@@ -225,7 +245,7 @@ func _hovered_door() -> Door:
 
 func _status_text() -> String:
 	if player.dead:
-		return DEATH_TEXT
+		return ""
 	var door := _door_to_use()
 	if door != null:
 		return "F  %s" % _door_action(door)

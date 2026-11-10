@@ -21,6 +21,7 @@ projectile_origin = Vector3(0, 1.0, 0)
 combo = Array[ExtResource("3_attack_step")]([ExtResource("4_long_spellcast"), ExtResource("5_shoot")])
 secondary_combo = Array[ExtResource("3_attack_step")]([ExtResource("6_raise")])
 stamina_cost = 0.0
+mana_cost = 12.0
 
 [node name="Model" parent="." unique_id=1428402660 instance=ExtResource("1_l7y6o")]
 

@@ -59,7 +59,8 @@ const EFFECTS := {
 	"impact_wood": preload("res://assets/audio/samples/mixkit/3141.mp3"),
 	"impact_stone": preload("res://assets/audio/samples/rock_break.ogg"),
 	"impact_metal": preload("res://assets/audio/samples/mixkit/833.mp3"),
-	"block_metal": preload("res://assets/audio/samples/mixkit/2765.mp3"),
+	"block_metal": preload("res://assets/audio/sfx/block_metal.wav"),
+	"shield_raise": preload("res://assets/audio/sfx/shield_raise.wav"),
 	"projectile_impact": preload("res://assets/audio/samples/mixkit/2765.mp3"),
 	"footstep_walk": preload("res://assets/audio/sfx/surfaces/stone01.ogg"),
 	"footstep_run": preload("res://assets/audio/sfx/surfaces/gravel.ogg"),
@@ -75,7 +76,7 @@ const EFFECTS := {
 	"equipment_unequip": preload("res://assets/audio/samples/mixkit/833.mp3"),
 	"ui_confirm": preload("res://assets/audio/samples/mixkit/1109.mp3"),
 	"ui_back": preload("res://assets/audio/samples/mixkit/1109.mp3"),
-	"ui_hover": preload("res://assets/audio/samples/mixkit/1117.mp3"),
+	"ui_hover": preload("res://assets/audio/sfx/ui_hover.wav"),
 	"ui_error": preload("res://assets/audio/samples/stone_rock_or_wood_moved.mp3"),
 	"purchase": preload("res://assets/audio/samples/mixkit/1993.mp3"),
 	"breakable_crack": preload("res://assets/audio/samples/mixkit/3141.mp3"),
@@ -83,6 +84,7 @@ const EFFECTS := {
 	"door_open": preload("res://assets/audio/samples/mixkit/195.mp3"),
 	"door_close": preload("res://assets/audio/samples/mixkit/189.mp3"),
 }
+const HUB_MUSIC_START_DELAY := 1.5
 const MENU_MUSIC: AudioStream = preload("res://assets/audio/music/menu_calm.wav")
 const DUNGEON_AMBIENCE: AudioStream = preload("res://assets/audio/music/dungeon_ambience.ogg")
 const SURFACE_SOUNDS := {
@@ -419,11 +421,11 @@ func _on_scene_changed() -> void:
 	_register_ui_tree(scene)
 	var path := scene.scene_file_path.to_lower()
 	var is_gameplay := "gameplay" in path or "dungeon" in path or "combat_test" in path or "enemy_" in path
-	var is_main_menu := "main_menu.tscn" in path
-	var audio_scene := "gameplay" if is_gameplay else ("main_menu" if is_main_menu else "menu")
+	var start_delay := HUB_MUSIC_START_DELAY if "hub.tscn" in path else 0.0
+	var audio_scene := "gameplay" if is_gameplay else "menu"
 	if audio_scene != _music_scene:
 		_music_scene = audio_scene
-		_fade_to_music(null if is_gameplay or is_main_menu else MENU_MUSIC)
+		_fade_to_music(null if is_gameplay else MENU_MUSIC, start_delay)
 		_fade_to_ambience(DUNGEON_AMBIENCE if is_gameplay else null)
 
 
@@ -462,7 +464,7 @@ func _on_slider_changed(_value: float) -> void:
 	play_hover()
 
 
-func _fade_to_music(stream: AudioStream) -> void:
+func _fade_to_music(stream: AudioStream, start_delay := 0.0) -> void:
 	if _music_tween != null and _music_tween.is_running():
 		_music_tween.kill()
 	if stream == null:
@@ -472,14 +474,17 @@ func _fade_to_music(stream: AudioStream) -> void:
 		_music_tween.tween_property(_music_player, "volume_db", -35.0, 0.35)
 		_music_tween.tween_callback(_music_player.stop)
 		return
-	if not _music_player.playing:
+	if not _music_player.playing and is_zero_approx(start_delay):
 		_music_player.stream = stream
 		_music_player.volume_db = 6.0
 		_music_player.play()
 		return
 	_music_tween = create_tween()
-	_music_tween.tween_property(_music_player, "volume_db", -35.0, 0.35)
-	_music_tween.tween_callback(_music_player.stop)
+	if _music_player.playing:
+		_music_tween.tween_property(_music_player, "volume_db", -35.0, 0.35)
+		_music_tween.tween_callback(_music_player.stop)
+	if start_delay > 0.0:
+		_music_tween.tween_interval(start_delay)
 	_music_tween.tween_callback(_music_player.set_stream.bind(stream))
 	_music_tween.tween_callback(_music_player.set_volume_db.bind(-35.0))
 	_music_tween.tween_callback(_music_player.play)

@@ -44,6 +44,8 @@ const UPPER_BODY_BONES: Array[StringName] = [
 const ROOT_TRACK := ^"Rig_Medium/Skeleton3D:root"
 const HIPS_TRACK := ^"Rig_Medium/Skeleton3D:hips"
 const MIRRORED_LIBRARY := &"mirrored"
+const DUAL_GUARD_LIBRARY := &"dual_guard"
+const RIGHT_ARM_BONES: Array[StringName] = [&"upperarm.r", &"lowerarm.r", &"wrist.r", &"hand.r", &"handslot.r"]
 const AIM_HOLD_LIBRARY := &"aim_hold"
 const MOVING_ACTION_LIBRARY := &"moving_action"
 const MOVING_HOLD_LIBRARY := &"moving_hold"
@@ -56,6 +58,8 @@ const COMBAT_ACTIONS: Array[StringName] = [&"attack", &"secondary"]
 const LIMB_BONES: Array[StringName] = [&"hand.l", &"hand.r", &"foot.l", &"foot.r"]
 const LIMB_STRIKE_RADIUS := 0.16
 const MIN_LAUNCH_AIM_DISTANCE := 1.0
+const UNARMED_REACH := 0.9
+const UNARMED_REACH_RADIUS := 0.55
 
 @export var character_class: CharacterClass
 @export var walk_speed := 3.0
@@ -64,6 +68,7 @@ const MIN_LAUNCH_AIM_DISTANCE := 1.0
 @export var lunge_speed := 4.0
 @export var jump_velocity := 8.0
 @export var turn_speed := 12.0
+@export var attack_turn_speed := 30.0
 @export var gravity_multiplier := 2.0
 @export var fidget_delay := 6.0
 @export var unarmed_damage := 9.0
@@ -91,6 +96,16 @@ const MIN_LAUNCH_AIM_DISTANCE := 1.0
 @export var walk_animation: StringName = &"movement_basic/Walking_A"
 @export var run_animation: StringName = &"movement_basic/Running_A"
 
+@export_group("Dual wield guard")
+@export var dual_guard_raise_animation: StringName = &"combat_melee/Melee_Block"
+@export var dual_guard_hold_animation: StringName = &"combat_melee/Melee_Blocking"
+@export var dual_guard_hit_animation: StringName = &"combat_melee/Melee_Block_Hit"
+@export var dual_guard_bash_animation: StringName = &"combat_melee/Melee_Block_Attack"
+@export var dual_guard_bash_stamina_cost := 10.0
+@export var dual_guard_block_stamina_per_damage := 1.0
+@export var dual_guard_bash_hit_start := 0.32
+@export var dual_guard_bash_hit_end := 0.45
+
 @onready var model: Node3D = $Model
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
 @onready var skeleton: Skeleton3D = get_node(SKELETON_PATH)
@@ -98,6 +113,7 @@ const MIN_LAUNCH_AIM_DISTANCE := 1.0
 @onready var health := get_node_or_null(^"Health") as Health
 @onready var hurtbox := get_node_or_null(^"Hurtbox") as Hurtbox
 @onready var stamina := get_node_or_null(^"Stamina") as StatPool
+@onready var mana := get_node_or_null(^"Mana") as StatPool
 
 var dead := false
 var combat_input_enabled := true
@@ -118,7 +134,7 @@ var _attack_combo: Array[AttackStep] = []
 var _attack_input := &"attack"
 var _combo_grace := 0.0
 var _projectile_released := false
-var _shield_raised := false
+var _guard_raised := false
 var _aim_raised := false
 var _shot_queued := false
 var _shot_step := -1
@@ -135,6 +151,7 @@ var _hit_flinch := UpperBodyFlinch.new()
 var _facing_yaw := 0.0
 var _limb_bones: Array[int] = []
 var _limb_query := PhysicsShapeQueryParameters3D.new()
+var _reach_query := PhysicsShapeQueryParameters3D.new()
 var _struck: Array[Hurtbox] = []
 var _winded := false
 var _foot_plants: FootPlants
@@ -178,7 +195,7 @@ func _physics_process(delta: float) -> void:
 	_strike_targets()
 	_update_aim_raise()
 	_update_aim_return()
-	_lower_shield_if_released()
+	_lower_guard_if_released()
 	_hold_stamina_while_blocking()
 	_walk_out_of_hit(direction)
 	if _action_cancellable and _has_new_input(direction):
@@ -192,7 +209,7 @@ func _physics_process(delta: float) -> void:
 	_update_facing(direction, delta)
 	_update_upper_body_twist(direction, delta)
 	if not _is_blocking():
-		_shield_raised = false
+		_guard_raised = false
 	if not _is_aiming():
 		_aim_raised = false
 	if _was_airborne and is_on_floor():
@@ -202,6 +219,10 @@ func _physics_process(delta: float) -> void:
 
 func is_acting() -> bool:
 	return _action != &""
+
+
+func fights_in_melee() -> bool:
+	return _held_weapon == null or _held_weapon.projectile == null
 
 
 func is_aiming() -> bool:
@@ -300,8 +321,8 @@ func use_item() -> void:
 func take_hit() -> void:
 	if dead:
 		return
-	if _is_blocking() and _can_react_with_shield():
-		_start_action(shield.hit_animation)
+	if _is_blocking() and _can_react_with_guard():
+		_start_action(_guard_hit_animation())
 		return
 	_react_to_hit()
 
@@ -376,13 +397,13 @@ func _walk_out_of_hit(direction: Vector3) -> void:
 
 
 func _on_blocked(_hit: Hit) -> void:
-	_start_action(shield.hit_animation)
+	_start_action(_guard_hit_animation())
 
 
 func _blocks(hit: Hit) -> bool:
-	if not _is_blocking() or not _can_react_with_shield():
+	if not _is_blocking() or not _can_react_with_guard():
 		return false
-	return _guard_holds(hit.amount * shield.block_stamina_per_damage)
+	return _guard_holds(hit.amount * _block_stamina_per_damage())
 
 
 func _guard_holds(cost: float) -> bool:
@@ -400,6 +421,25 @@ func _pay_stamina(cost: float) -> bool:
 		return false
 	stamina.drain(cost)
 	return true
+
+
+func _pay_for_attack_step(step_index: int, input: StringName) -> bool:
+	var mana_cost := _cast_mana_cost(step_index, input)
+	if not _can_pay_mana(mana_cost) or not _pay_stamina(_attack_stamina_cost()):
+		return false
+	if mana != null and mana_cost > 0.0:
+		mana.spend(mana_cost)
+	return true
+
+
+func _cast_mana_cost(step_index: int, input: StringName) -> float:
+	if _held_weapon == null or input != &"attack" or step_index != 0:
+		return 0.0
+	return _held_weapon.mana_cost
+
+
+func _can_pay_mana(cost: float) -> bool:
+	return mana == null or mana.can_spend(cost)
 
 
 func _attack_stamina_cost() -> float:
@@ -442,13 +482,19 @@ func _prepare_limb_strikes() -> void:
 	_limb_query.collide_with_areas = true
 	_limb_query.collide_with_bodies = false
 	_limb_query.collision_mask = 1 << (Hurtbox.LAYER - 1)
+	var reach := SphereShape3D.new()
+	reach.radius = UNARMED_REACH_RADIUS
+	_reach_query.shape = reach
+	_reach_query.collide_with_areas = true
+	_reach_query.collide_with_bodies = false
+	_reach_query.collision_mask = 1 << (Hurtbox.LAYER - 1)
 
 
 func _strike_targets() -> void:
 	if not _is_striking():
 		return
 	AudioManager.check_weapon_environment(self, _held_weapon, _world_struck)
-	if _is_bashing():
+	if _is_bashing() and shield != null:
 		_strike_with(shield, shield.bash_damage)
 		return
 	for weapon: Weapon in [_held_weapon, off_hand_weapon]:
@@ -469,6 +515,15 @@ func _strike_with_limbs(damage: float) -> void:
 		var limb := skeleton.global_transform * skeleton.get_bone_global_pose(bone).origin
 		_limb_query.transform = Transform3D(Basis.IDENTITY, limb)
 		_strike_all(space.intersect_shape(_limb_query).map(func(contact: Dictionary) -> Object: return contact.collider), damage, limb, is_punch)
+	var reach_center := global_position + Vector3.UP * STRIKE_SIGHT_HEIGHT + _flat_facing() * UNARMED_REACH
+	_reach_query.transform = Transform3D(Basis.IDENTITY, reach_center)
+	_strike_all(space.intersect_shape(_reach_query).map(func(contact: Dictionary) -> Object: return contact.collider), damage, reach_center, is_punch)
+
+
+func _flat_facing() -> Vector3:
+	var forward := model.global_basis.z
+	forward.y = 0.0
+	return forward.normalized()
 
 
 func _strike_all(areas: Array, damage: float, origin: Vector3, is_punch := false) -> void:
@@ -496,12 +551,18 @@ func _is_striking() -> bool:
 	if _attack_step != null:
 		return _attack_step.is_striking_at(time)
 	if _is_bashing():
-		return shield.bash_strikes_at(time)
+		return _bash_strikes_at(time)
 	return _is_running_attack() and _held_weapon.running_attack_strikes_at(time)
 
 
 func _is_bashing() -> bool:
-	return shield != null and _action == shield.bash_animation
+	return _can_guard() and _action == _guard_bash_animation()
+
+
+func _bash_strikes_at(time: float) -> bool:
+	if shield != null:
+		return shield.bash_strikes_at(time)
+	return time >= dual_guard_bash_hit_start and time <= dual_guard_bash_hit_end
 
 
 func _is_running_attack() -> bool:
@@ -547,14 +608,14 @@ func _input_direction() -> Vector3:
 
 func _move_with_input(direction: Vector3, delta: float) -> void:
 	if is_on_floor():
-		if _is_blocking() and not _shield_raised:
-			_shield_raised = true
-			AudioManager.play("equipment_equip", global_position, Vector2(0.88, 0.96), -8.0)
-			_start_action(shield.raise_animation, true)
+		if _is_blocking() and not _guard_raised:
+			_guard_raised = true
+			AudioManager.play("shield_raise", global_position, Vector2(0.96, 1.04), -4.5)
+			_start_action(_guard_raise_animation(), true)
 			return
 		if _just_pressed("attack") and _is_blocking():
-			if _pay_stamina(shield.bash_stamina_cost):
-				_start_action(shield.bash_animation)
+			if _pay_stamina(_bash_stamina_cost()):
+				_start_action(_guard_bash_animation())
 			return
 		if _is_aiming() and not _aim_raised:
 			_raise_aim(false)
@@ -611,7 +672,7 @@ func _action_allows_movement() -> bool:
 		return true
 	if _action in [INTERACT_ANIMATION, THROW_ANIMATION]:
 		return true
-	return shield != null and _action in [shield.raise_animation, shield.hit_animation, shield.bash_animation]
+	return _can_guard() and _action in _guard_actions()
 
 
 func _travels(direction: Vector3) -> bool:
@@ -628,7 +689,39 @@ func _move_with_action(delta: float) -> void:
 
 
 func _is_blocking() -> bool:
-	return shield != null and is_on_floor() and _held("secondary")
+	return _can_guard() and is_on_floor() and _held("secondary")
+
+
+func _can_guard() -> bool:
+	return shield != null or off_hand_weapon != null
+
+
+func _guard_raise_animation() -> StringName:
+	return shield.raise_animation if shield != null else _dual_guard(dual_guard_raise_animation)
+
+
+func _guard_hold_animation() -> StringName:
+	return shield.hold_animation if shield != null else _dual_guard(dual_guard_hold_animation)
+
+
+func _guard_hit_animation() -> StringName:
+	return shield.hit_animation if shield != null else _dual_guard(dual_guard_hit_animation)
+
+
+func _guard_bash_animation() -> StringName:
+	return shield.bash_animation if shield != null else _dual_guard(dual_guard_bash_animation)
+
+
+func _guard_actions() -> Array[StringName]:
+	return [_guard_raise_animation(), _guard_hit_animation(), _guard_bash_animation()]
+
+
+func _block_stamina_per_damage() -> float:
+	return shield.block_stamina_per_damage if shield != null else dual_guard_block_stamina_per_damage
+
+
+func _bash_stamina_cost() -> float:
+	return shield.bash_stamina_cost if shield != null else dual_guard_bash_stamina_cost
 
 
 func _is_aiming() -> bool:
@@ -672,15 +765,16 @@ func _update_upper_body_twist(direction: Vector3, delta: float) -> void:
 
 
 func _turn_toward(target_yaw: float, delta: float) -> void:
-	model.rotation.y = lerp_angle(model.rotation.y, target_yaw, 1.0 - exp(-turn_speed * delta))
+	var speed := attack_turn_speed if _attacking else turn_speed
+	model.rotation.y = lerp_angle(model.rotation.y, target_yaw, 1.0 - exp(-speed * delta))
 
 
-func _can_react_with_shield() -> bool:
-	return not is_acting() or _action in [shield.raise_animation, shield.hit_animation] or _action in HIT_ANIMATIONS
+func _can_react_with_guard() -> bool:
+	return not is_acting() or _action in [_guard_raise_animation(), _guard_hit_animation()] or _action in HIT_ANIMATIONS
 
 
-func _lower_shield_if_released() -> void:
-	if shield != null and _action == shield.raise_animation and not _is_blocking():
+func _lower_guard_if_released() -> void:
+	if _can_guard() and _action == _guard_raise_animation() and not _is_blocking():
 		_end_action()
 
 
@@ -727,7 +821,7 @@ func _animate(direction: Vector3, gait: Gait, delta: float) -> void:
 
 func _moving_clip(gait_clip: StringName) -> StringName:
 	if _is_blocking():
-		return _hold_on_the_move(shield.hold_animation, gait_clip)
+		return _hold_on_the_move(_guard_hold_animation(), gait_clip)
 	if _is_aiming():
 		return _hold_on_the_move(_aim_hold_animation(), gait_clip)
 	return _stanced(gait_clip)
@@ -743,7 +837,7 @@ func _animate_airborne() -> void:
 
 func _animate_idle(delta: float) -> void:
 	if _is_blocking():
-		_play(shield.hold_animation)
+		_play(_guard_hold_animation())
 		return
 	if _is_aiming():
 		_play(_aim_hold_animation())
@@ -792,7 +886,7 @@ func _attack_with(combo: Array[AttackStep], input: StringName) -> void:
 	if _combo_grace > 0.0 and _attack_input == input and _attack_combo == combo:
 		_continue_combo()
 		return
-	if not _pay_stamina(_attack_stamina_cost()):
+	if not _pay_for_attack_step(0, input):
 		return
 	_attack_combo = combo
 	_attack_input = input
@@ -900,10 +994,11 @@ func _has_next_attack_step() -> bool:
 
 
 func _continue_combo() -> void:
-	if not _pay_stamina(_attack_stamina_cost()):
+	var next_index := _combo_index + 1 if _has_next_attack_step() else 0
+	if not _pay_for_attack_step(next_index, _attack_input):
 		_attack_queued = false
 		return
-	_combo_index = _combo_index + 1 if _has_next_attack_step() else 0
+	_combo_index = next_index
 	var step := _attack_combo[_combo_index]
 	_start_attack_step(step, step.chain_start, CHAIN_BLEND)
 
@@ -1051,15 +1146,15 @@ func _actions_on_the_move() -> Array[StringName]:
 	if weapon != null:
 		actions.append(weapon.aim_animation)
 		actions.append_array(weapon.shot_animations)
-	if shield != null:
-		actions.append_array([shield.raise_animation, shield.hit_animation, shield.bash_animation])
+	if _can_guard():
+		actions.append_array(_guard_actions())
 	return actions
 
 
 func _holds_on_the_move() -> Array[StringName]:
 	var holds: Array[StringName] = []
-	if shield != null:
-		holds.append(shield.hold_animation)
+	if _can_guard():
+		holds.append(_guard_hold_animation())
 	if _ranged_weapon() != null:
 		holds.append(_aim_hold_animation())
 	return holds
@@ -1289,6 +1384,26 @@ func _pelvis_rotation_at(animation: Animation, time: float) -> Quaternion:
 
 func _mirrored(animation: StringName) -> StringName:
 	return _derived_animation(MIRRORED_LIBRARY, animation, _mirror)
+
+
+func _dual_guard(animation: StringName) -> StringName:
+	return _derived_animation(DUAL_GUARD_LIBRARY, animation, _with_right_arm_mirroring_left)
+
+
+func _with_right_arm_mirroring_left(source: Animation) -> Animation:
+	var guard: Animation = source.duplicate(true)
+	var mirrored := _mirror(source)
+	for track in range(guard.get_track_count() - 1, -1, -1):
+		if _is_right_arm_track(guard, track):
+			guard.remove_track(track)
+	for track in mirrored.get_track_count():
+		if _is_right_arm_track(mirrored, track):
+			_copy_track(mirrored, track, guard, 1.0)
+	return guard
+
+
+func _is_right_arm_track(animation: Animation, track: int) -> bool:
+	return StringName(animation.track_get_path(track).get_concatenated_subnames()) in RIGHT_ARM_BONES
 
 
 func _derived_animation(library: StringName, animation: StringName, derive: Callable, clip_name: StringName = &"") -> StringName:

@@ -5,7 +5,7 @@ const MIN_TARGET_DISTANCE := 0.3
 
 var camera_yaw := 0.0
 var aim_point := Vector3.INF
-var aim_target: Enemy = null
+var attack_target: Enemy = null
 
 
 func _input_direction() -> Vector3:
@@ -22,9 +22,11 @@ func _aim_point() -> Vector3:
 
 func _view_yaw() -> float:
 	if _has_live_target():
-		var to_target := _flat_offset_to(aim_target.global_position)
+		var to_target := _flat_offset_to(attack_target.global_position)
 		if to_target.length() >= MIN_TARGET_DISTANCE:
 			return atan2(to_target.x, to_target.z)
+	if fights_in_melee():
+		return super()
 	var to_aim := _flat_offset_to(aim_point)
 	if not aim_point.is_finite() or to_aim.length() < MIN_AIM_DISTANCE:
 		return super()
@@ -32,7 +34,7 @@ func _view_yaw() -> float:
 
 
 func _has_live_target() -> bool:
-	return is_instance_valid(aim_target) and not aim_target.dead
+	return is_instance_valid(attack_target) and not attack_target.dead
 
 
 func _flat_offset_to(point: Vector3) -> Vector3:

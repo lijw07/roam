@@ -28,6 +28,7 @@
 [ext_resource type="Script" path="res://scripts/shoulder_camera.gd" id="94_shoulder_camera"]
 [ext_resource type="Script" path="res://scripts/render_warm_up.gd" id="90_render_warm_up"]
 [ext_resource type="PackedScene" path="res://scenes/ui/victory_screen.tscn" id="98_victory_screen"]
+[ext_resource type="PackedScene" path="res://scenes/ui/death_screen.tscn" id="99_death_screen"]
 
 [sub_resource type="Environment" id="Environment_dungeon"]
 background_mode = 1
@@ -198,3 +199,5 @@ text = "Kill All Enemies"
 [node name="PauseMenu" parent="HUD" instance=ExtResource("96_pause_menu")]
 
 [node name="VictoryScreen" parent="HUD" instance=ExtResource("98_victory_screen")]
+
+[node name="DeathScreen" parent="HUD" instance=ExtResource("99_death_screen")]

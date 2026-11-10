@@ -4,7 +4,6 @@
 
 [ext_resource type="PackedScene" path="res://scenes/ui/menu_backdrop.tscn" id="ui_backdrop"]
 [ext_resource type="Theme" path="res://resources/ui/minimal_theme.tres" id="ui_theme"]
-[ext_resource type="AudioStream" path="res://assets/audio/music/menu_calm.wav" id="menu_music"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -15,12 +14,6 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("ui_theme")
 script = ExtResource("1_main_menu")
-
-[node name="MenuMusic" type="AudioStreamPlayer" parent="."]
-stream = ExtResource("menu_music")
-volume_db = 8.0
-autoplay = true
-bus = &"Music"
 
 [node name="Background" parent="." instance=ExtResource("ui_backdrop")]
 layout_mode = 1

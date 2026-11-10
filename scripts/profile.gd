@@ -69,6 +69,9 @@ func take_run_return() -> bool:
 
 func lose_run() -> void:
 	backpack.clear()
+	weapon.clear()
+	off_hand.clear()
+	_returned_from_run = true
 	save()
 
 
