@@ -137,7 +137,9 @@ var _limb_bones: Array[int] = []
 var _limb_query := PhysicsShapeQueryParameters3D.new()
 var _struck: Array[Hurtbox] = []
 var _winded := false
-var _footstep_distance := 0.0
+var _foot_plants: FootPlants
+var _swing_action: StringName = &""
+var _swing_time := 0.0
 var _world_struck: Array[CollisionObject3D] = []
 var _was_airborne := false
 
@@ -161,6 +163,7 @@ func _ready() -> void:
 	skeleton.add_child(_upper_body_twist)
 	_facing_yaw = model.rotation.y
 	_prepare_limb_strikes()
+	_foot_plants = FootPlants.new(skeleton)
 	_connect_health()
 
 
@@ -170,6 +173,7 @@ func _physics_process(delta: float) -> void:
 	_combo_grace = maxf(_combo_grace - delta, 0.0)
 	var direction := _input_direction() if movement_input_enabled else Vector3.ZERO
 	_update_attack()
+	_play_swing_when_due()
 	_release_projectile_when_due()
 	_strike_targets()
 	_update_aim_raise()
@@ -217,8 +221,7 @@ func is_performing(animation: StringName) -> bool:
 
 
 func interact() -> void:
-	if _perform(INTERACT_ANIMATION):
-		AudioManager.play("ui_confirm", global_position)
+	_perform(INTERACT_ANIMATION)
 
 
 func pick_up(item: Node3D = null) -> void:
@@ -461,17 +464,18 @@ func _strike_with(striker: Area3D, damage: float) -> void:
 
 func _strike_with_limbs(damage: float) -> void:
 	var space := get_world_3d().direct_space_state
+	var is_punch := _held_weapon == null and (_attack_step == null or not _attack_step.uses_legs)
 	for bone in _limb_bones:
 		var limb := skeleton.global_transform * skeleton.get_bone_global_pose(bone).origin
 		_limb_query.transform = Transform3D(Basis.IDENTITY, limb)
-		_strike_all(space.intersect_shape(_limb_query).map(func(contact: Dictionary) -> Object: return contact.collider), damage, limb)
+		_strike_all(space.intersect_shape(_limb_query).map(func(contact: Dictionary) -> Object: return contact.collider), damage, limb, is_punch)
 
 
-func _strike_all(areas: Array, damage: float, origin: Vector3) -> void:
+func _strike_all(areas: Array, damage: float, origin: Vector3, is_punch := false) -> void:
 	for area in areas:
 		if area is Hurtbox and area not in _struck and _can_reach(area as Hurtbox):
 			_struck.append(area)
-			area.receive(Hit.new(damage, self, origin))
+			area.receive(Hit.new(damage, self, origin, is_punch))
 
 
 func _can_reach(target: Hurtbox) -> bool:
@@ -581,25 +585,20 @@ func _move_while_acting(direction: Vector3, delta: float) -> void:
 
 
 func _travel(direction: Vector3, gait: Gait, delta: float) -> void:
-	var previous_position := global_position
 	_spend_sprint_stamina(direction, gait, delta)
 	velocity.x = direction.x * gait.speed
 	velocity.z = direction.z * gait.speed
 	move_and_slide()
-	_update_footsteps(previous_position, gait.sprinting)
+	_update_footsteps(gait.sprinting)
 	if not direction.is_zero_approx():
 		_turn_toward(atan2(direction.x, direction.z) + gait.facing_offset, delta)
 
 
-func _update_footsteps(previous_position: Vector3, running: bool) -> void:
+func _update_footsteps(running: bool) -> void:
 	if dead or not is_on_floor():
 		return
-	var travelled := Vector2(global_position.x - previous_position.x, global_position.z - previous_position.z).length()
-	_footstep_distance += travelled
-	var threshold := 1.12 if running else 1.55
-	while _footstep_distance >= threshold:
-		AudioManager.play_footstep_at(global_position, running, self)
-		_footstep_distance -= threshold
+	for foot in _foot_plants.planted_this_frame(global_position.y):
+		AudioManager.play_footstep_at(foot, running, self)
 
 
 func _action_allows_movement() -> bool:
@@ -808,7 +807,7 @@ func _start_running_attack(direction: Vector3) -> void:
 	_attack_queued = false
 	_attack_step = null
 	_world_struck.clear()
-	AudioManager.play_swing(self, _held_weapon)
+	_queue_swing(_held_weapon.running_attack_hit_start)
 
 
 func _start_attack_step(step: AttackStep, from: float, blend: float) -> void:
@@ -818,7 +817,25 @@ func _start_attack_step(step: AttackStep, from: float, blend: float) -> void:
 	_attack_step = step
 	_projectile_released = false
 	_world_struck.clear()
-	AudioManager.play_swing(self, _held_weapon)
+	_queue_swing(step.hit_start if step.hit_start >= 0.0 else step.projectile_time)
+
+
+func _queue_swing(strike_time: float) -> void:
+	_swing_action = _action
+	_swing_time = strike_time
+
+
+func _play_swing_when_due() -> void:
+	if _swing_action == &"":
+		return
+	if _action != _swing_action:
+		_swing_action = &""
+		return
+	var late_by := AudioManager.swing_lateness(self, _held_weapon, false, _swing_action, _swing_time, animation_player)
+	if late_by < 0.0:
+		return
+	AudioManager.play_swing(self, _held_weapon, false, _swing_action, late_by)
+	_swing_action = &""
 
 
 func _update_attack() -> void:
@@ -867,7 +884,8 @@ func _launch_projectile(scene: PackedScene, weapon: Weapon) -> void:
 	var origin := weapon.global_transform * weapon.projectile_origin
 	projectile.global_transform = Transform3D(_launch_basis(origin), origin)
 	projectile_launched.emit(projectile)
-	AudioManager.play("projectile_launch", global_position, Vector2(0.94, 1.06), -5.0)
+	if not AudioManager.is_fireball_weapon(weapon):
+		AudioManager.play_projectile_launch(origin, weapon)
 
 
 func _launch_basis(origin: Vector3) -> Basis:

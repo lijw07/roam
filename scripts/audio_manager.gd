@@ -29,6 +29,18 @@ const SWORD_SWINGS := [
 	preload("res://assets/audio/samples/medieval/sword_swing_02.wav"),
 	preload("res://assets/audio/samples/medieval/sword_swing_03.wav"),
 ]
+const SWING_PEAKS := {
+	"sword_swing": 0.14,
+	"swing_light": 0.13,
+	"swing_heavy": 0.13,
+	"axe_swing": 0.13,
+	"blunt_swing": 0.13,
+	"fist_swing": 0.01,
+	"magic_cast": 1.26,
+	"bow_draw": 0.63,
+}
+const MIN_PLAYBACK_SPEED := 0.01
+const UNARMED_ANIMATION_TAG := "Unarmed"
 const EFFECTS := {
 	"swing_light": preload("res://assets/audio/samples/mixkit/1487.mp3"),
 	"swing_heavy": preload("res://assets/audio/samples/mixkit/1485.mp3"),
@@ -36,12 +48,13 @@ const EFFECTS := {
 	"sword_swing": preload("res://assets/audio/samples/medieval/sword_swing_01.wav"),
 	"axe_swing": preload("res://assets/audio/samples/mixkit/1485.mp3"),
 	"blunt_swing": preload("res://assets/audio/samples/mixkit/1485.mp3"),
-	"fist_swing": preload("res://assets/audio/samples/mixkit/2141.mp3"),
+	"fist_swing": preload("res://assets/audio/sfx/fist_swing.wav"),
 	"jump_takeoff": preload("res://assets/audio/sfx/jump_takeoff.wav"),
 	"landing": preload("res://assets/audio/sfx/surfaces/stone01.ogg"),
 	"magic_cast": preload("res://assets/audio/samples/mixkit/2345.mp3"),
 	"projectile_launch": preload("res://assets/audio/samples/mixkit/1491.mp3"),
-	"impact_flesh": preload("res://assets/audio/samples/mixkit/2155.mp3"),
+	"fireball_launch": preload("res://assets/audio/samples/magic/fireball_launch.wav"),
+	"impact_flesh": preload("res://assets/audio/sfx/impact_flesh.wav"),
 	"impact_heavy": preload("res://assets/audio/samples/mixkit/2765.mp3"),
 	"impact_wood": preload("res://assets/audio/samples/mixkit/3141.mp3"),
 	"impact_stone": preload("res://assets/audio/samples/rock_break.ogg"),
@@ -102,13 +115,13 @@ func _ready() -> void:
 	call_deferred("_on_scene_changed")
 
 
-func play(sound: String, at: Vector3 = Vector3.ZERO, pitch_range := Vector2(0.94, 1.06), volume_db := -5.0) -> void:
+func play(sound: String, at: Vector3 = Vector3.ZERO, pitch_range := Vector2(0.94, 1.06), volume_db := -5.0, from := 0.0) -> AudioStreamPlayer3D:
 	if not EFFECTS.has(sound):
-		return
-	play_stream(EFFECTS[sound], at, pitch_range, volume_db)
+		return null
+	return play_stream(EFFECTS[sound], at, pitch_range, volume_db, from)
 
 
-func play_stream(stream: AudioStream, at: Vector3 = Vector3.ZERO, pitch_range := Vector2(0.94, 1.06), volume_db := -5.0) -> void:
+func play_stream(stream: AudioStream, at: Vector3 = Vector3.ZERO, pitch_range := Vector2(0.94, 1.06), volume_db := -5.0, from := 0.0) -> AudioStreamPlayer3D:
 	var player := AudioStreamPlayer3D.new()
 	player.stream = stream
 	player.bus = SFX_BUS
@@ -119,16 +132,51 @@ func play_stream(stream: AudioStream, at: Vector3 = Vector3.ZERO, pitch_range :=
 	add_child(player)
 	player.global_position = at
 	player.finished.connect(player.queue_free)
-	player.play()
+	player.play(from)
+	return player
 
 
-func play_swing(source: Node3D, weapon: Node3D = null, enemy_attack := false) -> void:
+func play_swing(source: Node3D, weapon: Node3D = null, enemy_attack := false, animation: StringName = &"", from := 0.0) -> void:
+	var sound := _swing_sound(source, weapon, enemy_attack, animation)
+	if sound == "sword_swing":
+		play_stream(SWORD_SWINGS[randi_range(0, SWORD_SWINGS.size() - 1)], source.global_position, Vector2(0.94, 1.06), -7.0, from)
+	else:
+		play(sound, source.global_position, Vector2(0.9, 1.1), -7.0, from)
+
+
+func play_projectile_launch(at: Vector3, weapon: Node3D = null) -> void:
+	if is_fireball_weapon(weapon):
+		play("fireball_launch", at, Vector2(0.94, 1.06), -7.0)
+	else:
+		play("projectile_launch", at, Vector2(0.94, 1.06), -5.0)
+
+
+func is_fireball_weapon(weapon: Node3D) -> bool:
+	if weapon == null:
+		return false
+	var identity := (weapon.scene_file_path + "/" + str(weapon.name)).to_lower()
+	return "staff" in identity or "wand" in identity
+
+
+func swing_lateness(source: Node3D, weapon: Node3D, enemy_attack: bool, animation: StringName, strike_time: float, animation_player: AnimationPlayer) -> float:
+	if strike_time < 0.0 or strike_time == INF:
+		return 0.0
+	var speed := maxf(animation_player.get_playing_speed(), MIN_PLAYBACK_SPEED)
+	var until_strike := (strike_time - animation_player.current_animation_position) / speed
+	return SWING_PEAKS.get(_swing_sound(source, weapon, enemy_attack, animation), 0.0) - until_strike
+
+
+func _swing_sound(source: Node3D, weapon: Node3D, enemy_attack: bool, animation: StringName) -> String:
 	var sound := "fist_swing"
+	if UNARMED_ANIMATION_TAG in String(animation):
+		return sound
+	if is_fireball_weapon(weapon):
+		return ""
 	var identity := ""
 	if weapon != null:
 		identity = (weapon.scene_file_path + "/" + str(weapon.name)).to_lower()
 		if weapon.has_method("is_ranged") and weapon.call("is_ranged"):
-			sound = "magic_cast" if "staff" in identity or "wand" in identity else "bow_draw"
+			sound = "bow_draw"
 		elif "sword" in identity or "dagger" in identity:
 			sound = "sword_swing"
 		elif "axe" in identity or "halberd" in identity or "spear" in identity:
@@ -137,12 +185,9 @@ func play_swing(source: Node3D, weapon: Node3D = null, enemy_attack := false) ->
 			sound = "blunt_swing"
 		else:
 			sound = "swing_heavy" if float(weapon.get("damage")) >= 25.0 else "swing_light"
-	elif enemy_attack:
-		sound = "magic_cast" if source.has_method("is_ranged") and source.call("is_ranged") else "swing_heavy"
-	if sound == "sword_swing":
-		play_stream(SWORD_SWINGS[randi_range(0, SWORD_SWINGS.size() - 1)], source.global_position, Vector2(0.94, 1.06), -7.0)
-	else:
-		play(sound, source.global_position, Vector2(0.9, 1.1), -7.0)
+	elif enemy_attack and source.has_method("is_ranged") and source.call("is_ranged"):
+		sound = "magic_cast"
+	return sound
 
 
 func play_surface_impact(surface: String, at: Vector3, weight := 1.0) -> void:

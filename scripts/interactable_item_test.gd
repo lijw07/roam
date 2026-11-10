@@ -65,7 +65,7 @@ func _look(mouse_motion: Vector2) -> void:
 
 
 func _pick_up_prompt() -> String:
-	var pickup := item_collector.nearest_pickup()
+	var pickup := item_collector.target_pickup()
 	if pickup == null or pickup.auto_pick_up:
 		return ""
 	if pickup.count > 1:

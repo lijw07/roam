@@ -88,13 +88,15 @@ var _winded := false
 var _main_hand: BoneAttachment3D = null
 var _strike_sphere := SphereShape3D.new()
 var _strike_query := PhysicsShapeQueryParameters3D.new()
-var _footstep_distance := 0.0
+var _foot_plants: FootPlants
+var _swing_step: AttackStep = null
 var _world_struck: Array[CollisionObject3D] = []
 var _was_airborne := false
 
 
 func _ready() -> void:
 	_main_hand = _find_main_hand()
+	_foot_plants = FootPlants.new(find_children("*", "Skeleton3D", true, false)[0])
 	floor_snap_length = STEP_HEIGHT + STEP_SNAP_MARGIN
 	_disable_held_collision()
 	_prepare_strikes()
@@ -175,7 +177,7 @@ func _begin_step(step: AttackStep, from: float, blend: float) -> void:
 		stamina.drain(attack_stamina_cost)
 	_attack_step = step
 	_world_struck.clear()
-	AudioManager.play_swing(self, _weapon_in_hand(), true)
+	_swing_step = step
 	_projectile_fired = false
 	_struck.clear()
 	animation_player.play(step.animation, blend)
@@ -293,6 +295,7 @@ func _finish_attack() -> void:
 
 
 func _update_attack(delta: float) -> void:
+	_play_swing_when_due()
 	var time := animation_player.current_animation_position
 	if time < _strike_start():
 		_turn_toward_focus(delta, attack_turn_speed)
@@ -300,6 +303,19 @@ func _update_attack(delta: float) -> void:
 	_fire_projectile_when_due(time)
 	if _attack_step != null and _can_chain() and time >= _attack_step.combo_time:
 		_chain_next_step()
+
+
+func _play_swing_when_due() -> void:
+	if _swing_step == null:
+		return
+	if _swing_step != _attack_step:
+		_swing_step = null
+		return
+	var late_by := AudioManager.swing_lateness(self, _weapon_in_hand(), true, _swing_step.animation, _strike_start(), animation_player)
+	if late_by < 0.0:
+		return
+	AudioManager.play_swing(self, _weapon_in_hand(), true, _swing_step.animation, late_by)
+	_swing_step = null
 
 
 func _can_chain() -> bool:
@@ -358,7 +374,8 @@ func _strike_targets(time: float) -> void:
 	for target in _hurtboxes_in_reach():
 		if _can_strike(target):
 			_struck.append(target)
-			target.receive(Hit.new(attack_damage, self, _strike_center() + _forward() * STRIKE_ORIGIN_OFFSET))
+			var unarmed_punch := _weapon_in_hand() == null and not is_ranged()
+			target.receive(Hit.new(attack_damage, self, _strike_center() + _forward() * STRIKE_ORIGIN_OFFSET, unarmed_punch))
 
 
 func _can_strike(target: Hurtbox) -> bool:
@@ -386,7 +403,7 @@ func _fire_projectile_when_due(time: float) -> void:
 	get_parent().add_child(bolt)
 	var origin := _projectile_origin()
 	bolt.global_transform = Transform3D(_aim_basis(_aim_point(origin, bolt.speed, bolt.max_range) - origin), origin)
-	AudioManager.play("projectile_launch", origin, Vector2(0.94, 1.06), -5.0)
+	AudioManager.play_projectile_launch(origin, _weapon_in_hand())
 
 
 func _ally_hurtbox_rids() -> Array[RID]:
@@ -439,7 +456,6 @@ func _aim_basis(aim: Vector3) -> Basis:
 
 
 func _travel(delta: float) -> void:
-	var previous_position := global_position
 	var direction := _flat(move_direction).limit_length()
 	var speed := _speed_for(direction)
 	velocity.x = direction.x * speed
@@ -448,7 +464,7 @@ func _travel(delta: float) -> void:
 	_step_up_if_blocked(Vector3(velocity.x, 0.0, velocity.z) * delta)
 	move_and_slide()
 	_update_landing()
-	_update_footsteps(previous_position, running)
+	_update_footsteps(running)
 	var intended := heading
 	heading = Vector3.ZERO
 	var motion := _actual_motion(direction, intended)
@@ -457,15 +473,11 @@ func _travel(delta: float) -> void:
 	_play(clip, BLEND_TIME, strafe_animation_speed if clip in [STRAFE_LEFT_ANIMATION, STRAFE_RIGHT_ANIMATION] else 1.0)
 
 
-func _update_footsteps(previous_position: Vector3, is_running: bool) -> void:
+func _update_footsteps(is_running: bool) -> void:
 	if not is_on_floor():
 		return
-	var travelled := Vector2(global_position.x - previous_position.x, global_position.z - previous_position.z).length()
-	_footstep_distance += travelled
-	var threshold := 1.12 if is_running else 1.55
-	while _footstep_distance >= threshold:
-		AudioManager.play_footstep_at(global_position, is_running, self)
-		_footstep_distance -= threshold
+	for foot in _foot_plants.planted_this_frame(global_position.y):
+		AudioManager.play_footstep_at(foot, is_running, self)
 
 
 func _update_landing() -> void:

@@ -11,7 +11,7 @@ const GROUND_PROBE_DEPTH := 6.0
 const WORLD_MASK := 1
 
 @export var inventory: Inventory
-@export var throw_distance := 2.0
+@export var throw_distance := 1.2
 
 @onready var body: CharacterBody3D = get_parent()
 @onready var model: Node3D = body.get_node(MODEL_PATH)

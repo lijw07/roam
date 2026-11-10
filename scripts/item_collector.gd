@@ -4,8 +4,11 @@ extends Node
 @export var inventory: Inventory
 @export var reach := 1.6
 @export var pull_radius := 2.5
+@export var crosshair_only := false
 
 @onready var body: Node3D = get_parent()
+
+var aimed_pickup: ItemPickup = null
 
 
 func _physics_process(_delta: float) -> void:
@@ -16,10 +19,20 @@ func _physics_process(_delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact"):
-		_collect_nearest()
+		_collect_target()
 
 
-func nearest_pickup() -> ItemPickup:
+func has_aimed_pickup() -> bool:
+	return is_instance_valid(aimed_pickup) and _flat_distance_to(aimed_pickup) < reach
+
+
+func target_pickup() -> ItemPickup:
+	if has_aimed_pickup():
+		return aimed_pickup
+	return null if crosshair_only else _nearest_pickup()
+
+
+func _nearest_pickup() -> ItemPickup:
 	var nearest: ItemPickup = null
 	var best := reach
 	for pickup: ItemPickup in get_tree().get_nodes_in_group(ItemPickup.GROUP):
@@ -36,8 +49,8 @@ func _should_pull(pickup: ItemPickup) -> bool:
 		and inventory.has_room_for(pickup.item_name)
 
 
-func _collect_nearest() -> void:
-	var pickup := nearest_pickup()
+func _collect_target() -> void:
+	var pickup := target_pickup()
 	if pickup != null and inventory.has_room_for(pickup.item_name):
 		body.collect(pickup, pickup.collect_into.bind(inventory))
 

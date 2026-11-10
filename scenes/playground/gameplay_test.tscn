@@ -62,6 +62,7 @@ script = ExtResource("5_inventory")
 [node name="ItemCollector" type="Node" parent="Player" node_paths=PackedStringArray("inventory")]
 script = ExtResource("6_item_collector")
 inventory = NodePath("../Inventory")
+crosshair_only = true
 
 [node name="ItemThrower" type="Node" parent="Player" node_paths=PackedStringArray("inventory")]
 script = ExtResource("7_item_thrower")

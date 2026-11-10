@@ -47,7 +47,6 @@ func _input(event: InputEvent) -> void:
 	# Handle Tab before focused buttons consume it as focus navigation.
 	if event.is_action_pressed("inventory"):
 		visible = not visible
-		AudioManager.play_ui("ui_confirm" if visible else "ui_back")
 		get_viewport().set_input_as_handled()
 	elif visible and event.is_action_pressed("ui_cancel") and not amount_popup.visible:
 		hide()
@@ -94,7 +93,6 @@ func _on_drag_started(index: int) -> void:
 func _on_slot_selected(index: int) -> void:
 	_selected_index = index
 	_refresh_selection()
-	AudioManager.play_ui("ui_confirm")
 
 
 func _refresh_selection() -> void:
@@ -135,7 +133,6 @@ func _throw(index: int) -> void:
 		_with_amount(DROP_TEXT, count, func(amount: int) -> void: inventory.throw_out(index, amount))
 	else:
 		inventory.throw_out(index, count)
-	AudioManager.play_ui("ui_back")
 
 
 func _with_amount(action_text: String, max_amount: int, apply: Callable) -> void:

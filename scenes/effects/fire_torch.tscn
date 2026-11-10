@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/fire.gd" id="1_k06lw"]
+[ext_resource type="AudioStream" path="res://assets/audio/samples/fire/fireplace_loop.wav" id="2_fire_audio"]
 
 [sub_resource type="Gradient" id="Gradient_8ntmf"]
 colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
@@ -38,6 +39,16 @@ colors = PackedColorArray(1, 0.95, 0.6, 1, 1, 0.65, 0.2, 0.95, 0.9, 0.3, 0.08, 0
 [node name="FireTorch" type="Node3D" unique_id=1144997728]
 script = ExtResource("1_k06lw")
 light_energy = 1.8
+
+[node name="FireSound" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("2_fire_audio")
+volume_db = 2.0
+unit_size = 3.0
+max_db = 2.0
+max_distance = 12.0
+attenuation_model = 1
+max_polyphony = 1
+bus = &"SFX"
 
 [node name="Flames" type="CPUParticles3D" parent="." unique_id=893670435]
 cast_shadow = 0

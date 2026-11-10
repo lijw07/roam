@@ -9,6 +9,11 @@ signal closed
 
 const LEAF_GROUP := &"door_leaves"
 const CLEAR_DISTANCE := 0.75
+const OPEN_CREAK_START := 0.1
+const CLOSE_LATCH_TIME := 1.8
+const CREAK_FADE_TIME := 0.25
+const CREAK_VOLUME_DB := -4.0
+const SILENT_DB := -60.0
 
 @export_node_path("Node3D") var leaf_path: NodePath
 ## Positive swings toward the wall's front (+Z), which faces into rooms.
@@ -23,6 +28,7 @@ var _body: CollisionObject3D
 var _solid_layer := 0
 var _closed_yaw := 0.0
 var _tween: Tween
+var _creak: AudioStreamPlayer3D
 
 
 func _ready() -> void:
@@ -32,8 +38,6 @@ func _ready() -> void:
 	_body.add_to_group(LEAF_GROUP)
 	_solid_layer = _body.collision_layer
 	_closed_yaw = _leaf.rotation.y
-	opened.connect(func() -> void: AudioManager.play("door_open", global_position, Vector2(0.96, 1.04), -4.0))
-	closed.connect(func() -> void: AudioManager.play("door_close", global_position, Vector2(0.96, 1.04), -4.0))
 	set_physics_process(false)
 	if start_open:
 		is_open = true
@@ -59,11 +63,36 @@ func set_open(value: bool) -> void:
 	if _tween:
 		_tween.kill()
 	_pass_through_bodies()
+	_play_creak()
 	# Physics process so the leaf's AnimatableBody3D moves in step with the physics server.
 	_tween = create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_tween.tween_property(_leaf, "rotation:y", _target_yaw(), swing_time)
+	if is_open:
+		_tween.tween_callback(_fade_out_creak)
 	_tween.tween_callback(set_physics_process.bind(true))
+
+
+func _play_creak() -> void:
+	_stop_creak()
+	if is_open:
+		_creak = AudioManager.play("door_open", global_position, Vector2(0.96, 1.04), CREAK_VOLUME_DB, OPEN_CREAK_START)
+	else:
+		_creak = AudioManager.play("door_close", global_position, Vector2.ONE, CREAK_VOLUME_DB, maxf(CLOSE_LATCH_TIME - swing_time, 0.0))
+
+
+func _fade_out_creak() -> void:
+	if not is_instance_valid(_creak):
+		return
+	var fade := _creak.create_tween()
+	fade.tween_property(_creak, "volume_db", SILENT_DB, CREAK_FADE_TIME)
+	fade.tween_callback(_creak.queue_free)
+
+
+func _stop_creak() -> void:
+	if is_instance_valid(_creak):
+		_creak.queue_free()
+	_creak = null
 
 
 func _physics_process(_delta: float) -> void:

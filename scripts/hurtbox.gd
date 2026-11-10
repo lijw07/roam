@@ -43,7 +43,10 @@ func receive(hit: Hit) -> void:
 		return
 	var damage := health.take_damage(hit.amount, hit.attacker)
 	if damage > 0.0:
-		AudioManager.play("impact_flesh" if damage < 25.0 else "impact_heavy", global_position, Vector2(0.9, 1.08), -3.5)
+		if hit.is_punch:
+			AudioManager.play("impact_flesh", global_position, Vector2(0.9, 1.08), -3.5)
+		else:
+			AudioManager.play("impact_flesh" if damage < 25.0 else "impact_heavy", global_position, Vector2(0.9, 1.08), -3.5)
 	hit_taken.emit(hit, damage)
 
 

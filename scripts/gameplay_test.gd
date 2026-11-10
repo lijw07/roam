@@ -4,7 +4,6 @@ const RIG_HEIGHT := 1.4
 const MOUSE_SENSITIVITY := 0.003
 const MIN_PITCH := -1.2
 const MAX_PITCH := 0.3
-const DOOR_REACH := 3.0
 const HOVERED_DOOR_REACH := 3.5
 const REACH_HEIGHT := 1.0
 const DEATH_TEXT := "You died   R to return to camp"
@@ -31,7 +30,6 @@ const BODY_SHAPE_PATH := ^"CollisionShape3D"
 @onready var inventory_ui: Control = $HUD/Inventory
 @onready var aim_targeting: AimTargeting = $AimTargeting
 
-var _doors: Array[Door] = []
 var _navigation_stale := false
 var _boss_defeated := false
 
@@ -56,6 +54,7 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	camera_rig.global_position = player.global_position + Vector3.UP * RIG_HEIGHT
 	player.camera_yaw = camera_rig.rotation.y
+	item_collector.aimed_pickup = aim_targeting.looked_at as ItemPickup
 	control_hints.show_status(_status_text(), player.dead)
 
 
@@ -146,7 +145,6 @@ func _enter_dungeon() -> void:
 
 
 func _track_door(door: Door) -> void:
-	_doors.append(door)
 	door.opened.connect(_rebake_navigation)
 	door.closed.connect(_rebake_navigation)
 
@@ -215,8 +213,7 @@ func _return_to_camp() -> void:
 
 
 func _door_to_use() -> Door:
-	var hovered := _hovered_door()
-	return hovered if hovered != null else _nearest_door()
+	return null if item_collector.has_aimed_pickup() else _hovered_door()
 
 
 func _hovered_door() -> Door:
@@ -224,17 +221,6 @@ func _hovered_door() -> Door:
 	if aim_targeting.hovered_door_point.distance_to(reach_from) > HOVERED_DOOR_REACH:
 		return null
 	return aim_targeting.hovered_door
-
-
-func _nearest_door() -> Door:
-	var nearest: Door = null
-	var best := DOOR_REACH
-	for door in _doors:
-		var distance := door.global_position.distance_to(player.global_position)
-		if distance < best:
-			best = distance
-			nearest = door
-	return nearest
 
 
 func _status_text() -> String:
@@ -247,7 +233,7 @@ func _status_text() -> String:
 
 
 func _pick_up_prompt() -> String:
-	var pickup := item_collector.nearest_pickup()
+	var pickup := item_collector.target_pickup()
 	if pickup == null or pickup.auto_pick_up:
 		return ""
 	if pickup.count > 1:
