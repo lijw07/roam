@@ -1,11 +1,18 @@
 [gd_scene format=3 uid="uid://b2tpsr2tmacpo"]
 
 [ext_resource type="PackedScene" uid="uid://dn56xw4xlmyvs" path="res://assets/dungeon/furniture/table_long_decorated_C.gltf" id="1_model"]
+[ext_resource type="Script" path="res://scripts/breakable.gd" id="90_breakable"]
+[ext_resource type="Script" path="res://scripts/health.gd" id="91_health"]
+[ext_resource type="Script" path="res://scripts/hurtbox.gd" id="92_hurtbox"]
+[ext_resource type="Script" path="res://scripts/item_dropper.gd" id="93_item_dropper"]
+[ext_resource type="Script" path="res://scripts/loot_table.gd" id="94_loot_table"]
+[ext_resource type="Resource" path="res://resources/loot/breakable_planks.tres" id="95_breakable_planks"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_blocker0"]
 size = Vector3(2, 3.5, 4.025)
 
 [node name="TableLongDecoratedC" instance=ExtResource("1_model")]
+script = ExtResource("90_breakable")
 
 [node name="CharacterBlocker" type="StaticBody3D" parent="."]
 collision_layer = 4
@@ -14,3 +21,15 @@ collision_mask = 0
 [node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBlocker"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0, 1.75, -0.013)
 shape = SubResource("BoxShape3D_blocker0")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("91_health")
+max_value = 30.0
+
+[node name="Hurtbox" type="Area3D" parent="." node_paths=PackedStringArray("health")]
+script = ExtResource("92_hurtbox")
+health = NodePath("../Health")
+
+[node name="ItemDropper" type="Node" parent="."]
+script = ExtResource("93_item_dropper")
+loot_tables = Array[ExtResource("94_loot_table")]([ExtResource("95_breakable_planks")])

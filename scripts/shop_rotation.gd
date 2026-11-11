@@ -50,12 +50,12 @@ func _process(_delta: float) -> void:
 
 func _update_rotation() -> void:
 	var now := int(Time.get_unix_time_from_system())
-	var rotation := now / ROTATION_SECONDS
-	if rotation != _rotation:
-		_rotation = rotation
+	var current_rotation := floori(float(now) / ROTATION_SECONDS)
+	if current_rotation != _rotation:
+		_rotation = current_rotation
 		_stock_offers()
 	var seconds_left := ROTATION_SECONDS - now % ROTATION_SECONDS
-	_countdown.text = "New stock in %d:%02d" % [seconds_left / 60, seconds_left % 60]
+	_countdown.text = "New stock in %d:%02d" % [floori(seconds_left / 60.0), seconds_left % 60]
 
 
 func _stock_offers() -> void:
@@ -137,10 +137,12 @@ func _change_quantity(offer: Offer, step: int) -> void:
 func _buy(offer: Offer) -> void:
 	var amount := offer.quantity
 	if amount > _most_buyable(offer):
+		AudioManager.play_ui("ui_error")
 		return
 	Profile.spend(offer.recipe.cost, amount)
 	offer.info.add_to(Profile.stash, amount * offer.recipe.count)
 	Profile.record_purchase(_rotation, offer.recipe.item.resource_path, amount)
+	AudioManager.play_ui("purchase")
 	offer.quantity = 1
 	_refresh()
 
@@ -158,8 +160,8 @@ func _stock_left(offer: Offer) -> int:
 
 func _price_text(recipe: Recipe) -> String:
 	var parts := PackedStringArray()
-	for material: String in recipe.cost:
-		parts.append("%d %s" % [recipe.cost[material], material])
+	for material_name: String in recipe.cost:
+		parts.append("%d %s" % [recipe.cost[material_name], material_name])
 	return ", ".join(parts)
 
 

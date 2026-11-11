@@ -26,8 +26,8 @@ class Entry:
 
 
 func _ready() -> void:
-	for material in materials.recipes:
-		var info := ItemInfo.of(material.item.resource_path)
+	for offer in materials.recipes:
+		var info := ItemInfo.of(offer.item.resource_path)
 		_material_scenes[info.item_name] = info.scene_path
 	for recipe in book.recipes:
 		if _is_craftable_by_character(recipe):
@@ -70,8 +70,8 @@ func _header(entry: Entry) -> Button:
 func _details(entry: Entry) -> MarginContainer:
 	var rows := VBoxContainer.new()
 	rows.add_theme_constant_override("separation", 8)
-	for material: String in entry.recipe.cost:
-		rows.add_child(_material_row(entry, material))
+	for material_name: String in entry.recipe.cost:
+		rows.add_child(_material_row(entry, material_name))
 	rows.add_child(entry.craft_button)
 	var padding := MarginContainer.new()
 	padding.add_theme_constant_override("margin_left", DETAILS_PADDING)
@@ -82,21 +82,21 @@ func _details(entry: Entry) -> MarginContainer:
 	return padding
 
 
-func _material_row(entry: Entry, material: String) -> HBoxContainer:
+func _material_row(entry: Entry, material_name: String) -> HBoxContainer:
 	var icon := TextureRect.new()
 	icon.custom_minimum_size = MATERIAL_ICON_SIZE
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.texture = icon_renderer.icon_for(_material_scenes[material]) if _material_scenes.has(material) else null
-	var name_label := _cost_label(material)
+	icon.texture = icon_renderer.icon_for(_material_scenes[material_name]) if _material_scenes.has(material_name) else null
+	var name_label := _cost_label(material_name)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	entry.material_counts[material] = _cost_label("")
+	entry.material_counts[material_name] = _cost_label("")
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	row.add_child(icon)
 	row.add_child(name_label)
-	row.add_child(entry.material_counts[material])
+	row.add_child(entry.material_counts[material_name])
 	return row
 
 
@@ -118,8 +118,8 @@ func _toggle(entry: Entry) -> void:
 
 func _refresh() -> void:
 	for entry in _entries:
-		for material: String in entry.material_counts:
-			entry.material_counts[material].text = "%d / %d" % [Profile.stash.count_of(material), entry.recipe.cost[material]]
+		for material_name: String in entry.material_counts:
+			entry.material_counts[material_name].text = "%d / %d" % [Profile.stash.count_of(material_name), entry.recipe.cost[material_name]]
 		entry.craft_button.disabled = not _can_craft(entry)
 
 
@@ -129,6 +129,8 @@ func _can_craft(entry: Entry) -> bool:
 
 func _craft(entry: Entry) -> void:
 	if not _can_craft(entry):
+		AudioManager.play_ui("ui_error")
 		return
 	Profile.spend(entry.recipe.cost, 1)
 	entry.info.add_to(Profile.stash, entry.recipe.count)
+	AudioManager.play_ui("purchase")

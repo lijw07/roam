@@ -37,6 +37,8 @@ const FLIP_THICKNESS_AXIS := Basis(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0
 
 @export_group("Magic")
 @export var cast_color := Color.WHITE
+@export var mana_cost := 0.0
+@export var secondary_mana_cost := 0.0
 
 
 func _ready() -> void:

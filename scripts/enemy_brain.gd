@@ -56,6 +56,7 @@ const QUEUE_RECHECK_TIME := 0.4
 @export var awareness_radius := 3.0
 @export var give_up_distance := 18.0
 @export var give_up_time := 4.0
+@export var provoked_time := 6.0
 @export var ranged_search_time := 9.0
 @export var cautious_distance := 6.0
 @export var roam_radius := 4.0
@@ -96,6 +97,7 @@ var _roam_point := Vector3.ZERO
 var _has_roam_point := false
 var _roam_pause := 0.0
 var _unseen_time := 0.0
+var _provoked_until := -INF
 var _last_seen_position := Vector3.ZERO
 var _cautious := false
 var _pursuit_timer := 0.0
@@ -256,14 +258,15 @@ func _stand_down() -> void:
 
 
 func _keep_track_of_target(delta: float) -> void:
-	if _distance_to_target() > give_up_distance:
+	var provoked := _is_provoked()
+	if _distance_to_target() > give_up_distance and not provoked:
 		_enter(State.RETURN)
 		return
 	_pursuit_timer -= delta
 	if _pursuit_timer > 0.0:
 		return
 	_pursuit_timer = SIGHT_CHECK_INTERVAL
-	var tracked := _distance_to_target() <= awareness_radius or can_see(_target_chest())
+	var tracked := provoked or _distance_to_target() <= awareness_radius or can_see(_target_chest())
 	_unseen_time = 0.0 if tracked else _unseen_time + SIGHT_CHECK_INTERVAL
 	if tracked:
 		_last_seen_position = _target().global_position
@@ -541,16 +544,36 @@ func _raise_guard() -> void:
 		_enter(State.GUARD)
 
 
-func _on_hit_taken(_hit: Hit, damage: float) -> void:
+func _on_hit_taken(hit: Hit, damage: float) -> void:
 	if damage <= 0.0 or enemy.dead:
 		return
 	_recent_hits.append(_clock)
 	_guard_delay = -1.0
+	if hit.attacker != null and hit.attacker == _target():
+		_provoke()
 	if state in [State.IDLE, State.RETURN]:
 		_director.alert(self)
 		return
+	if not _hit_from_close(hit):
+		return
 	if state in [State.APPROACH, State.ATTACK, State.GUARD] or _recent_hits.size() >= PRESSURE_RETREAT_HITS:
 		_enter(State.RECOVER)
+
+
+func _provoke() -> void:
+	_provoked_until = _clock + provoked_time
+	_unseen_time = 0.0
+	_last_seen_position = _target().global_position
+
+
+func _is_provoked() -> bool:
+	return _clock < _provoked_until
+
+
+func _hit_from_close(hit: Hit) -> bool:
+	if not is_instance_valid(hit.attacker):
+		return true
+	return _flat(hit.attacker.global_position - enemy.global_position).length() <= MELEE_THREAT_RANGE
 
 
 func _on_guard_broken() -> void:

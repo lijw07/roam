@@ -11,7 +11,7 @@ const GROUND_PROBE_DEPTH := 6.0
 const WORLD_MASK := 1
 
 @export var inventory: Inventory
-@export var throw_distance := 2.0
+@export var throw_distance := 1.2
 
 @onready var body: CharacterBody3D = get_parent()
 @onready var model: Node3D = body.get_node(MODEL_PATH)
@@ -33,7 +33,9 @@ func _release(scene_path: String, count: int) -> void:
 	var pickup := _create_pickup(scene_path, count)
 	body.get_parent().add_child(pickup)
 	var target := body.global_position + _flat_forward() * throw_distance
-	pickup.launch(_hand_position(), _ground_below(target))
+	var origin := _hand_position()
+	AudioManager.play("item_throw", origin, Vector2(0.94, 1.08), -8.0)
+	pickup.launch(origin, _ground_below(target))
 
 
 func _create_pickup(scene_path: String, count: int) -> ItemPickup:

@@ -12,6 +12,10 @@ extends Node3D
 @export var explore_shoulder := 1.0
 @export var explore_fov := 65.0
 
+@export_group("Melee")
+@export var melee_distance := 4.4
+@export var melee_shoulder := 0.25
+
 @export_group("Aim")
 @export var aim_distance := 2.2
 @export var aim_shoulder := 0.8
@@ -26,14 +30,21 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	var aiming := _player_aiming()
+	var melee := not aiming and _player_fights_in_melee()
 	var blend := 1.0 - exp(-transition_speed * delta)
-	camera_boom.spring_length = lerpf(camera_boom.spring_length, aim_distance if aiming else explore_distance, blend)
-	shoulder_boom.spring_length = lerpf(shoulder_boom.spring_length, aim_shoulder if aiming else explore_shoulder, blend)
+	var distance := aim_distance if aiming else melee_distance if melee else explore_distance
+	var shoulder := aim_shoulder if aiming else melee_shoulder if melee else explore_shoulder
+	camera_boom.spring_length = lerpf(camera_boom.spring_length, distance, blend)
+	shoulder_boom.spring_length = lerpf(shoulder_boom.spring_length, shoulder, blend)
 	camera.fov = lerpf(camera.fov, aim_fov if aiming else explore_fov, blend)
 
 
 func look_scale() -> float:
 	return camera.fov / explore_fov
+
+
+func _player_fights_in_melee() -> bool:
+	return is_instance_valid(player) and player.has_method(&"fights_in_melee") and player.fights_in_melee()
 
 
 func _player_aiming() -> bool:

@@ -29,6 +29,6 @@ lore = "The old border keep stands empty now. Its last knight still carries the 
 display_name = "Knight"
 character_scene = ExtResource("2_character")
 weapons_text = "Swords, polearms and shields"
-starting_weapon = ExtResource("3_sword_1handed")
+starting_weapon = ExtResource("12_sword_a")
 starting_off_hand = ExtResource("8_shield_round")
 equipment = Array[PackedScene]([ExtResource("3_sword_1handed"), ExtResource("4_sword_2handed"), ExtResource("5_sword_2handed_color"), ExtResource("6_shield_badge"), ExtResource("7_shield_badge_color"), ExtResource("8_shield_round"), ExtResource("9_shield_round_color"), ExtResource("10_shield_square"), ExtResource("11_shield_square_color"), ExtResource("12_sword_a"), ExtResource("13_sword_b"), ExtResource("14_sword_c"), ExtResource("15_sword_d"), ExtResource("16_sword_e"), ExtResource("17_halberd"), ExtResource("18_spear_a"), ExtResource("19_shield_a"), ExtResource("20_shield_b"), ExtResource("21_shield_c")])

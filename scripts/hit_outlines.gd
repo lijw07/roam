@@ -2,6 +2,7 @@ extends HurtboxWatcher
 
 const OUTLINE_SHADER := preload("res://shaders/hit_outline.gdshader")
 const PROP_OUTLINE_SHADER := preload("res://shaders/prop_outline.gdshader")
+const PROP_OUTLINE_THROUGH_PLAYER_SHADER := preload("res://shaders/prop_outline_through_player.gdshader")
 const OUTLINE_MASK_SHADER := preload("res://shaders/outline_mask.gdshader")
 const COLOR_PARAMETER := &"outline_color"
 const WIDTH_PARAMETER := &"outline_width"
@@ -12,6 +13,7 @@ const FADE_TIME := 0.3
 const WARM_UP_FRAMES := 2
 const RADIAL_CENTER_PARAMETER := &"radial_center"
 const PROP_OUTLINE_PRIORITY := 1
+const PICKUP_OUTLINE_RADIUS := 6.0
 
 @export var player: Node3D
 @export var targeting: AimTargeting
@@ -23,6 +25,7 @@ const PROP_OUTLINE_PRIORITY := 1
 
 var _flashes: Dictionary[int, Tween] = {}
 var _state_outlines: Dictionary[int, ShaderMaterial] = {}
+var _pickup_outlines: Dictionary[int, ShaderMaterial] = {}
 
 
 func _ready() -> void:
@@ -38,6 +41,65 @@ func _process(_delta: float) -> void:
 			_drop_state_outline(id)
 	for outlined: Node3D in wanted:
 		_show_state_outline(outlined, wanted[outlined])
+	_update_pickup_outlines()
+
+
+func _update_pickup_outlines() -> void:
+	for id: int in _pickup_outlines.keys():
+		var tracked := instance_from_id(id) as ItemPickup
+		if tracked == null or not _tracks_pickup(tracked):
+			_drop_pickup_outline(id, tracked)
+	for pickup: ItemPickup in get_tree().get_nodes_in_group(ItemPickup.GROUP):
+		if _tracks_pickup(pickup):
+			_show_pickup_outline(pickup)
+
+
+func _tracks_pickup(pickup: ItemPickup) -> bool:
+	if pickup.is_queued_for_deletion() or not is_instance_valid(player):
+		return false
+	return _is_looked_at(pickup) or pickup.global_position.distance_to(player.global_position) <= PICKUP_OUTLINE_RADIUS
+
+
+func _is_looked_at(pickup: ItemPickup) -> bool:
+	return targeting != null and targeting.looked_at == pickup
+
+
+func _show_pickup_outline(pickup: ItemPickup) -> void:
+	var id := pickup.get_instance_id()
+	if not _pickup_outlines.has(id):
+		_pickup_outlines[id] = _pickup_outline_material(pickup)
+		_outline_meshes(_meshes_of(pickup), _overlay_for(_pickup_outlines[id], pickup))
+	var outline := _pickup_outlines[id]
+	outline.set_shader_parameter(COLOR_PARAMETER, Color(looked_at_color, 1.0 if _is_looked_at(pickup) else 0.0))
+	(outline.next_pass as ShaderMaterial).set_shader_parameter(COLOR_PARAMETER, Color(looked_at_color, 1.0 if _covered_by_player(pickup) else 0.0))
+
+
+func _drop_pickup_outline(id: int, pickup: ItemPickup) -> void:
+	_pickup_outlines.erase(id)
+	if pickup != null:
+		_clear_outline(_meshes_of(pickup))
+
+
+func _pickup_outline_material(pickup: ItemPickup) -> ShaderMaterial:
+	var outline := _outline_material(Color.TRANSPARENT, state_width, pickup)
+	var through := ShaderMaterial.new()
+	through.shader = PROP_OUTLINE_THROUGH_PLAYER_SHADER
+	through.render_priority = PROP_OUTLINE_PRIORITY
+	through.set_shader_parameter(COLOR_PARAMETER, Color.TRANSPARENT)
+	through.set_shader_parameter(WIDTH_PARAMETER, state_width)
+	through.set_shader_parameter(RADIAL_CENTER_PARAMETER, _local_center(pickup))
+	outline.next_pass = through
+	return outline
+
+
+func _covered_by_player(pickup: ItemPickup) -> bool:
+	var camera := get_viewport().get_camera_3d()
+	var body := player as CollisionObject3D
+	if camera == null or body == null:
+		return false
+	var center := pickup.global_transform * _local_center(pickup)
+	var query := PhysicsRayQueryParameters3D.create(camera.global_position, center, body.collision_layer)
+	return get_world_3d().direct_space_state.intersect_ray(query).get("collider") == body
 
 
 func _on_hit_taken(_hit: Hit, damage: float, hurtbox: Hurtbox) -> void:
@@ -50,10 +112,14 @@ func _wanted_outlines() -> Dictionary[Node3D, Color]:
 	var wanted: Dictionary[Node3D, Color] = {}
 	for enemy in _aggroed_enemies():
 		wanted[enemy] = aggro_color
-	if targeting == null or not is_instance_valid(targeting.looked_at) or targeting.looked_at == player:
+	if targeting == null:
 		return wanted
-	var looked_at: Node3D = targeting.looked_at
-	wanted[looked_at] = target_color if looked_at is Enemy else looked_at_color
+	if is_instance_valid(targeting.looked_at):
+		var looked_at := targeting.looked_at
+		if looked_at != player and not (looked_at is Enemy or looked_at is ItemPickup):
+			wanted[looked_at] = looked_at_color
+	if is_instance_valid(targeting.attack_target):
+		wanted[targeting.attack_target] = target_color
 	return wanted
 
 
@@ -104,7 +170,7 @@ func _flash(target: Node3D) -> void:
 	_state_outlines.erase(id)
 	var meshes := _meshes_of(target)
 	var outline := _outline_material(hit_color, FLASH_WIDTH, target)
-	_outline_meshes(meshes, outline)
+	_outline_meshes(meshes, _overlay_for(outline, target))
 	var tween := create_tween()
 	tween.tween_interval(HOLD_TIME)
 	tween.tween_property(outline, WIDTH_PROPERTY, 0.0, FADE_TIME).set_ease(Tween.EASE_IN)

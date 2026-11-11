@@ -1,6 +1,8 @@
 extends Control
 
-@export_file("*.tscn") var dungeon_scene := "res://scenes/playground/gameplay_test.tscn"
+const FADE_IN_TIME := 0.6
+
+@export_file("*.tscn") var dungeon_scene := "res://scenes/game/dungeon.tscn"
 @export_file("*.tscn") var character_select_scene := "res://scenes/ui/character_select.tscn"
 @export_file("*.tscn") var main_menu_scene := "res://scenes/ui/main_menu.tscn"
 
@@ -13,6 +15,7 @@ extends Control
 @onready var change_character_button: Button = %ChangeCharacterButton
 @onready var main_menu_button: Button = %MainMenuButton
 @onready var item_tooltip: ItemTooltip = %ItemTooltip
+@onready var fade_in: ColorRect = %FadeIn
 
 var _detail_inventory: Inventory
 var _detail_index := 0
@@ -33,6 +36,16 @@ func _ready() -> void:
 	change_character_button.pressed.connect(_go_to.bind(character_select_scene))
 	main_menu_button.pressed.connect(_go_to.bind(main_menu_scene))
 	enter_dungeon_button.grab_focus()
+	if Profile.take_run_return():
+		_fade_in_from_black()
+
+
+func _fade_in_from_black() -> void:
+	fade_in.modulate.a = 1.0
+	fade_in.show()
+	var fade := create_tween()
+	fade.tween_property(fade_in, "modulate:a", 0.0, FADE_IN_TIME)
+	fade.tween_callback(fade_in.hide)
 
 
 func _bind(grid: ItemGrid, inventory: Inventory) -> void:
@@ -72,10 +85,15 @@ func _on_slot_dropped(source: Inventory, from_index: int, target: Inventory, to_
 	var moving := source.slots[from_index]
 	if not _fits(target, moving):
 		return
+	var changed := false
 	if target.movable_amount_from(source, from_index, to_index) > 0:
 		target.move_from(source, from_index, to_index, moving.count)
+		changed = true
 	elif _fits(source, target.slots[to_index]):
 		target.swap_from(source, from_index, to_index)
+		changed = true
+	if changed and target in [Profile.weapon, Profile.off_hand]:
+		AudioManager.play_ui("equipment_equip")
 	_stash_unpaired_off_hand()
 
 
@@ -99,6 +117,7 @@ func _equip_from_stash(index: int) -> void:
 	var hand := Profile.weapon if ItemInfo.of(slot.scene_path).is_weapon else Profile.off_hand
 	if _fits(hand, slot):
 		hand.swap_from(Profile.stash, index, 0)
+		AudioManager.play_ui("equipment_equip")
 
 
 func _fits(inventory: Inventory, slot: Inventory.Slot) -> bool:

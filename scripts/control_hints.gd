@@ -1,17 +1,19 @@
 extends VBoxContainer
 
 const Glyph := preload("res://scripts/control_glyph.gd")
-const PLAY_HINTS := [["WASD", "Move"], ["Shift", "Run"], ["Space", "Jump"], ["left", "Attack"], ["right", "Block / aim"], ["F", "Interact"], ["Tab", "Inventory"], ["R", "New dungeon"], ["Esc", "Pause"]]
+const PLAY_HINTS := [["WASD", "Move"], ["Shift", "Run"], ["Space", "Jump"], ["left", "Attack"], ["right", "Block / aim"], ["F", "Interact"], ["Tab", "Inventory"], ["Esc", "Pause"]]
+const RESTART_HINT := ["R", "New dungeon"]
 const INVENTORY_HINTS := [["left", "Drag item"], ["Shift", "Split stack"], ["right", "Drink potion"], ["Tab", "Close"]]
 
 @onready var context: Label = $Context
 @onready var hints: HFlowContainer = $Hints
 var _inventory_open := false
 var _dead := false
+var _restart_hint := false
 
 func _ready() -> void:
 	minimum_size_changed.connect(_fit_height)
-	_build(PLAY_HINTS)
+	_build(_play_hints())
 	_fit_height()
 
 func _fit_height() -> void:
@@ -25,6 +27,10 @@ func show_status(text: String, dead: bool) -> void:
 		_dead = dead
 		_refresh()
 
+func show_restart_hint(shown: bool) -> void:
+	_restart_hint = shown
+	_refresh()
+
 func set_inventory_open(open: bool) -> void:
 	_inventory_open = open
 	context.visible = not open and not context.text.is_empty()
@@ -32,9 +38,16 @@ func set_inventory_open(open: bool) -> void:
 
 func _refresh() -> void:
 	if _dead:
-		_build([["R", "Return to camp"], ["Esc", "Pause"]])
+		_build([])
 	else:
-		_build(INVENTORY_HINTS if _inventory_open else PLAY_HINTS)
+		_build(INVENTORY_HINTS if _inventory_open else _play_hints())
+
+func _play_hints() -> Array:
+	if not _restart_hint:
+		return PLAY_HINTS
+	var hints_with_restart := PLAY_HINTS.duplicate()
+	hints_with_restart.insert(hints_with_restart.size() - 1, RESTART_HINT)
+	return hints_with_restart
 
 func _build(entries: Array) -> void:
 	for child in hints.get_children():

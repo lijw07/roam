@@ -4,21 +4,25 @@ const RIG_HEIGHT := 1.4
 const MOUSE_SENSITIVITY := 0.003
 const MIN_PITCH := -1.2
 const MAX_PITCH := 0.3
-const DOOR_REACH := 3.0
 const HOVERED_DOOR_REACH := 3.5
 const REACH_HEIGHT := 1.0
-const DEATH_TEXT := "You died   R to return to camp"
 const LEAVE_TEXT := "Leave dungeon"
 const LOCKED_EXIT_TEXT := "Defeat the boss to leave"
 const MODEL_PATH := ^"Model"
 const BODY_SHAPE_PATH := ^"CollisionShape3D"
+const MELEE_CROSSHAIR_ALPHA := 0.35
 
 @export var default_class: CharacterClass
+@export var debug_tools := false
 @export_file("*.tscn") var hub_scene := "res://scenes/ui/hub.tscn"
 
 @onready var player: CharacterBody3D = $Player
 @onready var item_collector: ItemCollector = $Player/ItemCollector
 @onready var run_inventory: Inventory = $Player/Inventory
+@onready var kill_all_button := get_node_or_null(^"HUD/KillAllEnemies") as Button
+@onready var pause_menu: Control = $HUD/PauseMenu
+@onready var victory_screen: Control = $HUD/VictoryScreen
+@onready var death_screen: Control = $HUD/DeathScreen
 @onready var navigation_region: NavigationRegion3D = $NavigationRegion3D
 @onready var generator: DungeonGenerator = $NavigationRegion3D/DungeonGenerator
 @onready var starting_gear: Node3D = $StartingGear
@@ -27,8 +31,8 @@ const BODY_SHAPE_PATH := ^"CollisionShape3D"
 @onready var control_hints: VBoxContainer = $HUD/ControlHints
 @onready var inventory_ui: Control = $HUD/Inventory
 @onready var aim_targeting: AimTargeting = $AimTargeting
+@onready var crosshair: Control = $HUD/Crosshair
 
-var _doors: Array[Door] = []
 var _navigation_stale := false
 var _boss_defeated := false
 
@@ -41,9 +45,14 @@ func _ready() -> void:
 	_stock_starting_gear()
 	run_inventory.load_data(Profile.backpack.to_data())
 	_enter_dungeon()
+	if kill_all_button != null:
+		kill_all_button.visible = debug_tools
+		kill_all_button.pressed.connect(_kill_all_enemies)
+	control_hints.show_restart_hint(debug_tools)
 	navigation_region.bake_finished.connect(_on_navigation_baked)
 	_rebake_navigation()
 	inventory_ui.visibility_changed.connect(_on_inventory_toggled)
+	player.health.died.connect(_on_player_died)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_equip_starting_gear_after_spawn()
 
@@ -51,13 +60,20 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	camera_rig.global_position = player.global_position + Vector3.UP * RIG_HEIGHT
 	player.camera_yaw = camera_rig.rotation.y
+	item_collector.aimed_pickup = _aimed_pickup()
+	crosshair.modulate.a = MELEE_CROSSHAIR_ALPHA if player.fights_in_melee() else 1.0
 	control_hints.show_status(_status_text(), player.dead)
+
+
+func _aimed_pickup() -> ItemPickup:
+	var looked_at := aim_targeting.looked_at
+	return looked_at as ItemPickup if is_instance_valid(looked_at) else null
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact") and _door_to_use() != null:
-		_use_door()
 		get_viewport().set_input_as_handled()
+		_use_door()
 	elif event is InputEventKey and event.pressed and not event.echo:
 		_on_key_pressed(event.physical_keycode)
 
@@ -70,16 +86,26 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _on_key_pressed(key: Key) -> void:
-	if key == KEY_R:
+	if debug_tools and key == KEY_R:
 		_restart()
 
 
 func _restart() -> void:
-	if player.dead:
-		Profile.lose_run()
-		get_tree().change_scene_to_file(hub_scene)
-	else:
-		get_tree().reload_current_scene()
+	get_tree().reload_current_scene.call_deferred()
+
+
+func _on_player_died() -> void:
+	set_process_unhandled_key_input(false)
+	pause_menu.process_mode = Node.PROCESS_MODE_DISABLED
+	inventory_ui.hide()
+	inventory_ui.process_mode = Node.PROCESS_MODE_DISABLED
+	death_screen.finished.connect(_return_to_camp_after_death)
+	death_screen.play()
+
+
+func _return_to_camp_after_death() -> void:
+	Profile.lose_run()
+	get_tree().change_scene_to_file(hub_scene)
 
 
 func _become(chosen: CharacterClass) -> void:
@@ -101,6 +127,7 @@ func _swap_child(parent: Node, source: Node, path: NodePath) -> void:
 	parent.remove_child(old)
 	old.free()
 	source.remove_child(replacement)
+	replacement.owner = null
 	parent.add_child(replacement)
 	parent.move_child(replacement, index)
 
@@ -136,10 +163,16 @@ func _enter_dungeon() -> void:
 	for node in generator.find_children("*", "Node3D", true, false):
 		if node is Door:
 			_track_door(node)
+		elif node.has_signal(&"broken"):
+			node.broken.connect(_rebake_after_break)
+
+
+func _rebake_after_break() -> void:
+	await get_tree().process_frame
+	_rebake_navigation()
 
 
 func _track_door(door: Door) -> void:
-	_doors.append(door)
 	door.opened.connect(_rebake_navigation)
 	door.closed.connect(_rebake_navigation)
 
@@ -170,6 +203,12 @@ func _look(mouse_motion: Vector2) -> void:
 	camera_rig.rotation.y -= mouse_motion.x * sensitivity * Settings.mouse_sensitivity_x
 
 
+func _kill_all_enemies() -> void:
+	for enemy in generator.get_enemies():
+		if is_instance_valid(enemy) and not enemy.dead:
+			enemy.die()
+
+
 func _watch_boss() -> void:
 	_boss_defeated = generator.boss == null
 	if not _boss_defeated:
@@ -189,12 +228,20 @@ func _leave_dungeon() -> void:
 	if not _boss_defeated:
 		return
 	Profile.finish_run(run_inventory)
+	set_process_unhandled_key_input(false)
+	pause_menu.process_mode = Node.PROCESS_MODE_DISABLED
+	get_tree().paused = true
+	victory_screen.finished.connect(_return_to_camp)
+	victory_screen.play()
+
+
+func _return_to_camp() -> void:
+	get_tree().paused = false
 	get_tree().change_scene_to_file(hub_scene)
 
 
 func _door_to_use() -> Door:
-	var hovered := _hovered_door()
-	return hovered if hovered != null else _nearest_door()
+	return null if item_collector.has_aimed_pickup() else _hovered_door()
 
 
 func _hovered_door() -> Door:
@@ -204,20 +251,9 @@ func _hovered_door() -> Door:
 	return aim_targeting.hovered_door
 
 
-func _nearest_door() -> Door:
-	var nearest: Door = null
-	var best := DOOR_REACH
-	for door in _doors:
-		var distance := door.global_position.distance_to(player.global_position)
-		if distance < best:
-			best = distance
-			nearest = door
-	return nearest
-
-
 func _status_text() -> String:
 	if player.dead:
-		return DEATH_TEXT
+		return ""
 	var door := _door_to_use()
 	if door != null:
 		return "F  %s" % _door_action(door)
@@ -225,7 +261,7 @@ func _status_text() -> String:
 
 
 func _pick_up_prompt() -> String:
-	var pickup := item_collector.nearest_pickup()
+	var pickup := item_collector.target_pickup()
 	if pickup == null or pickup.auto_pick_up:
 		return ""
 	if pickup.count > 1:

@@ -7,6 +7,7 @@ signal died
 signal revived
 
 @export var invulnerable := false
+@export var damage_taken := 1.0
 
 var _dead := false
 
@@ -18,7 +19,7 @@ func is_dead() -> bool:
 func take_damage(amount: float, source: Node = null) -> float:
 	if _dead or invulnerable or amount <= 0.0:
 		return 0.0
-	var dealt := drain(amount)
+	var dealt := drain(amount * damage_taken)
 	damaged.emit(dealt, source)
 	if is_empty():
 		_die()

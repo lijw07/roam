@@ -2,8 +2,10 @@ extends Node
 
 const SAVE_PATH := "user://settings.cfg"
 const MUSIC_BUS := &"Music"
+const SFX_BUS := &"SFX"
 const DEFAULT_SENSITIVITY := 1.0
 const DEFAULT_MUSIC_VOLUME := 1.0
+const DEFAULT_SFX_VOLUME := 1.0
 const ACTION_NAMES: Dictionary[StringName, String] = {
 	&"move_forward": "Move forward",
 	&"move_back": "Move back",
@@ -27,6 +29,7 @@ const MOUSE_BUTTON_NAMES: Dictionary[int, String] = {
 var mouse_sensitivity_x := DEFAULT_SENSITIVITY
 var mouse_sensitivity_y := DEFAULT_SENSITIVITY
 var music_volume := DEFAULT_MUSIC_VOLUME
+var sfx_volume := DEFAULT_SFX_VOLUME
 
 var _default_events: Dictionary[StringName, Array] = {}
 var _save_queued := false
@@ -37,6 +40,7 @@ func _ready() -> void:
 		_default_events[action] = InputMap.action_get_events(action)
 	_load()
 	_apply_music_volume()
+	_apply_sfx_volume()
 
 
 func set_mouse_sensitivity_x(value: float) -> void:
@@ -52,6 +56,12 @@ func set_mouse_sensitivity_y(value: float) -> void:
 func set_music_volume(value: float) -> void:
 	music_volume = value
 	_apply_music_volume()
+	_queue_save()
+
+
+func set_sfx_volume(value: float) -> void:
+	sfx_volume = clampf(value, 0.0, 1.0)
+	_apply_sfx_volume()
 	_queue_save()
 
 
@@ -95,6 +105,7 @@ func save() -> void:
 	config.set_value("mouse", "sensitivity_x", mouse_sensitivity_x)
 	config.set_value("mouse", "sensitivity_y", mouse_sensitivity_y)
 	config.set_value("audio", "music_volume", music_volume)
+	config.set_value("audio", "sfx_volume", sfx_volume)
 	for action in ACTION_NAMES:
 		config.set_value("bindings", action, events_of(action).map(_event_data))
 	config.save(SAVE_PATH)
@@ -107,6 +118,7 @@ func _load() -> void:
 	mouse_sensitivity_x = config.get_value("mouse", "sensitivity_x", DEFAULT_SENSITIVITY)
 	mouse_sensitivity_y = config.get_value("mouse", "sensitivity_y", DEFAULT_SENSITIVITY)
 	music_volume = config.get_value("audio", "music_volume", DEFAULT_MUSIC_VOLUME)
+	sfx_volume = config.get_value("audio", "sfx_volume", DEFAULT_SFX_VOLUME)
 	for action in ACTION_NAMES:
 		if config.has_section_key("bindings", action):
 			_set_events(action, config.get_value("bindings", action).map(_event_from))
@@ -138,6 +150,12 @@ func _apply_music_volume() -> void:
 	var bus := AudioServer.get_bus_index(MUSIC_BUS)
 	if bus >= 0:
 		AudioServer.set_bus_volume_db(bus, linear_to_db(music_volume))
+
+
+func _apply_sfx_volume() -> void:
+	var bus := AudioServer.get_bus_index(SFX_BUS)
+	if bus >= 0:
+		AudioServer.set_bus_volume_db(bus, linear_to_db(sfx_volume))
 
 
 func _queue_save() -> void:

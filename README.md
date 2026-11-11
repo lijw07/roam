@@ -19,6 +19,7 @@ scenes/
   dungeon/      One scene per dungeon piece, each with its own collision
   equipment/    One scene per item, each with its own collision
   effects/      Arrow, magic bolt and melee impact effects
+  game/         The release game: main.tscn (the project's main scene, opens on the main menu) and dungeon.tscn (the run the hub's Enter Dungeon loads)
   playground/   Movement, animation, inventory and combat test scenes
   ui/           The main menu, character select and hub screens, the health, mana and stamina bars,
                 and the bar over each enemy
@@ -35,13 +36,15 @@ scripts/
   shield.gd               An off-hand shield and its block animations
   upper_body_twist.gd     Twists the spine, chest and head toward the camera while the legs walk another way
   attack_step.gd          One step of a combo: its animation and when it can chain
+  step_climber.gd         Lets the player and enemies walk up over low obstacles (up to 0.5 m) instead of getting stuck
   projectile.gd           Moves an effect forward, damages the first hurtbox it reaches and stops at walls
   stat_pool.gd            A refilling pool (mana, stamina): spend, drain, restore, restore over time, passive regen
   health.gd               A StatPool that can take damage, heal, die and be revived
   hurtbox.gd              The area that receives hits and passes them to a Health
   hit.gd                  One hit: its damage, who dealt it and where it came from
   potion.gd               A potion's restores, poured into the drinker's Health, Mana and Stamina
-  breakable.gd            Frees an object when its Health runs out
+  breakable.gd            Frees an object when its Health runs out (barrels, boxes, kegs and all furniture: tables,
+                          chairs, stools, shelves, beds); the dungeon re-bakes enemy navigation after a break
   vitals_hud.gd           Health, mana and stamina bars bound to three pools
   damage_numbers.gd       Pops a floating number over every hurtbox that takes a hit
   floating_number.gd      One floating number that rises, fades and frees itself
@@ -59,6 +62,8 @@ scripts/
   settings_menu.gd        Settings screen: sensitivity and volume sliders and two rebindable slots per action
   item_tooltip.gd          Details panel beside the selected hub slot: name, type, damage, potion effects, quantity, and whether the character can use it
   hover_focus.gd          Autoload that gives a button or inventory slot keyboard focus when the mouse moves onto it, so only one is ever highlighted
+  death_screen.gd         Fade to black, "You have died", then back to the hub
+  victory_screen.gd       Victory banner after leaving through the unlocked exit, then a fade to black before the hub
   pause_menu.gd           In-dungeon pause menu: Resume, Settings (opened over the game), Return to Camp, Quit
   character_class.gd      A playable character: its model, the weapons it may hold and its starting gear
   character_select.gd     Character select screen built from the CharacterClass list
@@ -73,14 +78,24 @@ scripts/
 ```
 
 ## Game flow
-Main menu → character select → hub → dungeon (`gameplay_test.tscn`) → hub.
+Main menu → character select → hub → dungeon (`scenes/game/dungeon.tscn`) → hub.
+
+`scenes/game/main.tscn` is the game's entry point and the project's main scene: it opens on the main menu (it inherits `scenes/ui/main_menu.tscn`), so running it, or the project with F5, plays the whole game from the menu through character select, the hub and the dungeon. `scenes/game/dungeon.tscn` is the run itself, loaded by the hub, not a scene to start on its own: the same level, player, HUD and run rules as
+`scenes/playground/gameplay_test.tscn`, both driven by `scripts/dungeon_run.gd`, but with
+`debug_tools` off, so there is no Kill All Enemies button and R doesn't reroll the dungeon. The test
+scene keeps `debug_tools` on for those tools.
+
+Each class starts with its most basic weapon, given whenever the character owns no weapon it can use (in the weapon or off-hand slot, the stash or the backpack): when the class is chosen and again after a death empties the slots. The basic weapons are the wooden
+sword for the Knight (`sword_a`), the wooden club for the Barbarian (`hammer_c`), the plain wooden staff
+for the Mage (`staff_a`), the plain wooden bow for the Ranger (`bow_a_withstring`) and the simple
+dagger for the Rogue (`dagger_a`). The Knight and Barbarian also keep their starting shields.
 
 - **Characters**: five adventurers (Knight, Barbarian, Mage, Ranger, Rogue — the hooded model). Each can only hold the weapons and shields listed in its
   `resources/characters/*.tres`; `player.gd` refuses anything else.
 - **Hub**: drag items between the stash (8x7), the weapon and off-hand slots and the 3x3 backpack.
   The backpack takes no weapons or shields, the off-hand only takes what pairs with the weapon,
-  and gear the current character can't use goes back to the stash on a character change. A
-  character's starting gear is given once, the first time it is played.
+  and each character keeps its own weapon and off-hand: switching characters puts the current loadout away with that character (the stash isn't touched) and equips the new character's, which comes back exactly as it was left. A
+  character's starting gear is given whenever it has no usable weapon anywhere.
 - **Crafting**: lists the current character's weapons; clicking one drops down the materials it needs
   (icon, have / need) and a Craft button, which spends them from the stash. Costs live in
   `resources/crafting/weapon_recipes.tres`.
@@ -96,15 +111,19 @@ Main menu → character select → hub → dungeon (`gameplay_test.tscn`) → hu
   the equipped weapon and shields with the equipped off-hand (same as dragging onto the slot), and
   backpack or hand slots go back to the stash. Hovering a slot with the mouse selects it.
 - **Runs**: the player starts with the loadout and the backpack's items. Killing the boss unlocks
-  the boss room's exit door; leaving through it puts the run inventory into the stash. Dying and
-  pressing R returns to the hub and loses the backpack. In the inventory, Enter / Space / A (or
+  the boss room's exit door; leaving through it (F) shows a Victory screen, fades to black and returns to the hub,
+  where everything collected is waiting in the backpack to move into the stash. Dying fades to
+  black, shows "You have died" and returns to the hub; everything carried (backpack, weapon and
+  off-hand) is lost, the stash is kept. In the inventory, Enter / Space / A (or
   right-click) on a potion drinks it. While the inventory is open the player
   stands still (no moving, sprinting, jumping or attacking), so WASD and the stick only move between slots.
 - **Screen size**: every screen is laid out for a 1280x720 base and scaled to the window (`canvas_items`
   stretch, `expand` aspect): smaller or larger screens scale the whole UI, and other aspect ratios add
   room around the anchored layouts instead of cropping them.
+- **Kill All Enemies**: test scene only (`debug_tools`), a button at the top right of the dungeon HUD kills every enemy,
+  boss included, so the exit unlocks right away. Open the inventory (Tab) to free the mouse and click it.
 - **Pause**: Esc or Start in the dungeon pauses the game. Return to Camp asks first, then ends the run
-  like dying (the backpack is lost); Quit is hidden in web builds.
+  like dying (everything carried is lost); Quit is hidden in web builds.
 - **Settings**: mouse X/Y sensitivity (multipliers on the dungeon camera), music volume (the `Music`
   bus in `default_bus_layout.tres`) and key bindings for movement, sprint, jump, attack, block,
   interact and inventory. Click a binding and press a key or mouse button; Esc cancels. Binding an
@@ -113,10 +132,10 @@ Main menu → character select → hub → dungeon (`gameplay_test.tscn`) → hu
   Enter/Space/A confirm and Esc/B go back on the character select and settings screens. Every
   screen focuses a button when it opens, and scroll lists follow the focus. Only the focused button is
   highlighted (white); hovering a button with the mouse focuses it.
-- **Test items**: in debug builds (running from the editor) an empty stash is filled with 24 random
-  weapons, materials, coins and potions. The first debug launch with a
-  save also adds 12 of each crafting material and 50 coins once. Delete `user://profile.json` to start
-  over with a fresh set.
+- **Test items**: off by default, so a new save starts like the published game. Turn on
+  `roam/testing/fill_stash` in Project Settings (Advanced Settings) and an empty stash is filled with 24
+  random weapons, materials, coins and potions, and 12 of each crafting material and 50 coins are added
+  once. Delete `user://profile.json` (Project > Open User Data Folder) to start over.
 - **Saving**: everything is saved to `user://profile.json`. In the web build that is the browser's
   IndexedDB, so it survives closing the tab on itch.io but not clearing site data or switching browsers.
 
@@ -151,6 +170,13 @@ dual-wield off-hand weapon (playing `PickUp` mirrored, see Dual wielding). It fi
 the player so that hand lands on the item's origin (its grip), then takes it straight into that hand
 at the bottom of the reach. The dungeon preview plays `Spawn_Ground` when you
 spawn and `Interact` when you open a door.
+
+Walking or lunging into an obstacle no taller than `StepClimber.STEP_HEIGHT` (0.5 m, about knee
+height on these characters) steps up onto it instead of stopping: `step_climber.gd` checks the way
+ahead is blocked by something that isn't walkable floor, that there's room 0.5 m higher, then lifts
+the body, and the floor snap (0.55 m, also on enemies) settles it onto the top or back down the far
+side. Enemies use the same step, and every dungeon navigation mesh has `agent_max_climb` 0.5, so
+they plan routes over the same obstacles instead of around them.
 
 ## Weapons
 A weapon scene's root runs `weapon.gd`, which says how it is held and swung: `hand` (`handslot.r`
@@ -202,6 +228,20 @@ upper body faces the camera). Held poses (`Melee_Blocking`, the aim holds) are l
 the same way (`moving_hold/`). Starting or stopping mid-action swaps between the standing and moving
 copy at the same playback time, so the swing carries on. A step with `uses_legs` on (the kick) still
 plants the player, and sprinting into an attack still plays the weapon's lunge.
+
+### Melee targeting
+Melee (unarmed and any weapon without a projectile) soft-locks onto one enemy, picked by
+`AimTargeting._melee_target`: the enemy under the crosshair when it is within `SOFT_LOCK_RANGE`
+(3 m), otherwise the nearest visible enemy within that range and within `SOFT_LOCK_CONE_DEGREES`
+(50°) of the camera's forward direction. That enemy is the player's `attack_target`; attacks turn
+toward it at `attack_turn_speed`, and with no target they follow the camera. The enemy the next swing
+will hit gets the red outline (other engaged enemies stay white), and the crosshair is dimmed to
+`MELEE_CROSSHAIR_ALPHA` so the outline is the cue. Ranged weapons keep the crosshair: the
+`attack_target` is the enemy under it, and shots fly toward the camera ray's hit point.
+
+The camera follows the same split. Melee uses the `Melee` group on `ShoulderCamera` (4.4 m back,
+0.25 m to the side, nearly centred), ranged weapons out of aim use the `Explore` group (1 m shoulder),
+and holding aim uses the `Aim` group.
 
 ### Combos
 Every KayKit attack is a standalone move: it winds up from a neutral stance, swings for about a tenth
@@ -277,8 +317,23 @@ the top of its wind-up, so even mashing plays every attack whole, about 0.8–1.
 | `Melee_Dualwield_Attack_Stab` | both 0.38–0.45 | 0.85 | 1.40 | 0.05 |
 | `Melee_Dualwield_Attack_Slice` | both 0.55–0.68 and 0.75–0.83 | 1.10 | 1.12 | 0.05 |
 
+Each separate swing is its own hit window, so it can land on an enemy that an earlier swing in the
+same step already hit: Chop hits with the right blade at 0.50–0.62 and the left at 0.84–0.92, and
+Slice's two parts hit at 0.52–0.70 and 0.73–0.86 (`AttackStep.extra_hit_windows` holds the windows
+after the first; the player clears its struck list whenever a new window opens). Within one window an
+enemy still takes one hit.
+
 The packs have no dual-wield idle, walk, run or sprint attack, so the player moves as with one
 weapon and sprinting into an attack still plays the main-hand weapon's `Melee_1H_Attack_Jump_Chop`.
+
+Dual wielding blocks exactly like a shield (see Shields): hold right mouse to raise the guard,
+attack while blocking to bash with both blades, and every blocked hit drains stamina. The packs have
+no dual-wield block, so the guard clips are the shield's (`Melee_Block`, `Melee_Blocking`,
+`Melee_Block_Hit`, `Melee_Block_Attack`) with the right arm replaced by the left arm mirrored
+(`_dual_guard`, built into the `dual_guard` library), so both blades come up together. The clips and
+numbers are exports under **Dual wield guard** on the player, defaulting to the shield's values:
+`dual_guard_block_stamina_per_damage` 1.0, `dual_guard_bash_stamina_cost` 10, and the bash hits
+from 0.32 to 0.45 s with each weapon's own damage.
 
 ### Unarmed
 With nothing in the main hand (including holding only a shield) left mouse runs the `unarmed_combo`
@@ -286,6 +341,9 @@ export: a left punch (`fists/left_punch.tres`, `Melee_Unarmed_Attack_Punch_A` mi
 punch (`unarmed/punch.tres`), alternating while mashed. With both hands empty, right mouse runs
 `unarmed_secondary_combo`, a kick (`unarmed/kick.tres`); with a shield, right mouse blocks instead.
 The fist weapons use the same moves.
+Besides the limb hitboxes, every unarmed strike checks a sphere `UNARMED_REACH_RADIUS` (0.55 m)
+centred `UNARMED_REACH` (0.9 m) in front of the player at chest height, so a punch lands on whatever
+is directly ahead even when the hand animation passes beside it.
 
 | Step | Swing | `combo_time` | `window_end` | `chain_start` |
 | --- | --- | --- | --- | --- |
@@ -362,12 +420,17 @@ its own. All are in `scenes/effects/` and use `projectile.gd` (they fly straight
 
 The variants are copies of `magic_bolt` with a different core size and colour, light and trail.
 
+Casts cost mana instead of stamina: the weapon's `mana_cost` (left mouse) or `secondary_mana_cost`
+(right mouse) is paid once when a cast starts (the first step of the combo), and with too little mana
+the cast doesn't start. Wands cost 12 and 18, staffs 18 and 25, so a full 100 mana pool gives about 8
+wand or 5 staff left-mouse casts before regen (5/s after 1.5 s without spending) or a mana potion.
+
 Presses only queue the combo that the same button started, so clicking one button during the
 other's cast doesn't cut it short. `Ranged_Magic_Summon` is unused.
 
 While the player casts, `cast_effects.gd` opens a glowing circle with rising sparks under their feet:
 the free area effect from Binbun's Elemental Magic FX (`vfx_fire_area_01`). It follows the player
-and opens when a `Ranged_Magic_` clip starts. It closes the moment the bolt or burst leaves (the
+and opens whenever an attack step with a `Ranged_Magic_` clip starts while it is closed (the player's `attack_step_started` signal), so spammed casts that chain straight from Shoot into the next spellcast reopen it, and restart the conjure sound, each time. It closes the moment the bolt or burst leaves (the
 player's `projectile_launched` signal), partway through the Shoot or Raise clip, or earlier if another
 clip cuts the cast short, such as a dodge or a hit. The next spellcast opens it again. Its colour is the held
 weapon's `cast_color`, the colour of its bolts. `radius` is 0.8 m and `emission` is 1.2; the pack's
@@ -423,6 +486,11 @@ Every character scene (the six adventurers and four skeletons) has three stat no
 | `Mana` | `stat_pool.gd` | 100 | 5/s after 1.5 s without spending |
 | `Stamina` | `stat_pool.gd` | 100 | 35/s after 0.5 s without spending |
 | `Hurtbox` | `hurtbox.gd` | | |
+
+`Health.damage_taken` multiplies every hit before it is drained (1.0 by default). The player copies
+its `CharacterClass.damage_taken` into it, so the classes that can fight from a distance pay for it up
+close: Rogue 1.15, Ranger 1.25 and Mage 1.3 (Knight and Barbarian 1.0). Character select adds a
+"Fragile: takes N% more damage." line under those classes' descriptions.
 
 `StatPool` is the shared base: `spend(amount)` (false, and nothing taken, if there isn't enough),
 `can_spend`, `drain`, `restore`, `restore_over_time(amount, duration)`, `fill`, `ratio`, `is_empty`
@@ -577,6 +645,15 @@ items (the breakable containers), never on the player. Every mesh of the target 
 (`set_instance_shader_parameter`). The outline holds for 0.08 s, shrinks away over 0.3 s, then the
 overlay is removed. The enemy health bar is left out.
 
+The white outline on the furniture or door under the crosshair (`shaders/prop_outline.gdshader`, masked
+by `shaders/outline_mask.gdshader` through the stencil buffer) is hidden by walls and other props like
+any surface. Dropped items (`ItemPickup`) are small enough for the player to cover completely, so every
+item within `PICKUP_OUTLINE_RADIUS` (6 m) of the player, plus the one under the crosshair, keeps one
+overlay with two outline passes: the normal one, shown while the item is under the crosshair, and
+`shaders/prop_outline_through_player.gdshader`, which skips the depth test and is shown while a ray
+from the camera to the item's centre hits the player's body first. Only the passes' alpha changes from
+frame to frame. Both passes share `shaders/prop_outline.gdshaderinc`.
+
 Hits must never create materials. The GL Compatibility renderer compiles shaders again for every new
 material instance, even one identical to a material already in use, and a compile in the middle of a fight
 is a visible hitch (measured at 175–450 ms per hit with the driver's shader cache off). Creating a fresh
@@ -711,6 +788,6 @@ Run `tests/inventory_ui_check.gd` with Godot's `--headless --script` options for
 
 On character selection, drag over the character with the left mouse button to rotate it. `scripts/character_turntable.gd` captures the drag even outside the preview region. The character animation, showcase timer and camera drift pause during the grab, then resume on release. Escape, focus loss, changing class and leaving the scene all cancel the grab. New character selections reset the viewing angle. `tests/character_showcase_check.gd` verifies all five class demos and `tests/character_turntable_check.gd` covers rotation and cancellation.
 
-Character selection keeps the actor clear of captions: the class list identifies the selection, while a short description and backstory appear on the right. These are authored in each `CharacterClass` resource's `description` and `lore` fields. Dragging the actor still rotates it.
+Character selection keeps the actor clear of captions: the class list identifies the selection, while a short description and backstory appear on the right. These are authored in each `CharacterClass` resource's `description` and `lore` fields. A class is chosen only by pressing its button (click, Enter or Space); hovering or moving focus over another class doesn't change the choice, and the chosen button stays in its pressed style. Dragging the actor still rotates it.
 
 The dungeon uses `scenes/ui/control_hints.tscn` for a bottom-right row of keycaps and mouse-button symbols, drawn by `scripts/control_glyph.gd`. The row wraps beside the vitals on narrower windows, switches to item actions when the inventory opens, and shows return-to-camp controls on death. Nearby door/pickup prompts appear above it during play.

@@ -15,5 +15,6 @@ lore = "For years, the ranger guided travelers through the woods above these hal
 display_name = "Ranger"
 character_scene = ExtResource("2_character")
 weapons_text = "Bows and crossbows"
-starting_weapon = ExtResource("3_bow_withstring")
+starting_weapon = ExtResource("6_bow_a_withstring")
 equipment = Array[PackedScene]([ExtResource("3_bow_withstring"), ExtResource("4_crossbow_1handed"), ExtResource("5_crossbow_2handed"), ExtResource("6_bow_a_withstring"), ExtResource("7_bow_b_withstring")])
+damage_taken = 1.25

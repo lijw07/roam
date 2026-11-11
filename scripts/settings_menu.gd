@@ -26,6 +26,8 @@ var _adjustment_rows: Array[Array] = []
 @onready var sensitivity_y_value: Label = %SensitivityYValue
 @onready var music_slider: HSlider = %MusicSlider
 @onready var music_value: Label = %MusicValue
+@onready var sfx_slider: HSlider = %SFXSlider
+@onready var sfx_value: Label = %SFXValue
 @onready var bindings: GridContainer = %Bindings
 @onready var reset_bindings_button: Button = %ResetBindingsButton
 @onready var back_button: Button = %BackButton
@@ -35,9 +37,11 @@ func _ready() -> void:
 	_bind_slider(sensitivity_x_slider, sensitivity_x_value, Settings.mouse_sensitivity_x, Settings.set_mouse_sensitivity_x, _multiplier_text)
 	_bind_slider(sensitivity_y_slider, sensitivity_y_value, Settings.mouse_sensitivity_y, Settings.set_mouse_sensitivity_y, _multiplier_text)
 	_bind_slider(music_slider, music_value, Settings.music_volume, Settings.set_music_volume, _percent_text)
+	_bind_slider(sfx_slider, sfx_value, Settings.sfx_volume, Settings.set_sfx_volume, _percent_text)
 	_bind_steps(sensitivity_x_slider, %SensitivityXDecrease, %SensitivityXIncrease)
 	_bind_steps(sensitivity_y_slider, %SensitivityYDecrease, %SensitivityYIncrease)
 	_bind_steps(music_slider, %MusicDecrease, %MusicIncrease)
+	_bind_steps(sfx_slider, %SFXDecrease, %SFXIncrease)
 	for action in Settings.ACTION_NAMES:
 		_add_binding_row(action)
 	reset_bindings_button.pressed.connect(_on_reset_bindings_pressed)

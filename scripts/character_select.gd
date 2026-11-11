@@ -5,6 +5,7 @@ extends Control
 @export_file("*.tscn") var main_menu_scene := "res://scenes/ui/main_menu.tscn"
 
 var _chosen: CharacterClass
+var _choices := ButtonGroup.new()
 
 @onready var backdrop: Control = $Background
 @onready var turntable: Control = %PreviewSpace
@@ -34,14 +35,18 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _focus_chosen_or_first() -> void:
 	var index := maxi(classes.find(_chosen), 0)
-	(character_list.get_child(index) as Button).grab_focus()
+	var button := character_list.get_child(index) as Button
+	button.set_pressed_no_signal(true)
+	button.grab_focus()
 
 
 func _choice_button(character_class: CharacterClass) -> Button:
 	var button := Button.new()
 	button.text = character_class.display_name
 	button.custom_minimum_size = Vector2(240, 44)
-	button.focus_entered.connect(_show.bind(character_class))
+	button.toggle_mode = true
+	button.button_group = _choices
+	button.pressed.connect(_show.bind(character_class))
 	return button
 
 
@@ -50,8 +55,17 @@ func _show(character_class: CharacterClass) -> void:
 	_chosen = character_class
 	backdrop.show_character(character_class)
 	continue_button.disabled = character_class == null
-	description_label.text = character_class.description if character_class != null else ""
+	description_label.text = _description_of(character_class)
 	lore_label.text = character_class.lore if character_class != null else ""
+
+
+func _description_of(character_class: CharacterClass) -> String:
+	if character_class == null:
+		return ""
+	var extra := roundi((character_class.damage_taken - 1.0) * 100.0)
+	if extra <= 0:
+		return character_class.description
+	return "%s\n\nFragile: takes %d%% more damage." % [character_class.description, extra]
 
 
 func _on_continue_pressed() -> void:

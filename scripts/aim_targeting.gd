@@ -7,10 +7,13 @@ const MAX_PASSES := 8
 const PICKUP_AIM_RADIUS := 0.35
 const CHEST_HEIGHT := 1.1
 const START_MARGIN := 0.5
+const SOFT_LOCK_RANGE := 3.0
+const SOFT_LOCK_CONE_DEGREES := 50.0
 
 @export var player: CharacterBody3D
 
 var target: Enemy = null
+var attack_target: Enemy = null
 var looked_at: Node3D = null
 var hovered_door: Door = null
 var hovered_door_point := Vector3.ZERO
@@ -32,6 +35,7 @@ func _physics_process(_delta: float) -> void:
 	if camera == null or not is_instance_valid(player):
 		looked_at = null
 		target = null
+		attack_target = null
 		hovered_door = null
 		return
 	var forward := -camera.global_basis.z
@@ -46,7 +50,45 @@ func _physics_process(_delta: float) -> void:
 		looked_at = _pickup_near_ray(start, aim_point)
 	target = looked_at as Enemy
 	player.set("aim_point", aim_point)
+	attack_target = _melee_target(forward) if _player_fights_in_melee() else target
+	player.set("attack_target", attack_target)
 	_find_hovered_door(start, end)
+
+
+func _player_fights_in_melee() -> bool:
+	return player.has_method(&"fights_in_melee") and player.fights_in_melee()
+
+
+func _melee_target(camera_forward: Vector3) -> Enemy:
+	if _within_soft_lock_range(target):
+		return target
+	var forward := Vector3(camera_forward.x, 0.0, camera_forward.z).normalized()
+	var chest := player.global_position + Vector3.UP * CHEST_HEIGHT
+	var nearest: Enemy = null
+	var nearest_distance := SOFT_LOCK_RANGE
+	for hurtbox: Hurtbox in get_tree().get_nodes_in_group(Hurtbox.GROUP):
+		var enemy := hurtbox.get_parent() as Enemy
+		if enemy == null or enemy.dead or not hurtbox.is_active():
+			continue
+		var offset := _flat_offset_to(enemy)
+		if offset.length() < nearest_distance and _within_cone(offset, forward) and hurtbox.is_exposed_to(chest, player):
+			nearest = enemy
+			nearest_distance = offset.length()
+	return nearest
+
+
+func _within_soft_lock_range(enemy: Enemy) -> bool:
+	return is_instance_valid(enemy) and not enemy.dead and _flat_offset_to(enemy).length() <= SOFT_LOCK_RANGE
+
+
+func _within_cone(offset: Vector3, forward: Vector3) -> bool:
+	return offset.is_zero_approx() or forward.angle_to(offset) <= deg_to_rad(SOFT_LOCK_CONE_DEGREES)
+
+
+func _flat_offset_to(node: Node3D) -> Vector3:
+	var offset := node.global_position - player.global_position
+	offset.y = 0.0
+	return offset
 
 
 func _find_hovered_door(start: Vector3, end: Vector3) -> void:

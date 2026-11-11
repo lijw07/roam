@@ -50,6 +50,7 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif visible and event.is_action_pressed("ui_cancel") and not amount_popup.visible:
 		hide()
+		AudioManager.play_ui("ui_back")
 		get_viewport().set_input_as_handled()
 
 
@@ -106,12 +107,15 @@ func _on_dropped_on_slot(from: InventorySlot, to_index: int) -> void:
 		_with_amount(MOVE_TEXT, movable, func(amount: int) -> void: inventory.move(from_index, to_index, amount))
 	else:
 		inventory.swap(from_index, to_index)
+	AudioManager.play_ui("ui_confirm")
 
 
 func _on_slot_used(index: int) -> void:
 	var potion := inventory.potion_at(index)
 	if potion != null and is_instance_valid(drinker) and drinker.drink(potion):
 		inventory.use_one(index)
+	else:
+		AudioManager.play_ui("ui_error")
 
 
 func _finish_drag() -> void:

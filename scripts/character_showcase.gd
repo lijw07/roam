@@ -1,7 +1,8 @@
 extends Node3D
 
-## Presentation-only actor. Plays original clips and mounts original weapon meshes.
-## No player input, physics, hit detection, projectiles or saved loadout changes.
+const CLIP_BLEND := 0.18
+const NO_BLEND := 0.0
+
 var _character: Node3D
 var _animation: AnimationPlayer
 var _skeleton: Skeleton3D
@@ -27,7 +28,6 @@ func show_character(character_class: CharacterClass) -> void:
 	if character_class == null:
 		return
 	_character = character_class.character_scene.instantiate()
-	# Keep the exact model/rig and animation libraries, without gameplay components.
 	for child in _character.get_children():
 		if child.name not in [&"Model", &"AnimationPlayer"]:
 			_character.remove_child(child)
@@ -52,7 +52,8 @@ func show_character(character_class: CharacterClass) -> void:
 			_weapons.append(candidate)
 			break
 	_weapon_index = 0
-	_equip_and_sequence()
+	_equip_and_sequence(NO_BLEND)
+	_animation.advance(0.0)
 	set_process(true)
 
 
@@ -85,7 +86,7 @@ func _clear_character() -> void:
 	_skeleton = null
 
 
-func _equip_and_sequence() -> void:
+func _equip_and_sequence(first_blend := CLIP_BLEND) -> void:
 	for attachment in _attachments:
 		attachment.hide()
 		attachment.queue_free()
@@ -123,11 +124,10 @@ func _equip_and_sequence() -> void:
 				_clip(off_hand.bash_animation)
 			off_hand.free()
 		_clip(idle, 1.6)
-		# A short settle before the next loadout appears; each swap resets the sequence.
 		_clip(&"general/Use_Item")
 		weapon.free()
 	_step = 0
-	_play_step()
+	_play_step(first_blend)
 
 
 func _mount_model(item: Node3D, hand: StringName, grip: Transform3D) -> void:
@@ -147,14 +147,14 @@ func _clip(animation: StringName, hold := 0.0) -> void:
 		_sequence.append({"animation": animation, "duration": hold if hold > 0.0 else _animation.get_animation(animation).length})
 
 
-func _play_step() -> void:
+func _play_step(blend := CLIP_BLEND) -> void:
 	if _sequence.is_empty():
 		set_process(false)
 		return
 	var next := _sequence[_step]
 	current_action = next.animation
 	_remaining = next.duration
-	_animation.play(current_action, 0.18)
+	_animation.play(current_action, blend)
 
 
 func begin_turn() -> bool:

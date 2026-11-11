@@ -41,6 +41,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func open() -> void:
 	show()
+	AudioManager.play_ui("ui_back")
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	resume_button.grab_focus()
@@ -52,6 +53,7 @@ func close() -> void:
 	menu.show()
 	hide()
 	get_tree().paused = false
+	AudioManager.play_ui("ui_confirm")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
