@@ -55,8 +55,17 @@ func _show(character_class: CharacterClass) -> void:
 	_chosen = character_class
 	backdrop.show_character(character_class)
 	continue_button.disabled = character_class == null
-	description_label.text = character_class.description if character_class != null else ""
+	description_label.text = _description_of(character_class)
 	lore_label.text = character_class.lore if character_class != null else ""
+
+
+func _description_of(character_class: CharacterClass) -> String:
+	if character_class == null:
+		return ""
+	var extra := roundi((character_class.damage_taken - 1.0) * 100.0)
+	if extra <= 0:
+		return character_class.description
+	return "%s\n\nFragile: takes %d%% more damage." % [character_class.description, extra]
 
 
 func _on_continue_pressed() -> void:

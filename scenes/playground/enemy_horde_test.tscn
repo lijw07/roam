@@ -49,7 +49,7 @@ ambient_light_energy = 0.6
 geometry_parsed_geometry_type = 1
 agent_height = 2.0
 agent_radius = 0.5
-agent_max_climb = 0.25
+agent_max_climb = 0.5
 
 [node name="EnemyHordeTest" type="Node3D"]
 script = ExtResource("1_test")

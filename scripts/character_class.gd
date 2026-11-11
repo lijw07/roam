@@ -9,6 +9,7 @@ extends Resource
 @export var starting_weapon: PackedScene
 @export var starting_off_hand: PackedScene
 @export var equipment: Array[PackedScene] = []
+@export var damage_taken := 1.0
 
 
 func allows(item: Node3D) -> bool:

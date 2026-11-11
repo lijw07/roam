@@ -1,6 +1,6 @@
 shader_type spatial;
 render_mode unshaded, cull_front, depth_draw_never, depth_test_disabled, shadows_disabled;
-stencil_mode read, compare_equal, 2;
+stencil_mode read, compare_not_equal, 1;
 
 #include "res://shaders/prop_outline.gdshaderinc"
 

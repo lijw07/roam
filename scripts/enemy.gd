@@ -18,9 +18,6 @@ const DEATH_POSES := {
 const MAIN_HAND := &"handslot.r"
 const STRIKE_HEIGHT := 1.1
 const BLOCKED_SPEED := 0.4
-const STEP_HEIGHT := 0.35
-const STEP_PROBE := 0.15
-const STEP_SNAP_MARGIN := 0.05
 const STRIKE_ORIGIN_OFFSET := 0.5
 const STRAFE_LEFT_ANIMATION := &"movement_advanced/Running_Strafe_Left"
 const STRAFE_RIGHT_ANIMATION := &"movement_advanced/Running_Strafe_Right"
@@ -97,7 +94,7 @@ var _was_airborne := false
 func _ready() -> void:
 	_main_hand = _find_main_hand()
 	_foot_plants = FootPlants.new(find_children("*", "Skeleton3D", true, false)[0])
-	floor_snap_length = STEP_HEIGHT + STEP_SNAP_MARGIN
+	floor_snap_length = StepClimber.snap_length()
 	_disable_held_collision()
 	_prepare_strikes()
 	_prepare_flinches()
@@ -461,7 +458,7 @@ func _travel(delta: float) -> void:
 	velocity.x = direction.x * speed
 	velocity.z = direction.z * speed
 	_apply_gravity(delta)
-	_step_up_if_blocked(Vector3(velocity.x, 0.0, velocity.z) * delta)
+	StepClimber.step_up_if_blocked(self, Vector3(velocity.x, 0.0, velocity.z) * delta)
 	move_and_slide()
 	_update_landing()
 	_update_footsteps(running)
@@ -492,23 +489,6 @@ func _weapon_in_hand() -> Weapon:
 	for child in _main_hand.find_children("*", "Weapon", true, false):
 		return child as Weapon
 	return null
-
-
-func _step_up_if_blocked(motion: Vector3) -> void:
-	if not is_on_floor() or motion.is_zero_approx():
-		return
-	var probe := motion.normalized() * maxf(motion.length(), STEP_PROBE)
-	var collision := KinematicCollision3D.new()
-	if not test_move(global_transform, probe, collision) or _is_walkable(collision.get_normal()):
-		return
-	var lift := Vector3.UP * STEP_HEIGHT
-	if test_move(global_transform, lift) or test_move(global_transform.translated(lift), probe):
-		return
-	global_position += lift
-
-
-func _is_walkable(normal: Vector3) -> bool:
-	return normal.angle_to(Vector3.UP) <= floor_max_angle
 
 
 func _hold_guard(delta: float) -> void:

@@ -3,6 +3,7 @@ extends CharacterBody3D
 signal animation_changed(animation: StringName)
 signal item_released(item: Node3D)
 signal projectile_launched(projectile: Projectile)
+signal attack_step_started(step: AttackStep)
 
 const BLEND_TIME := 0.15
 const RIGHT_HAND := &"handslot.r"
@@ -153,6 +154,7 @@ var _limb_bones: Array[int] = []
 var _limb_query := PhysicsShapeQueryParameters3D.new()
 var _reach_query := PhysicsShapeQueryParameters3D.new()
 var _struck: Array[Hurtbox] = []
+var _hit_window := -1
 var _winded := false
 var _foot_plants: FootPlants
 var _swing_action: StringName = &""
@@ -181,7 +183,10 @@ func _ready() -> void:
 	_facing_yaw = model.rotation.y
 	_prepare_limb_strikes()
 	_foot_plants = FootPlants.new(skeleton)
+	floor_snap_length = StepClimber.snap_length()
 	_connect_health()
+	if character_class != null and health != null:
+		health.damage_taken = character_class.damage_taken
 
 
 func _physics_process(delta: float) -> void:
@@ -433,9 +438,9 @@ func _pay_for_attack_step(step_index: int, input: StringName) -> bool:
 
 
 func _cast_mana_cost(step_index: int, input: StringName) -> float:
-	if _held_weapon == null or input != &"attack" or step_index != 0:
+	if _held_weapon == null or step_index != 0:
 		return 0.0
-	return _held_weapon.mana_cost
+	return _held_weapon.secondary_mana_cost if input == &"secondary" else _held_weapon.mana_cost
 
 
 func _can_pay_mana(cost: float) -> bool:
@@ -493,6 +498,7 @@ func _prepare_limb_strikes() -> void:
 func _strike_targets() -> void:
 	if not _is_striking():
 		return
+	_start_new_hit_window()
 	AudioManager.check_weapon_environment(self, _held_weapon, _world_struck)
 	if _is_bashing() and shield != null:
 		_strike_with(shield, shield.bash_damage)
@@ -502,6 +508,15 @@ func _strike_targets() -> void:
 			_strike_with(weapon, weapon.damage)
 	if _strikes_with_limbs():
 		_strike_with_limbs(_limb_damage())
+
+
+func _start_new_hit_window() -> void:
+	if _attack_step == null:
+		return
+	var window: int = _attack_step.hit_window_at(animation_player.current_animation_position)
+	if window != _hit_window:
+		_hit_window = window
+		_struck.clear()
 
 
 func _strike_with(striker: Area3D, damage: float) -> void:
@@ -649,6 +664,7 @@ func _travel(direction: Vector3, gait: Gait, delta: float) -> void:
 	_spend_sprint_stamina(direction, gait, delta)
 	velocity.x = direction.x * gait.speed
 	velocity.z = direction.z * gait.speed
+	StepClimber.step_up_if_blocked(self, Vector3(velocity.x, 0.0, velocity.z) * delta)
 	move_and_slide()
 	_update_footsteps(gait.sprinting)
 	if not direction.is_zero_approx():
@@ -685,6 +701,7 @@ func _move_with_action(delta: float) -> void:
 	velocity.z = action_velocity.z
 	if not is_on_floor():
 		velocity.y -= gravity * delta
+	StepClimber.step_up_if_blocked(self, Vector3(velocity.x, 0.0, velocity.z) * delta)
 	move_and_slide()
 
 
@@ -912,6 +929,7 @@ func _start_attack_step(step: AttackStep, from: float, blend: float) -> void:
 	_projectile_released = false
 	_world_struck.clear()
 	_queue_swing(step.hit_start if step.hit_start >= 0.0 else step.projectile_time)
+	attack_step_started.emit(step)
 
 
 func _queue_swing(strike_time: float) -> void:
@@ -1244,6 +1262,7 @@ func _start_action(animation: StringName, cancellable := false, action_velocity 
 	_combo_grace = 0.0
 	_idle_time = 0.0
 	_struck.clear()
+	_hit_window = -1
 	_play(animation, blend, from)
 
 

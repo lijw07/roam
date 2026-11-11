@@ -9,4 +9,5 @@ combo_time = 1.1
 window_end = 1.22
 chain_start = 0.05
 hit_start = 0.5
-hit_end = 0.92
+hit_end = 0.62
+extra_hit_windows = Array[Vector2]([Vector2(0.84, 0.92)])

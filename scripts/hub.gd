@@ -2,7 +2,7 @@ extends Control
 
 const FADE_IN_TIME := 0.6
 
-@export_file("*.tscn") var dungeon_scene := "res://scenes/playground/gameplay_test.tscn"
+@export_file("*.tscn") var dungeon_scene := "res://scenes/game/dungeon.tscn"
 @export_file("*.tscn") var character_select_scene := "res://scenes/ui/character_select.tscn"
 @export_file("*.tscn") var main_menu_scene := "res://scenes/ui/main_menu.tscn"
 

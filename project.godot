@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Roam"
-run/main_scene="res://scenes/ui/main_menu.tscn"
+run/main_scene="res://scenes/game/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
@@ -185,3 +185,7 @@ inventory={
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+
+[roam]
+
+testing/fill_stash=false

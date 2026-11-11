@@ -1,6 +1,7 @@
 extends Node
 
 const SAVE_PATH := "user://profile.json"
+const TEST_STASH_SETTING := "roam/testing/fill_stash"
 const STASH_COLUMNS := 8
 const STASH_ROWS := 7
 const BACKPACK_COLUMNS := 3
@@ -26,8 +27,8 @@ var weapon: Inventory
 var off_hand: Inventory
 var backpack: Inventory
 
-var _started_classes: PackedStringArray = []
 var _test_materials_given := false
+var _loadouts: Dictionary[String, Dictionary] = {}
 var _returned_from_run := false
 var _shop_rotation := -1
 var _shop_purchases: Dictionary[String, int] = {}
@@ -40,18 +41,16 @@ func _ready() -> void:
 	off_hand = _add_inventory("OffHand", 1, 1)
 	backpack = _add_inventory("Backpack", BACKPACK_COLUMNS, BACKPACK_ROWS)
 	_load()
-	if OS.is_debug_build():
+	if ProjectSettings.get_setting(TEST_STASH_SETTING, false):
 		_add_test_items()
 
 
 func choose_class(chosen: CharacterClass) -> void:
-	character_class = chosen
-	_stash_unusable(weapon)
-	_stash_unusable(off_hand)
-	if not _started_classes.has(chosen.resource_path):
-		_started_classes.append(chosen.resource_path)
-		_give(chosen.starting_weapon, weapon)
-		_give(chosen.starting_off_hand, off_hand)
+	if chosen != character_class:
+		_put_away_loadout()
+		character_class = chosen
+		_take_out_loadout()
+	_arm_if_unarmed()
 	_queue_save()
 
 
@@ -71,6 +70,7 @@ func lose_run() -> void:
 	backpack.clear()
 	weapon.clear()
 	off_hand.clear()
+	_arm_if_unarmed()
 	_returned_from_run = true
 	save()
 
@@ -111,8 +111,8 @@ func save() -> void:
 		return
 	file.store_string(JSON.stringify({
 		"character_class": character_class.resource_path if character_class != null else "",
-		"started_classes": Array(_started_classes),
 		"test_materials_given": _test_materials_given,
+		"loadouts": _loadouts,
 		"stash": stash.to_data(),
 		"weapon": weapon.to_data(),
 		"off_hand": off_hand.to_data(),
@@ -130,8 +130,10 @@ func _load() -> void:
 		return
 	var class_path: String = data.get("character_class", "")
 	character_class = load(class_path) as CharacterClass if ResourceLoader.exists(class_path) else null
-	_started_classes = PackedStringArray(data.get("started_classes", []))
 	_test_materials_given = data.get("test_materials_given", false)
+	var loadouts: Dictionary = data.get("loadouts", {})
+	for class_key: String in loadouts:
+		_loadouts[class_key] = loadouts[class_key]
 	stash.load_data(data.get("stash", []))
 	weapon.load_data(data.get("weapon", []))
 	off_hand.load_data(data.get("off_hand", []))
@@ -203,10 +205,34 @@ func _give(scene: PackedScene, slot: Inventory) -> void:
 	ItemInfo.of(scene.resource_path).add_to(target, 1)
 
 
-func _stash_unusable(slot: Inventory) -> void:
-	var held := slot.slots[0]
-	if held.count > 0 and not character_class.allows_scene(held.scene_path):
-		slot.deposit_into(stash)
+func _arm_if_unarmed() -> void:
+	if character_class == null or _owns_usable_weapon():
+		return
+	_give(character_class.starting_weapon, weapon)
+	if off_hand.count_at(0) == 0:
+		_give(character_class.starting_off_hand, off_hand)
+
+
+func _owns_usable_weapon() -> bool:
+	for inventory: Inventory in [weapon, off_hand, stash, backpack]:
+		for slot: Inventory.Slot in inventory.slots:
+			if slot.count > 0 and ItemInfo.of(slot.scene_path).is_weapon and character_class.allows_scene(slot.scene_path):
+				return true
+	return false
+
+
+func _put_away_loadout() -> void:
+	if character_class == null:
+		return
+	_loadouts[character_class.resource_path] = {"weapon": weapon.to_data(), "off_hand": off_hand.to_data()}
+
+
+func _take_out_loadout() -> void:
+	var loadout: Dictionary = _loadouts.get(character_class.resource_path, {})
+	for hand: Inventory in [weapon, off_hand]:
+		hand.clear()
+	weapon.load_data(loadout.get("weapon", []))
+	off_hand.load_data(loadout.get("off_hand", []))
 
 
 func _queue_save() -> void:

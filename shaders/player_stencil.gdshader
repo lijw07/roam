@@ -1,8 +1,0 @@
-shader_type spatial;
-render_mode unshaded, depth_draw_never, shadows_disabled;
-stencil_mode write, compare_always, 2;
-
-void fragment() {
-	ALBEDO = vec3(0.0);
-	ALPHA = 0.0;
-}

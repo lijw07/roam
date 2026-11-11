@@ -3,18 +3,17 @@ extends HurtboxWatcher
 const OUTLINE_SHADER := preload("res://shaders/hit_outline.gdshader")
 const PROP_OUTLINE_SHADER := preload("res://shaders/prop_outline.gdshader")
 const PROP_OUTLINE_THROUGH_PLAYER_SHADER := preload("res://shaders/prop_outline_through_player.gdshader")
-const PLAYER_STENCIL_SHADER := preload("res://shaders/player_stencil.gdshader")
 const OUTLINE_MASK_SHADER := preload("res://shaders/outline_mask.gdshader")
 const COLOR_PARAMETER := &"outline_color"
 const WIDTH_PARAMETER := &"outline_width"
+const WIDTH_PROPERTY := ^"shader_parameter/outline_width"
 const FLASH_WIDTH := 0.04
 const HOLD_TIME := 0.08
 const FADE_TIME := 0.3
 const WARM_UP_FRAMES := 2
 const RADIAL_CENTER_PARAMETER := &"radial_center"
 const PROP_OUTLINE_PRIORITY := 1
-const PLAYER_STENCIL_PRIORITY := -1
-const PICKUP_REVEAL_RADIUS := 6.0
+const PICKUP_OUTLINE_RADIUS := 6.0
 
 @export var player: Node3D
 @export var targeting: AimTargeting
@@ -26,17 +25,11 @@ const PICKUP_REVEAL_RADIUS := 6.0
 
 var _flashes: Dictionary[int, Tween] = {}
 var _state_outlines: Dictionary[int, ShaderMaterial] = {}
-var _player_stencil := ShaderMaterial.new()
-var _revealed_pickups: Dictionary[int, ShaderMaterial] = {}
+var _pickup_outlines: Dictionary[int, ShaderMaterial] = {}
 
 
 func _ready() -> void:
 	super()
-	_player_stencil.shader = PLAYER_STENCIL_SHADER
-	_player_stencil.render_priority = PLAYER_STENCIL_PRIORITY
-	if is_instance_valid(player):
-		for mesh: MeshInstance3D in player.find_children("*", "MeshInstance3D", true, false):
-			_mark_player_mesh(mesh)
 	_warm_up_outline.call_deferred()
 
 
@@ -48,52 +41,65 @@ func _process(_delta: float) -> void:
 			_drop_state_outline(id)
 	for outlined: Node3D in wanted:
 		_show_state_outline(outlined, wanted[outlined])
-	_reveal_pickups_behind_player(wanted)
+	_update_pickup_outlines()
 
 
-func _reveal_pickups_behind_player(wanted: Dictionary[Node3D, Color]) -> void:
-	for id: int in _revealed_pickups.keys():
-		var pickup := instance_from_id(id) as ItemPickup
-		if pickup == null or wanted.has(pickup) or not _is_near_player(pickup):
-			_drop_pickup_reveal(id, pickup, wanted)
+func _update_pickup_outlines() -> void:
+	for id: int in _pickup_outlines.keys():
+		var tracked := instance_from_id(id) as ItemPickup
+		if tracked == null or not _tracks_pickup(tracked):
+			_drop_pickup_outline(id, tracked)
 	for pickup: ItemPickup in get_tree().get_nodes_in_group(ItemPickup.GROUP):
-		var id := pickup.get_instance_id()
-		if not wanted.has(pickup) and not _revealed_pickups.has(id) and _is_near_player(pickup):
-			_revealed_pickups[id] = _reveal_material(pickup)
-			_outline_meshes(_meshes_of(pickup), _revealed_pickups[id])
+		if _tracks_pickup(pickup):
+			_show_pickup_outline(pickup)
 
 
-func _drop_pickup_reveal(id: int, pickup: ItemPickup, wanted: Dictionary[Node3D, Color]) -> void:
-	_revealed_pickups.erase(id)
-	if pickup != null and not wanted.has(pickup):
+func _tracks_pickup(pickup: ItemPickup) -> bool:
+	if pickup.is_queued_for_deletion() or not is_instance_valid(player):
+		return false
+	return _is_looked_at(pickup) or pickup.global_position.distance_to(player.global_position) <= PICKUP_OUTLINE_RADIUS
+
+
+func _is_looked_at(pickup: ItemPickup) -> bool:
+	return targeting != null and targeting.looked_at == pickup
+
+
+func _show_pickup_outline(pickup: ItemPickup) -> void:
+	var id := pickup.get_instance_id()
+	if not _pickup_outlines.has(id):
+		_pickup_outlines[id] = _pickup_outline_material(pickup)
+		_outline_meshes(_meshes_of(pickup), _overlay_for(_pickup_outlines[id], pickup))
+	var outline := _pickup_outlines[id]
+	outline.set_shader_parameter(COLOR_PARAMETER, Color(looked_at_color, 1.0 if _is_looked_at(pickup) else 0.0))
+	(outline.next_pass as ShaderMaterial).set_shader_parameter(COLOR_PARAMETER, Color(looked_at_color, 1.0 if _covered_by_player(pickup) else 0.0))
+
+
+func _drop_pickup_outline(id: int, pickup: ItemPickup) -> void:
+	_pickup_outlines.erase(id)
+	if pickup != null:
 		_clear_outline(_meshes_of(pickup))
 
 
-func _is_near_player(pickup: ItemPickup) -> bool:
-	return is_instance_valid(player) and not pickup.is_queued_for_deletion() \
-		and pickup.global_position.distance_to(player.global_position) <= PICKUP_REVEAL_RADIUS
-
-
-func _reveal_material(pickup: ItemPickup) -> ShaderMaterial:
-	var through := _through_player_pass(looked_at_color, state_width)
+func _pickup_outline_material(pickup: ItemPickup) -> ShaderMaterial:
+	var outline := _outline_material(Color.TRANSPARENT, state_width, pickup)
+	var through := ShaderMaterial.new()
+	through.shader = PROP_OUTLINE_THROUGH_PLAYER_SHADER
+	through.render_priority = PROP_OUTLINE_PRIORITY
+	through.set_shader_parameter(COLOR_PARAMETER, Color.TRANSPARENT)
+	through.set_shader_parameter(WIDTH_PARAMETER, state_width)
 	through.set_shader_parameter(RADIAL_CENTER_PARAMETER, _local_center(pickup))
-	var mask := ShaderMaterial.new()
-	mask.shader = OUTLINE_MASK_SHADER
-	mask.next_pass = through
-	return mask
+	outline.next_pass = through
+	return outline
 
 
-func _on_node_added(node: Node) -> void:
-	super(node)
-	if node is MeshInstance3D:
-		_mark_player_mesh(node as MeshInstance3D)
-
-
-func _mark_player_mesh(mesh: MeshInstance3D) -> void:
-	if is_instance_valid(player) and player.is_ancestor_of(mesh):
-		mesh.material_overlay = _player_stencil
-	elif mesh.material_overlay == _player_stencil:
-		mesh.material_overlay = null
+func _covered_by_player(pickup: ItemPickup) -> bool:
+	var camera := get_viewport().get_camera_3d()
+	var body := player as CollisionObject3D
+	if camera == null or body == null:
+		return false
+	var center := pickup.global_transform * _local_center(pickup)
+	var query := PhysicsRayQueryParameters3D.create(camera.global_position, center, body.collision_layer)
+	return get_world_3d().direct_space_state.intersect_ray(query).get("collider") == body
 
 
 func _on_hit_taken(_hit: Hit, damage: float, hurtbox: Hurtbox) -> void:
@@ -108,9 +114,10 @@ func _wanted_outlines() -> Dictionary[Node3D, Color]:
 		wanted[enemy] = aggro_color
 	if targeting == null:
 		return wanted
-	var looked_at: Node3D = targeting.looked_at
-	if is_instance_valid(looked_at) and looked_at != player and not (looked_at is Enemy):
-		wanted[looked_at] = looked_at_color
+	if is_instance_valid(targeting.looked_at):
+		var looked_at := targeting.looked_at
+		if looked_at != player and not (looked_at is Enemy or looked_at is ItemPickup):
+			wanted[looked_at] = looked_at_color
 	if is_instance_valid(targeting.attack_target):
 		wanted[targeting.attack_target] = target_color
 	return wanted
@@ -134,7 +141,7 @@ func _show_state_outline(outlined: Node3D, color: Color) -> void:
 	if not _state_outlines.has(id):
 		_state_outlines[id] = _outline_material(color, state_width, outlined)
 		_outline_meshes(_meshes_of(outlined), _overlay_for(_state_outlines[id], outlined))
-	_set_outline_parameter(_state_outlines[id], COLOR_PARAMETER, color)
+	_state_outlines[id].set_shader_parameter(COLOR_PARAMETER, color)
 
 
 func _drop_state_outline(id: int) -> void:
@@ -166,7 +173,7 @@ func _flash(target: Node3D) -> void:
 	_outline_meshes(meshes, _overlay_for(outline, target))
 	var tween := create_tween()
 	tween.tween_interval(HOLD_TIME)
-	tween.tween_method(_set_outline_width.bind(outline), FLASH_WIDTH, 0.0, FADE_TIME).set_ease(Tween.EASE_IN)
+	tween.tween_property(outline, WIDTH_PROPERTY, 0.0, FADE_TIME).set_ease(Tween.EASE_IN)
 	tween.tween_callback(_finish_flash.bind(id, meshes))
 	_flashes[id] = tween
 
@@ -183,30 +190,8 @@ func _outline_material(color: Color, width: float, target: Node3D) -> ShaderMate
 	outline.set_shader_parameter(WIDTH_PARAMETER, width)
 	if not (target is Enemy):
 		outline.render_priority = PROP_OUTLINE_PRIORITY
-		if target is ItemPickup:
-			outline.next_pass = _through_player_pass(color, width)
-		_set_outline_parameter(outline, RADIAL_CENTER_PARAMETER, _local_center(target))
+		outline.set_shader_parameter(RADIAL_CENTER_PARAMETER, _local_center(target))
 	return outline
-
-
-func _through_player_pass(color: Color, width: float) -> ShaderMaterial:
-	var through := ShaderMaterial.new()
-	through.shader = PROP_OUTLINE_THROUGH_PLAYER_SHADER
-	through.render_priority = PROP_OUTLINE_PRIORITY
-	through.set_shader_parameter(COLOR_PARAMETER, color)
-	through.set_shader_parameter(WIDTH_PARAMETER, width)
-	return through
-
-
-func _set_outline_width(width: float, outline: ShaderMaterial) -> void:
-	_set_outline_parameter(outline, WIDTH_PARAMETER, width)
-
-
-func _set_outline_parameter(outline: ShaderMaterial, parameter: StringName, value: Variant) -> void:
-	var pass_material: Material = outline
-	while pass_material is ShaderMaterial:
-		(pass_material as ShaderMaterial).set_shader_parameter(parameter, value)
-		pass_material = pass_material.next_pass
 
 
 func _overlay_for(outline: ShaderMaterial, target: Node3D) -> Material:

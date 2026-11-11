@@ -16,5 +16,6 @@ lore = "The rogue once earned a living opening doors for people who owned too ma
 display_name = "Rogue"
 character_scene = ExtResource("2_character")
 weapons_text = "Daggers, fist weapons and one-handed crossbows"
-starting_weapon = ExtResource("4_crossbow_1handed")
+starting_weapon = ExtResource("5_dagger_a")
 equipment = Array[PackedScene]([ExtResource("3_dagger"), ExtResource("4_crossbow_1handed"), ExtResource("5_dagger_a"), ExtResource("6_dagger_b"), ExtResource("7_fistweapon_a"), ExtResource("8_fistweapon_b")])
+damage_taken = 1.15

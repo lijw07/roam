@@ -24,6 +24,6 @@ lore = "Winter drove the clan from the high passes. Far from home, this wanderer
 display_name = "Barbarian"
 character_scene = ExtResource("2_character")
 weapons_text = "Axes, hammers and shields"
-starting_weapon = ExtResource("3_axe_1handed")
+starting_weapon = ExtResource("13_hammer_c")
 starting_off_hand = ExtResource("5_shield_round_barbarian")
 equipment = Array[PackedScene]([ExtResource("3_axe_1handed"), ExtResource("4_axe_2handed"), ExtResource("5_shield_round_barbarian"), ExtResource("6_shield_spikes"), ExtResource("7_shield_spikes_color"), ExtResource("8_axe_a"), ExtResource("9_axe_b"), ExtResource("10_axe_c"), ExtResource("11_hammer_a"), ExtResource("12_hammer_b"), ExtResource("13_hammer_c"), ExtResource("14_shield_a"), ExtResource("15_shield_b"), ExtResource("16_shield_c")])

@@ -13,12 +13,13 @@ const BODY_SHAPE_PATH := ^"CollisionShape3D"
 const MELEE_CROSSHAIR_ALPHA := 0.35
 
 @export var default_class: CharacterClass
+@export var debug_tools := false
 @export_file("*.tscn") var hub_scene := "res://scenes/ui/hub.tscn"
 
 @onready var player: CharacterBody3D = $Player
 @onready var item_collector: ItemCollector = $Player/ItemCollector
 @onready var run_inventory: Inventory = $Player/Inventory
-@onready var kill_all_button: Button = $HUD/KillAllEnemies
+@onready var kill_all_button := get_node_or_null(^"HUD/KillAllEnemies") as Button
 @onready var pause_menu: Control = $HUD/PauseMenu
 @onready var victory_screen: Control = $HUD/VictoryScreen
 @onready var death_screen: Control = $HUD/DeathScreen
@@ -44,8 +45,10 @@ func _ready() -> void:
 	_stock_starting_gear()
 	run_inventory.load_data(Profile.backpack.to_data())
 	_enter_dungeon()
-	kill_all_button.visible = OS.is_debug_build()
-	kill_all_button.pressed.connect(_kill_all_enemies)
+	if kill_all_button != null:
+		kill_all_button.visible = debug_tools
+		kill_all_button.pressed.connect(_kill_all_enemies)
+	control_hints.show_restart_hint(debug_tools)
 	navigation_region.bake_finished.connect(_on_navigation_baked)
 	_rebake_navigation()
 	inventory_ui.visibility_changed.connect(_on_inventory_toggled)
@@ -57,9 +60,14 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	camera_rig.global_position = player.global_position + Vector3.UP * RIG_HEIGHT
 	player.camera_yaw = camera_rig.rotation.y
-	item_collector.aimed_pickup = aim_targeting.looked_at as ItemPickup
+	item_collector.aimed_pickup = _aimed_pickup()
 	crosshair.modulate.a = MELEE_CROSSHAIR_ALPHA if player.fights_in_melee() else 1.0
 	control_hints.show_status(_status_text(), player.dead)
+
+
+func _aimed_pickup() -> ItemPickup:
+	var looked_at := aim_targeting.looked_at
+	return looked_at as ItemPickup if is_instance_valid(looked_at) else null
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -78,7 +86,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _on_key_pressed(key: Key) -> void:
-	if key == KEY_R:
+	if debug_tools and key == KEY_R:
 		_restart()
 
 

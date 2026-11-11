@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/gameplay_test.gd" id="1_gameplay_test"]
+[ext_resource type="Script" path="res://scripts/dungeon_run.gd" id="1_dungeon_run"]
 [ext_resource type="PackedScene" path="res://scenes/ui/control_hints.tscn" id="97_control_hints"]
 [ext_resource type="Resource" path="res://resources/characters/knight.tres" id="95_knight_class"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="96_pause_menu"]
@@ -39,11 +39,12 @@ ambient_light_color = Color(0.12, 0.12, 0.16, 1)
 [sub_resource type="NavigationMesh" id="NavigationMesh_dungeon"]
 geometry_parsed_geometry_type = 1
 agent_height = 2.0
-agent_max_climb = 0.25
+agent_max_climb = 0.5
 
 [node name="GameplayTest" type="Node3D"]
-script = ExtResource("1_gameplay_test")
+script = ExtResource("1_dungeon_run")
 default_class = ExtResource("95_knight_class")
+debug_tools = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_dungeon")

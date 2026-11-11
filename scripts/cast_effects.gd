@@ -31,6 +31,7 @@ func _ready() -> void:
 	_conjure_sound = _create_conjure_sound()
 	add_child(_conjure_sound)
 	player.animation_changed.connect(_on_player_animation_changed)
+	player.attack_step_started.connect(_on_player_attack_step_started)
 	player.projectile_launched.connect(_on_player_projectile_launched)
 	_warm_up()
 
@@ -55,15 +56,21 @@ func _warm_up() -> void:
 
 
 func _on_player_animation_changed(animation: StringName) -> void:
-	var casting := String(animation).contains(CAST_ANIMATION_MARKER)
-	if casting and not _casting:
-		_casting = true
-		_open_circle(_cast_color())
-		_start_conjure_sound()
-	elif not casting and _casting:
+	if _casting and not _is_cast_clip(animation):
 		_casting = false
 		_close_circle()
 		_stop_conjure_sound()
+
+
+func _on_player_attack_step_started(step: AttackStep) -> void:
+	if _is_cast_clip(step.animation) and not _open:
+		_casting = true
+		_open_circle(_cast_color())
+		_start_conjure_sound()
+
+
+func _is_cast_clip(animation: StringName) -> bool:
+	return String(animation).contains(CAST_ANIMATION_MARKER)
 
 
 func _on_player_projectile_launched(_projectile: Projectile) -> void:
