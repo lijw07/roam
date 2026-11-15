@@ -791,3 +791,18 @@ On character selection, drag over the character with the left mouse button to ro
 Character selection keeps the actor clear of captions: the class list identifies the selection, while a short description and backstory appear on the right. These are authored in each `CharacterClass` resource's `description` and `lore` fields. A class is chosen only by pressing its button (click, Enter or Space); hovering or moving focus over another class doesn't change the choice, and the chosen button stays in its pressed style. Dragging the actor still rotates it.
 
 The dungeon uses `scenes/ui/control_hints.tscn` for a bottom-right row of keycaps and mouse-button symbols, drawn by `scripts/control_glyph.gd`. The row wraps beside the vitals on narrower windows, switches to item actions when the inventory opens, and shows return-to-camp controls on death. Nearby door/pickup prompts appear above it during play.
+
+## Publishing to itch.io
+`export_presets.cfg` has one preset, **Web**: the single-threaded web build (`variant/thread_support`
+off, so itch.io doesn't need SharedArrayBuffer support), desktop VRAM texture compression, and
+`scenes/playground/*`, `tests/*`, `state/*` and `build/*` left out of the pack. To rebuild:
+
+1. Project > Export > Web > Export All > Release. It writes `build/web/index.html` and its files
+   (`build/` has a `.gdignore`, so the editor never imports the output, and `.gitignore` skips it).
+2. Zip the contents of `build/web/` so `index.html` sits at the top of the zip (`build/roam-web.zip`).
+3. On itch.io: Create new project, Kind of project **HTML**, upload the zip and tick **This file will be
+   played in the browser**. Embed options: viewport 1280 x 720, enable **Fullscreen button**, and
+   leave **SharedArrayBuffer support** off.
+
+Saves (`user://profile.json`, `user://settings.cfg`) are kept in the player's browser storage, so
+they survive between visits in the same browser.
