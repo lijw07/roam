@@ -196,4 +196,4 @@ func _on_back_pressed() -> void:
 	if main_menu_scene.is_empty():
 		closed.emit()
 	else:
-		get_tree().change_scene_to_file(main_menu_scene)
+		SceneLoader.go_to(main_menu_scene)

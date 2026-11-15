@@ -17,11 +17,11 @@ func _ready() -> void:
 
 
 func _on_play_pressed() -> void:
-	get_tree().change_scene_to_file(play_scene)
+	SceneLoader.go_to(play_scene)
 
 
 func _on_settings_pressed() -> void:
-	get_tree().change_scene_to_file(settings_scene)
+	SceneLoader.go_to(settings_scene)
 
 
 func _on_quit_pressed() -> void:

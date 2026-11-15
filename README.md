@@ -55,7 +55,8 @@ scripts/
   cast_effects.gd         Opens a glowing circle under the player while a wand or staff casts
   projectile_warm_up.gd   Draws every projectile and an arena-wide light once at load, so the first shot doesn't compile shaders
   warm_up_spot.gd         The point under the floor where warm-ups draw: on screen to the renderer, hidden by the floor
-  loading_cover.gd        Black cover that hides the arena while the warm-ups compile, then fades out
+  loading_cover.gd        Black cover that hides a test arena while the warm-ups compile, then fades out
+  scene_loader.gd         Autoload that fades to black, loads the next scene behind it and fades back in once that scene is ready
   combat_test.gd          Combat test scene: camera, weapon pickups and stat test keys
   main_menu.gd            Main menu: Play, Settings and Quit (Quit is hidden in web builds)
   settings.gd             Autoload holding mouse sensitivity, music volume and key bindings, saved to user://settings.cfg
@@ -84,6 +85,18 @@ Main menu → character select → hub → dungeon (`scenes/game/dungeon.tscn`) 
 `scenes/playground/gameplay_test.tscn`, both driven by `scripts/dungeon_run.gd`, but with
 `debug_tools` off, so there is no Kill All Enemies button and R doesn't reroll the dungeon. The test
 scene keeps `debug_tools` on for those tools.
+
+Every screen change goes through `SceneLoader.go_to(path)` (`scripts/scene_loader.gd`, an
+autoload). It fades a black cover in over 0.25 s on canvas layer 128, waits until two frames of
+black have been drawn, then loads the scene with `ResourceLoader.load_threaded_request` and swaps
+it in (unpausing the tree first). The cover blocks the mouse while it is up. The new scene can keep
+it up with `SceneLoader.cover_until(signal)`; once nothing is holding it, it fades out over 0.35 s.
+The dungeon holds it until its navigation mesh is baked and every warm-up has finished (at least 20
+frames), then the player plays the spawn animation as the cover fades. That way the hub goes black
+as soon as Enter Dungeon is pressed, and the slow part (loading the dungeon, generating it, baking
+navigation and compiling shaders) happens behind the black screen instead of freezing the hub.
+The web build is single-threaded, so there the load still blocks, but it blocks on a black
+screen. Debug builds print how long each change took (`SceneLoader: ... after N ms`).
 
 Each class starts with its most basic weapon, given whenever the character owns no weapon it can use (in the weapon or off-hand slot, the stash or the backpack): when the class is chosen and again after a death empties the slots. The basic weapons are the wooden
 sword for the Knight (`sword_a`), the wooden club for the Barbarian (`hammer_c`), the plain wooden staff
@@ -700,8 +713,10 @@ hide them:
 - `WarmUpSpot.under_floor()` puts the hit flashes, the cast circle and the projectiles 3 m under the
   floor, on the line from the camera through the player's feet. The renderer still draws them, but the
   floor covers every pixel.
-- `LoadingCover` (`loading_cover.gd`), a black `ColorRect` on canvas layer 100, holds for at least 20
-  frames and 0.5 s, then fades out over 0.3 s and frees itself. Every warm-up finishes behind it (the
+- In the dungeon and `gameplay_test`, `SceneLoader`'s cover stays up until the warm-ups and the
+  navigation bake are done (see Game flow). The other test arenas use `LoadingCover` (`loading_cover.gd`) instead, a black
+  `ColorRect` on canvas layer 100 that holds for at least 20 frames and 0.5 s, then fades out over
+  0.3 s and frees itself. Every warm-up finishes behind it (the
   projectiles by frame 15, the cast circle by frame 17), and so does the slow first frame that compiles
   the rest of the arena. It ignores the mouse, so the first click still reaches the game.
 

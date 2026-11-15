@@ -22,7 +22,6 @@
 [ext_resource type="Script" path="res://scripts/item_icon_renderer.gd" id="19_item_icon_renderer"]
 [ext_resource type="Script" path="res://scripts/inventory_ui.gd" id="20_inventory_ui"]
 [ext_resource type="Script" path="res://scripts/amount_popup.gd" id="21_amount_popup"]
-[ext_resource type="Script" path="res://scripts/loading_cover.gd" id="22_loading_cover"]
 [ext_resource type="Script" path="res://scripts/aim_targeting.gd" id="92_aim_targeting"]
 [ext_resource type="Script" path="res://scripts/crosshair.gd" id="93_crosshair"]
 [ext_resource type="Script" path="res://scripts/shoulder_camera.gd" id="94_shoulder_camera"]
@@ -170,19 +169,6 @@ script = ExtResource("21_amount_popup")
 
 [node name="RenderWarmUp" type="Node3D" parent="."]
 script = ExtResource("90_render_warm_up")
-
-[node name="LoadingCover" type="CanvasLayer" parent="."]
-layer = 100
-
-[node name="Cover" type="ColorRect" parent="LoadingCover"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(0, 0, 0, 1)
-script = ExtResource("22_loading_cover")
 
 [node name="PauseMenu" parent="HUD" instance=ExtResource("96_pause_menu")]
 
