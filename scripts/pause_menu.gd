@@ -87,5 +87,4 @@ func _leave() -> void:
 		return
 	leave_confirmation.hide()
 	Profile.lose_run()
-	get_tree().paused = false
-	get_tree().change_scene_to_file(hub_scene)
+	SceneLoader.go_to(hub_scene)

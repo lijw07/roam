@@ -1,5 +1,8 @@
 extends Node3D
 
+signal loaded
+
+const MIN_COVER_FRAMES := 20
 const RIG_HEIGHT := 1.4
 const MOUSE_SENSITIVITY := 0.003
 const MIN_PITCH := -1.2
@@ -34,6 +37,7 @@ const MELEE_CROSSHAIR_ALPHA := 0.35
 @onready var crosshair: Control = $HUD/Crosshair
 
 var _navigation_stale := false
+var _navigation_baked := false
 var _boss_defeated := false
 
 
@@ -42,6 +46,7 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+	SceneLoader.cover_until(loaded)
 	_stock_starting_gear()
 	run_inventory.load_data(Profile.backpack.to_data())
 	_enter_dungeon()
@@ -54,7 +59,24 @@ func _ready() -> void:
 	inventory_ui.visibility_changed.connect(_on_inventory_toggled)
 	player.health.died.connect(_on_player_died)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	_show_when_loaded()
+
+
+func _show_when_loaded() -> void:
+	await _finish_loading()
+	loaded.emit()
+	player.spawn()
 	_equip_starting_gear_after_spawn()
+
+
+func _finish_loading() -> void:
+	for _frame in MIN_COVER_FRAMES:
+		await get_tree().process_frame
+	if not _navigation_baked:
+		await navigation_region.bake_finished
+	for warm_up: RenderWarmUp in get_tree().get_nodes_in_group(RenderWarmUp.GROUP):
+		if warm_up.is_warming:
+			await warm_up.finished
 
 
 func _process(_delta: float) -> void:
@@ -105,7 +127,7 @@ func _on_player_died() -> void:
 
 func _return_to_camp_after_death() -> void:
 	Profile.lose_run()
-	get_tree().change_scene_to_file(hub_scene)
+	SceneLoader.go_to(hub_scene)
 
 
 func _become(chosen: CharacterClass) -> void:
@@ -158,7 +180,6 @@ func _equip_starting_gear_after_spawn() -> void:
 
 func _enter_dungeon() -> void:
 	player.global_position = generator.get_spawn_position()
-	player.spawn()
 	_watch_boss()
 	for node in generator.find_children("*", "Node3D", true, false):
 		if node is Door:
@@ -185,6 +206,7 @@ func _rebake_navigation() -> void:
 
 
 func _on_navigation_baked() -> void:
+	_navigation_baked = true
 	if _navigation_stale:
 		_navigation_stale = false
 		navigation_region.bake_navigation_mesh()
@@ -236,8 +258,7 @@ func _leave_dungeon() -> void:
 
 
 func _return_to_camp() -> void:
-	get_tree().paused = false
-	get_tree().change_scene_to_file(hub_scene)
+	SceneLoader.go_to(hub_scene)
 
 
 func _door_to_use() -> Door:

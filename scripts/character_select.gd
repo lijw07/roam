@@ -70,8 +70,8 @@ func _description_of(character_class: CharacterClass) -> String:
 
 func _on_continue_pressed() -> void:
 	Profile.choose_class(_chosen)
-	get_tree().change_scene_to_file(hub_scene)
+	SceneLoader.go_to(hub_scene)
 
 
 func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file(main_menu_scene)
+	SceneLoader.go_to(main_menu_scene)
